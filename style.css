@@ -41,7 +41,7 @@ body::before { content: ''; position: fixed; top: 0; left: 0; width: 100%; heigh
 .hero h1 { font-family: var(--heading-font); font-size: 4rem; margin-bottom: 1rem; }
 .hero .subtitle { font-size: 1.2rem; max-width: 650px; margin: 0 auto 2.5rem auto; opacity: 0.9; }
 .cta-buttons { display: flex; justify-content: center; gap: 1rem; align-items: center; }
-.button { display: inline-flex; align-items: center; gap: 0.5rem; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 700; font-family: var(--heading-font); transition: all 0.3s ease; }
+.button { display: inline-flex; align-items: center; gap: 0.75rem; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 700; font-family: var(--heading-font); transition: all 0.3s ease; }
 .button.primary { background-color: var(--accent-color); color: #fff; }
 .button.primary:hover { background-color: #ff5e78; transform: translateY(-2px); }
 .button.secondary { background-color: var(--secondary-color); color: var(--text-color); border: 1px solid var(--border-color); }
@@ -52,11 +52,21 @@ body::before { content: ''; position: fixed; top: 0; left: 0; width: 100%; heigh
 #animated-title { background-image: linear-gradient(45deg, var(--c1), var(--c2), var(--c3), var(--c4), var(--c5), var(--c1)); background-size: 400% 400%; -webkit-background-clip: text; background-clip: text; color: transparent; animation: gradient-animation 25s ease infinite; }
 
 /* --- Universal Section Styling --- */
-main .container > section { background: var(--glass-bg); border: 1px solid var(--border-color); padding: 3rem; border-radius: 20px; margin-bottom: 3rem; backdrop-filter: blur(8px); }
+main .container > section {
+    background: var(--glass-bg);
+    border: 1px solid var(--border-color);
+    padding: 3rem;
+    border-radius: 20px;
+    margin-bottom: 3rem;
+    backdrop-filter: blur(8px);
+}
 main section h2 { font-family: var(--heading-font); font-size: 2.8rem; margin-bottom: 1rem; color: var(--heading-color); text-align: center; }
 .section-subtitle { text-align: center; max-width: 700px; margin: 0 auto 3.5rem auto; opacity: 0.8; }
 
 /* --- Pricing Section --- */
+#pricing {
+    padding-bottom: 5rem;
+}
 .pricing-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 2rem; align-items: flex-start; }
 .pricing-card { background-color: var(--primary-color); border-radius: 20px; position: relative; display: flex; flex-direction: column; border: 1px solid var(--border-color); transition: transform 0.3s ease, box-shadow 0.3s ease; box-shadow: 0 10px 30px rgba(0,0,0,0.2); overflow: hidden; }
 .pricing-card:hover { transform: translateY(-10px); }
@@ -64,15 +74,7 @@ main section h2 { font-family: var(--heading-font); font-size: 2.8rem; margin-bo
 .card-header h3 { font-family: var(--heading-font); font-size: 2.5rem; color: #fff; font-weight: 700; }
 .card-body { padding: 1.5rem; background-color: var(--secondary-color); flex-grow: 1; }
 .price-tag { background-color: var(--primary-color); color: var(--text-color); font-size: 1.8rem; font-weight: 700; padding: 10px 20px; border-radius: 12px; display: inline-block; margin-bottom: 2rem; position: relative; left: 50%; transform: translateX(-50%); border: 1px solid var(--border-color); }
-
-/* --- THIS IS THE FIX --- */
-.price-tag del {
-    font-size: 1.2rem;
-    color: #ff8a8a; /* A slightly pale but clear red */
-    opacity: 0.9;
-    margin-right: 0.75rem;
-}
-
+.price-tag del { font-size: 1.2rem; color: #ff8a8a; opacity: 0.9; margin-right: 0.75rem; }
 .features-list { list-style: none; text-align: left; height: 320px; overflow-y: auto; padding-right: 10px; }
 .features-list li { margin-bottom: 1rem; display: flex; align-items: flex-start; font-size: 0.95rem; }
 .features-list li::before { content: '•'; font-size: 1.5rem; line-height: 1; margin-right: 0.75rem; }
@@ -85,7 +87,8 @@ main section h2 { font-family: var(--heading-font); font-size: 2.8rem; margin-bo
 
 .pricing-card.recommended { transform: scale(1.05); }
 .pricing-card.recommended::before {
-    content: 'Most Popular'; position: absolute; top: 25px; right: -35px;
+    content: 'Most Popular';
+    position: absolute; top: 25px; right: -35px;
     background-color: #2ecc71; color: white; padding: 5px 40px;
     font-family: var(--heading-font); font-size: 0.9rem; font-weight: 700;
     transform: rotate(45deg); z-index: 10;
