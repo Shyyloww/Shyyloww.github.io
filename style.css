@@ -22,28 +22,35 @@ body {
     line-height: 1.7;
 }
 
-/* --- NEW: Animated Background Styling --- */
+/* --- Animated Background Styling --- */
 .video-background {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    z-index: -2; /* Place it behind everything */
+    z-index: -2;
     overflow: hidden;
 }
 
-.video-background video {
-    min-width: 100%;
-    min-height: 100%;
-    width: auto;
-    height: auto;
+/* --- THIS IS THE KEY CHANGE --- */
+/* This rule tells the image how to fit within its container */
+.video-background img {
+    /* Position the image within the container */
     position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    object-fit: cover; /* This prevents the video from stretching */
+    top: 0;
+    left: 0;
+    /* Make the image's container fill the space */
+    width: 100%;
+    height: 100%;
+    /* 
+       This is the magic property. It scales the image to maintain its aspect ratio
+       while filling the element's entire content box. The image will be clipped to fit
+       if necessary, but it will NEVER be stretched or distorted.
+    */
+    object-fit: cover;
 }
+/* ----------------------------- */
 
 /* Add an overlay so the text is readable */
 body::before {
@@ -56,8 +63,6 @@ body::before {
     background-color: rgba(18, 18, 18, 0.85); /* Dark overlay */
     z-index: -1;
 }
-/* -------------------------------------- */
-
 
 .container { max-width: 1100px; margin: 0 auto; padding: 0 20px; }
 
@@ -82,7 +87,6 @@ body::before {
 .hero {
     padding: 12rem 0 8rem 0;
     text-align: center;
-    /* Removed the old background image styling */
 }
 #animated-title {
     font-family: var(--heading-font);
@@ -129,7 +133,7 @@ footer a { color: var(--accent-color); text-decoration: none; }
 .disclaimer { opacity: 0.6; margin-top: 0.5rem; }
 
 /* --- TOS Page Specific --- */
-.tos-page { background-color: transparent; } /* Let the video background show */
+.tos-page { background-color: transparent; }
 .tos-content { background-color: rgba(18, 18, 18, 0.8); backdrop-filter: blur(5px); padding: 3rem; border-radius: 12px; margin-top: 8rem; text-align: left; }
 .tos-content h1 { font-family: var(--heading-font); margin-bottom: 1rem; }
 .tos-content h2 { text-align: left; font-size: 1.8rem; margin-top: 2rem; margin-bottom: 1rem; border-bottom: 2px solid var(--secondary-color); padding-bottom: 0.5rem; }
