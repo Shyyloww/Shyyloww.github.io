@@ -1,116 +1,78 @@
-/* --- Basic Setup --- */
-:root {
-    --bg-color: #12121c;
-    --primary-color: #1a1a2e;
-    --secondary-color: #2a2a4a;
-    --text-color: #d0d0e0;
-    --heading-color: #ffffff;
-    --border-color: rgba(145, 120, 220, 0.2);
-    --accent-color: #e94560;
-    --glass-bg: rgba(26, 26, 46, 0.6);
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tether C2 - Total Remote Control</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <div class="video-background">
+        <img src="background.gif" alt="Animated pixelverse background">
+    </div>
+
+    <nav class="navbar">
+        <div class="container">
+            <a href="index.html" class="nav-brand">Tether C2</a>
+            <ul class="nav-links">
+                <li><a href="#features">Capabilities</a></li>
+                <li><a href="#pricing">Pricing</a></li>
+                <li><a href="tos.html">Terms of Service</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <header class="hero">
+        <div class="container">
+            <h1 id="animated-title">Tether C2</h1>
+            <p class="subtitle">Your all-in-one solution for remote access, data exfiltration, and complete victim control. Gain the power to hack, steal, and dominate any device with an undetectable, easy-to-use payload.</p>
+            <div class="cta-buttons">
+                <a href="#pricing" class="button primary">Download ⬇</a>
+                <a href="https://discord.gg/BPYscjFkK3" target="_blank" class="button secondary">
+                    <!-- NEW: Official Discord Logo SVG -->
+                    <svg class="discord-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 127 96"><path d="M107.7,8.3C100.2,3.3,92.1,0,84.2,0C75,0,66.5,1.9,58.3,5.3C58.3,5.3,58.3,5.3,58.2,5.3C52.1,3.3,46,2,39.9,2C39.9,2,39.9,2,39.9,2c-11.4,0-22.1,2.6-31.4,7.4C1.3,13.1,0,19.8,0,26.4C0,56,18.4,76.3,38.2,85.8C46.6,89.6,55.3,92,63.9,92c24.8,0,46.9-15.8,55.8-35.5c2.2-4.9,3.8-9.8,4.8-14.9C127,25.9,122.9,13.6,107.7,8.3z M43.4,62.1c-4.1,0-7.4-3.5-7.4-7.8c0-4.3,3.3-7.8,7.4-7.8c4.1,0,7.4,3.5,7.4,7.8C50.8,58.6,47.5,62.1,43.4,62.1z M83.6,62.1c-4.1,0-7.4-3.5-7.4-7.8c0-4.3,3.3-7.8,7.4-7.8c4.1,0,7.4,3.5,7.4,7.8C91,58.6,87.7,62.1,83.6,62.1z"/></svg>
+                    Join Discord
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <section id="about" class="hidden">
+            <h2>What is Tether?</h2>
+            <p class="section-subtitle">Tether C2 is a RAT (Remote Administration Tool) built for simplicity and power. The intuitive builder allows you to craft a payload with the exact features you need. Once the victim runs it, a session is established, and their device is yours. Access the Data Vault to steal their information or use the command center to control their machine as if you were sitting in front of it.</p>
+        </section>
+
+        <section id="features" class="hidden">
+            <h2>Core Capabilities</h2>
+            <div class="feature-grid">
+                <div class="feature-card"><h3><span class="icon">🗄️</span>Exfiltrate Everything</h3><p>Steal browser passwords, live Discord tokens, crypto wallets, and financial data. Dox your victim with a complete system profile. Their information is now your asset.</p></div>
+                <div class="feature-card"><h3><span class="icon">⚡</span>Absolute Victim Control</h3><p>Go beyond data theft. Take direct control with a live remote desktop, command shell, and file manager. Blackmail, disrupt, and instill fear with a powerful suite of live actions designed for maximum psychological impact.</p></div>
+                <div class="feature-card"><h3><span class="icon">🛡️</span>Unbreakable Access</h3><p>Don't lose your foothold. Build your payload with powerful persistence modules, including the self-reviving 'Hydra' system, and advanced obfuscation to ensure your access to the victim's device remains stable and undetected.</p></div>
+            </div>
+        </section>
+
+        <section id="pricing" class="hidden">
+            <h2>Choose Your Tier</h2>
+            <div class="pricing-grid">
+                <div class="pricing-card basic"><div class="card-header"><h3>Basic</h3></div><div class="card-body"><div class="price-tag">$9.99</div><ul class="features-list"><li>Full System & Hardware Info</li><li>Installed Apps & Security Products</li><li>Network Information (IP, MAC)</li><li>Browser History & Clipboard</li><li>Standard Popup & Default Sounds</li><li>Toggle Desktop Icons</li><li>Forced Caps Lock & Taskbar Sizing</li><li>Read-Only File & Process Viewer</li><li>Icon Customization</li><li>Startup Persistence Module</li><li>Single Live Session Management</li><li>Light & Dark UI Themes</li></ul></div><div class="card-footer"><a href="https://discord.com/channels/1391108549785944084/1400869692347777205" target="_blank" class="purchase-button">Continue</a></div></div>
+                <div class="pricing-card pro recommended"><div class="card-header"><h3>Pro</h3></div><div class="card-body"><div class="price-tag">$14.99</div><ul class="features-list"><li>All Basic Features, plus:</li><li><strong>Full Remote Desktop (RAT)</strong></li><li>Advanced Network Analysis (ARP, DNS)</li><li>Wi-Fi Password Decryption</li><li>Full Browser Credential Theft</li><li><strong>Discord Token & Roblox Cookie Stealer</strong></li><li>SSH Key Discovery</li><li>Advanced Popups, Sounds, & Overlays</li><li>Full Suite of Interactive Live Actions</li><li>Standard User Commander Shell</li><li>Advanced File Manager (No Delete)</li><li>Advanced Process Manager (No End)</li><li>Hydra Persistence (Lite - 3 Guards)</li><li>Payload Compression</li><li>Manage up to 5 Sessions</li><li>+5 Exclusive UI Themes</li></ul></div><div class="card-footer"><a href="https://discord.com/channels/1391108549785944084/1400869692347777205" target="_blank" class="purchase-button">Continue</a></div></div>
+                <div class="pricing-card expert"><div class="card-header"><h3>Expert</h3></div><div class="card-body"><div class="price-tag">$19.99</div><ul class="features-list"><li>All Pro Features, plus:</li><li><strong>Live Webcam Viewer</strong></li><li><strong>Discord Account Hijacker</strong></li><li>Financial Data Harvesting (CC, Autofill)</li><li>Windows Vault & App Credentials</li><li><strong>Telegram Session Hijacking</strong></li><li>Crypto Wallet & Sensitive File Hunter</li><li>Destructive & Stealth Actions</li><li>BSOD, Fork Bomb, Browser Eraser</li><li>WinDefender Disable Module</li><li><strong>Administrator Commander Shell</strong></li><li>Total File Control (incl. Delete)</li><li>Total Process Control (incl. End)</li><li>Payload Obfuscation & Extension Spoofing</li><li>Hydra Persistence (Full - 10 Guards)</li><li>Unlimited Sessions & Multi-User Login</li><li>All Exclusive UI Themes</li></ul></div><div class="card-footer"><a href="https://discord.com/channels/1391108549785944084/1400869692347777205" target="_blank" class="purchase-button">Continue</a></div></div>
+            </div>
+            <p class="pricing-note">Purchases are handled via our Discord server. You must join the server to complete your purchase.</p>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>© 2025 Tether C2. All rights reserved. <a href="tos.html">Terms of Service</a></p>
+        </div>
+    </footer>
     
-    --heading-font: 'Poppins', sans-serif;
-    --body-font: 'Poppins', sans-serif;
-    
-    --basic-color: #3498db; --pro-color: #f39c12; --expert-color: #9b59b6;
-    --c1: #8cb4c4; --c2: #c774c7; --c3: #8f6acb; --c4: #6aab62; --c5: #a8c9a4;
-}
-
-* { margin: 0; padding: 0; box-sizing: border-box; }
-html { scroll-behavior: smooth; }
-
-body { font-family: var(--body-font); background-color: var(--bg-color); color: var(--text-color); line-height: 1.6; }
-
-/* --- Animated Background & Overlay --- */
-.video-background { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -2; overflow: hidden; }
-.video-background img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0.5; }
-body::before { content: ''; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle, rgba(18,18,28,0.7) 0%, rgba(18,18,28,0.95) 100%); z-index: -1; }
-
-.container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
-
-/* --- Navbar (Glassmorphism) --- */
-.navbar { background: var(--glass-bg); backdrop-filter: blur(10px); padding: 1rem 0; position: fixed; width: 100%; top: 0; z-index: 1000; border-bottom: 1px solid var(--border-color); }
-.nav-brand { font-family: var(--heading-font); font-size: 1.5rem; text-decoration: none; color: var(--heading-color); font-weight: 700; }
-.nav-links { list-style: none; display: flex; gap: 2rem; }
-.nav-links a { color: var(--text-color); text-decoration: none; font-weight: 600; transition: color 0.3s ease; }
-.nav-links a:hover { color: var(--accent-color); }
-.navbar .container { display: flex; justify-content: space-between; align-items: center; }
-
-/* --- Hero Section --- */
-.hero { padding: 10rem 0 6rem 0; text-align: center; }
-.hero h1 { font-family: var(--heading-font); font-size: 4rem; margin-bottom: 1rem; }
-.hero .subtitle { font-size: 1.2rem; max-width: 650px; margin: 0 auto 2.5rem auto; opacity: 0.9; }
-.cta-buttons { display: flex; justify-content: center; gap: 1rem; align-items: center; }
-.button { display: inline-flex; align-items: center; gap: 0.5rem; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 700; font-family: var(--heading-font); transition: all 0.3s ease; }
-.button.primary { background-color: var(--accent-color); color: #fff; }
-.button.primary:hover { background-color: #ff5e78; transform: translateY(-2px); }
-.button.secondary { background-color: var(--secondary-color); color: var(--text-color); border: 1px solid var(--border-color); }
-.button.secondary:hover { background-color: #3c3a52; border-color: #4a4861; }
-.discord-icon { width: 24px; height: auto; fill: currentColor; }
-
-/* --- Animated Title --- */
-#animated-title { background-image: linear-gradient(45deg, var(--c1), var(--c2), var(--c3), var(--c4), var(--c5), var(--c1)); background-size: 400% 400%; -webkit-background-clip: text; background-clip: text; color: transparent; animation: gradient-animation 25s ease infinite; }
-
-/* --- Universal Section Styling --- */
-main .container > section { background: var(--glass-bg); border: 1px solid var(--border-color); padding: 3rem; border-radius: 20px; margin-bottom: 3rem; backdrop-filter: blur(8px); }
-main section h2 { font-family: var(--heading-font); font-size: 2.8rem; margin-bottom: 1rem; color: var(--heading-color); text-align: center; }
-.section-subtitle { text-align: center; max-width: 700px; margin: 0 auto 3.5rem auto; opacity: 0.8; }
-
-/* --- Pricing Section --- */
-.pricing-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 2rem; align-items: flex-start; }
-.pricing-card { background-color: var(--primary-color); border-radius: 20px; position: relative; display: flex; flex-direction: column; border: 1px solid var(--border-color); transition: transform 0.3s ease, box-shadow 0.3s ease; box-shadow: 0 10px 30px rgba(0,0,0,0.2); overflow: hidden; /* Important for the badge */ }
-.pricing-card:hover { transform: translateY(-10px); }
-.card-header { padding: 1.5rem; text-align: center; border-radius: 18px 18px 0 0; }
-.card-header h3 { font-family: var(--heading-font); font-size: 2.5rem; color: #fff; font-weight: 700; }
-.card-body { padding: 1.5rem; background-color: var(--secondary-color); flex-grow: 1; }
-.price-tag { background-color: var(--primary-color); color: var(--text-color); font-size: 1.8rem; font-weight: 700; padding: 10px 20px; border-radius: 12px; display: inline-block; margin-bottom: 2rem; position: relative; left: 50%; transform: translateX(-50%); border: 1px solid var(--border-color); }
-.features-list { list-style: none; text-align: left; height: 320px; overflow-y: auto; padding-right: 10px; }
-.features-list li { margin-bottom: 1rem; display: flex; align-items: flex-start; font-size: 0.95rem; }
-.features-list li::before { content: '•'; font-size: 1.5rem; line-height: 1; margin-right: 0.75rem; }
-.card-footer { padding: 1.5rem; text-align: center; background-color: var(--secondary-color); border-radius: 0 0 18px 18px; border-top: 1px solid var(--border-color); }
-.purchase-button { display: inline-block; width: 100%; padding: 1rem; text-align: center; text-decoration: none; font-family: var(--heading-font); font-size: 1.2rem; font-weight: 700; border-radius: 12px; transition: all 0.3s ease; border: none; }
-.pricing-note { text-align: center; margin-top: 2.5rem; font-size: 0.9rem; opacity: 0.7; }
-.pricing-card.basic { border-color: var(--basic-color); } .pricing-card.basic .card-header { background: var(--basic-color); } .pricing-card.basic .purchase-button { background-color: var(--basic-color); color: #fff; } .pricing-card.basic .features-list li::before { color: var(--basic-color); }
-.pricing-card.pro { border-color: var(--pro-color); } .pricing-card.pro .card-header { background: var(--pro-color); } .pricing-card.pro .purchase-button { background-color: var(--pro-color); color: #fff; } .pricing-card.pro .features-list li::before { color: var(--pro-color); }
-.pricing-card.expert { border-color: var(--expert-color); } .pricing-card.expert .card-header { background: var(--expert-color); } .pricing-card.expert .purchase-button { background-color: var(--expert-color); color: #fff; } .pricing-card.expert .features-list li::before { color: var(--expert-color); }
-
-/* --- NEW: "Money Bill" Badge --- */
-.pricing-card.recommended { transform: scale(1.05); }
-.pricing-card.recommended::before {
-    content: 'Most Popular';
-    position: absolute; top: 25px; right: -35px;
-    background-color: #2ecc71; color: white; padding: 5px 40px;
-    font-family: var(--heading-font); font-size: 0.9rem; font-weight: 700;
-    transform: rotate(45deg); z-index: 10;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
-}
-
-.features-list::-webkit-scrollbar { width: 8px; }
-.features-list::-webkit-scrollbar-track { background: transparent; }
-.features-list::-webkit-scrollbar-thumb { background-color: #4a4861; border-radius: 4px; border: 2px solid var(--secondary-color); }
-.features-list::-webkit-scrollbar-thumb:hover { background-color: #5a5870; }
-
-/* --- Features Section ("Core Pillars") --- */
-.feature-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; text-align: left; }
-.feature-card { background: transparent; padding: 0; border: none; }
-.feature-card h3 { font-family: var(--heading-font); margin-bottom: 1rem; color: var(--heading-color); display: flex; align-items: center; gap: 0.75rem; }
-.feature-card .icon { font-size: 1.5rem; color: var(--accent-color); }
-
-/* --- Footer --- */
-footer { text-align: center; padding: 3rem 0; background-color: #0e0e1a; font-size: 0.9rem; }
-footer a { color: var(--accent-color); text-decoration: none; }
-
-/* --- TOS Page Specific (FIXED) --- */
-.tos-page main.container {
-    background: var(--glass-bg); backdrop-filter: blur(8px); border: 1px solid var(--border-color);
-    padding: 3rem; border-radius: 20px; text-align: left;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-    margin-top: 120px; /* Provides space for the fixed navbar */
-    margin-bottom: 3rem;
-}
-.tos-page h1, .tos-page h2 { font-family: var(--heading-font); color: var(--heading-color); }
-
-/* --- Animations --- */
-.hidden { opacity: 0; transform: translateY(30px); transition: opacity 0.6s ease-out, transform 0.6s ease-out; }
-.hidden.show { opacity: 1; transform: translateY(0); }
-@keyframes gradient-animation { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+    <script src="script.js" defer></script>
+</body>
+</html>
