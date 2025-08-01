@@ -1,53 +1,119 @@
-/* --- NEW: Pricing Section Styling --- */
-#pricing {
-    padding-bottom: 5rem;
+/* --- Basic Setup --- */
+:root {
+    --bg-color: #f4f6f9; /* Light gray background */
+    --text-color: #333; /* Dark text for readability */
+    --heading-color: #111;
+    --card-bg: #ffffff; /* White cards */
+    --shadow-color: rgba(0, 0, 0, 0.1);
+    --border-color: #e0e0e0;
+    --heading-font: 'Poppins', sans-serif;
+    --body-font: 'Poppins', sans-serif;
+    
+    /* Tier Colors */
+    --basic-color: #5dade2; /* Light Blue */
+    --pro-color: #f39c12; /* Burnt Orange */
+    --expert-color: #9b59b6; /* Vibrant Purple */
 }
 
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+
+body {
+    font-family: var(--body-font);
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    line-height: 1.7;
+}
+
+/* --- Re-instated Background & Navbar --- */
+.video-background { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -2; overflow: hidden; }
+.video-background img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; }
+body::before { content: ''; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(18, 18, 18, 0.85); z-index: -1; }
+
+.container { max-width: 1100px; margin: 0 auto; padding: 0 20px; }
+
+.navbar { background: rgba(26, 26, 46, 0.8); backdrop-filter: blur(10px); padding: 1rem 0; position: fixed; width: 100%; top: 0; z-index: 1000; }
+.nav-brand { font-family: var(--heading-font); font-size: 1.5rem; text-decoration: none; color: #fff; font-weight: 700; }
+.nav-links { list-style: none; display: flex; gap: 2rem; }
+.nav-links a { color: #f0f0f0; text-decoration: none; font-weight: 600; transition: color 0.3s ease; }
+.nav-links a:hover { color: var(--pro-color); }
+
+/* --- Hero Section --- */
+.hero { padding: 12rem 0 8rem 0; text-align: center; color: #fff; }
+#animated-title { font-family: var(--heading-font); font-size: 5rem; margin-bottom: 1rem; color: #fff; }
+.hero .subtitle { font-size: 1.25rem; max-width: 650px; margin: 0 auto 2.5rem auto; opacity: 0.9; }
+.cta-buttons { display: flex; justify-content: center; gap: 1rem; align-items: center; }
+.button { display: inline-flex; align-items: center; gap: 0.5rem; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 700; font-family: var(--heading-font); transition: all 0.3s ease; }
+.button.primary { background-color: var(--pro-color); color: #fff; }
+.button.primary:hover { background-color: #e67e22; transform: translateY(-5px) scale(1.05); }
+.button.secondary { background-color: transparent; color: #f0f0f0; border: 2px solid #f0f0f0; }
+.button.secondary:hover { background-color: rgba(255,255,255,0.1); }
+.discord-icon { width: 24px; height: auto; fill: currentColor; }
+
+/* --- Universal Section Styling (for light background) --- */
+main section {
+    padding: 5rem 0;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+}
+main section#pricing {
+    background-color: #ffffff; /* White background for pricing section */
+}
+
+main section h2 {
+    font-family: var(--heading-font);
+    font-size: 2.8rem;
+    margin-bottom: 3rem;
+    color: var(--heading-color);
+    text-align: center;
+}
+
+/* --- PRICING SECTION STYLING --- */
 .pricing-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
     gap: 2rem;
-    align-items: stretch; /* Makes cards equal height */
+    align-items: flex-start;
 }
 
 .pricing-card {
-    background-color: var(--primary-color);
+    background-color: transparent;
     border-radius: 20px;
-    overflow: hidden;
     position: relative;
     display: flex;
     flex-direction: column;
-    border: 3px solid transparent;
-    transition: transform 0.3s ease, border-color 0.3s ease;
+    border: 2px solid var(--border-color);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 .pricing-card:hover {
     transform: translateY(-10px);
+    box-shadow: 0 20px 40px var(--shadow-color);
 }
 
 .card-header {
-    padding: 1.5rem;
+    padding: 1rem;
     text-align: center;
+    border-radius: 18px 18px 0 0;
 }
 
 .card-header h3 {
     font-family: var(--heading-font);
-    font-size: 2rem;
+    font-size: 2.5rem;
     color: #fff;
     font-weight: 700;
 }
 
 .card-body {
-    padding: 2rem;
-    background-color: rgba(0, 0, 0, 0.2);
-    margin: 0 10px;
-    border-radius: 15px;
-    flex-grow: 1; /* Pushes the footer down */
+    padding: 1.5rem;
+    background-color: #f0f0f0; /* Light gray inner body */
+    margin: 0;
+    flex-grow: 1;
 }
 
 .price-tag {
     background-color: #fff;
-    color: var(--bg-color);
+    color: var(--heading-color);
     font-size: 1.8rem;
     font-weight: 700;
     padding: 10px 20px;
@@ -57,28 +123,27 @@
     position: relative;
     left: 50%;
     transform: translateX(-50%);
+    box-shadow: 0 4px 10px var(--shadow-color);
 }
-
-.price-tag .per-month {
-    font-size: 1rem;
-    font-weight: 400;
-    opacity: 0.7;
-}
+.price-tag .per-month { font-size: 1rem; font-weight: 400; opacity: 0.7; }
 
 .features-list {
     list-style: none;
     text-align: left;
+    height: 300px; /* Fixed height for consistency */
+    overflow-y: auto; /* Add scrollbar if content overflows */
+    padding-right: 10px; /* Space for the scrollbar */
 }
 
 .features-list li {
     margin-bottom: 1rem;
     display: flex;
     align-items: flex-start;
+    font-size: 0.95rem;
 }
 
 .features-list li::before {
     content: '•';
-    color: var(--accent-color);
     font-size: 1.5rem;
     line-height: 1;
     margin-right: 0.75rem;
@@ -87,11 +152,13 @@
 .card-footer {
     padding: 2rem;
     text-align: center;
+    background-color: #f0f0f0;
+    border-radius: 0 0 18px 18px;
 }
 
 .purchase-button {
     display: inline-block;
-    width: 80%;
+    width: 100%;
     padding: 1rem;
     text-align: center;
     text-decoration: none;
@@ -100,46 +167,34 @@
     font-weight: 700;
     border-radius: 12px;
     transition: all 0.3s ease;
+    border: none;
 }
 
-.pricing-note {
-    margin-top: 2.5rem;
-    font-size: 0.9rem;
-    opacity: 0.7;
-}
+.pricing-note { text-align: center; margin-top: 2.5rem; font-size: 0.9rem; opacity: 0.7; }
 
-/* --- Tier-Specific Colors --- */
-/* Basic - Light Blue */
-.pricing-card.basic { border-image: linear-gradient(to top, #4dabf7, #a5d8ff) 1; }
-.pricing-card.basic .card-header { background: linear-gradient(to right, #4dabf7, #a5d8ff); }
-.pricing-card.basic .purchase-button { background-color: #4dabf7; color: #fff; }
-.pricing-card.basic .purchase-button:hover { background-color: #74c0fc; }
-.pricing-card.basic .features-list li::before { color: #4dabf7; }
+/* Tier-Specific Colors */
+.pricing-card.basic { border-color: var(--basic-color); }
+.pricing-card.basic .card-header { background: linear-gradient(45deg, var(--basic-color), #a9cce3); }
+.pricing-card.basic .purchase-button { background-color: var(--basic-color); color: #fff; }
+.pricing-card.basic .features-list li::before { color: var(--basic-color); }
 
-/* Pro - Fiery Orange */
-.pricing-card.pro { border-image: linear-gradient(to top, #ff8c42, #ffb347) 1; }
-.pricing-card.pro .card-header { background: linear-gradient(to right, #ff8c42, #ffb347); }
-.pricing-card.pro .purchase-button { background-color: #ff8c42; color: #fff; }
-.pricing-card.pro .purchase-button:hover { background-color: #ffa057; }
-.pricing-card.pro .features-list li::before { color: #ff8c42; }
+.pricing-card.pro { border-color: var(--pro-color); }
+.pricing-card.pro .card-header { background: linear-gradient(45deg, var(--pro-color), #f8c471); }
+.pricing-card.pro .purchase-button { background-color: var(--pro-color); color: #fff; }
+.pricing-card.pro .features-list li::before { color: var(--pro-color); }
 
-/* Expert - Vibrant Purple */
-.pricing-card.expert { border-image: linear-gradient(to top, #8A2BE2, #bf8bff) 1; }
-.pricing-card.expert .card-header { background: linear-gradient(to right, #8A2BE2, #bf8bff); }
-.pricing-card.expert .purchase-button { background-color: #8A2BE2; color: #fff; }
-.pricing-card.expert .purchase-button:hover { background-color: #9c4bff; }
-.pricing-card.expert .features-list li::before { color: #8A2BE2; }
+.pricing-card.expert { border-color: var(--expert-color); }
+.pricing-card.expert .card-header { background: linear-gradient(45deg, var(--expert-color), #d7bde2); }
+.pricing-card.expert .purchase-button { background-color: var(--expert-color); color: #fff; }
+.pricing-card.expert .features-list li::before { color: var(--expert-color); }
 
-/* Recommended Badge */
-.pricing-card.recommended {
-    transform: scale(1.05); /* Make it slightly bigger */
-}
+.pricing-card.recommended { transform: scale(1.05); }
 .pricing-card.recommended::before {
     content: 'Most Popular';
     position: absolute;
     top: 20px;
     right: -30px;
-    background-color: var(--accent-color);
+    background-color: #2ecc71;
     color: white;
     padding: 5px 30px;
     font-family: var(--heading-font);
@@ -148,3 +203,15 @@
     transform: rotate(45deg);
     z-index: 10;
 }
+
+/* --- Other sections styling (for dark on light) --- */
+#features {
+    background-color: #ffffff;
+}
+.feature-card { background-color: #f4f6f9; border-left: 5px solid var(--pro-color); transition: transform 0.3s ease, box-shadow 0.3s ease; }
+.feature-card h3, .feature-card p { color: #333; }
+.feature-card .icon { color: var(--pro-color); }
+
+/* --- Restore Animations --- */
+.hidden { opacity: 0; transform: translateY(30px); transition: opacity 0.6s ease-out, transform 0.6s ease-out; }
+.hidden.show { opacity: 1; transform: translateY(0); }
