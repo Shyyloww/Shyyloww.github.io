@@ -6,7 +6,7 @@
     --text-color: #e0e0e0;
     --heading-color: #ffffff;
     --border-color: #2a2a4a;
-    --accent-color: #e94560; /* Restored red accent color */
+    --accent-color: #e94560;
     
     --heading-font: 'Poppins', sans-serif;
     --body-font: 'Poppins', sans-serif;
@@ -16,8 +16,12 @@
     --pro-color: #f39c12;
     --expert-color: #9b59b6;
 
-    /* Title Gradient Colors */
-    --c1: #9bf1ff; --c2: #ff00ff; --c3: #8A2BE2; --c4: #39ff14; --c5: #9dff8a;
+    /* NEW: Desaturated, paler title gradient colors */
+    --c1: #8cb4c4; /* Pale Cyan/Blue */
+    --c2: #c774c7; /* Pale Magenta */
+    --c3: #8f6acb; /* Pale Violet */
+    --c4: #6aab62; /* Pale Green */
+    --c5: #a8c9a4; /* Paler Green */
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -30,21 +34,21 @@ body {
     line-height: 1.6;
 }
 
-/* --- RESTORED: Animated Background & Overlay --- */
+/* --- Animated Background & Overlay --- */
 .video-background { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -2; overflow: hidden; }
 .video-background img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; }
 body::before { content: ''; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(18, 18, 18, 0.85); z-index: -1; }
 
 .container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
 
-/* --- RESTORED: Navbar --- */
+/* --- Navbar --- */
 .navbar { background: rgba(26, 26, 46, 0.8); backdrop-filter: blur(10px); padding: 1rem 0; position: fixed; width: 100%; top: 0; z-index: 1000; border-bottom: 1px solid var(--secondary-color); }
 .nav-brand { font-family: var(--heading-font); font-size: 1.5rem; text-decoration: none; color: var(--heading-color); font-weight: 700; }
 .nav-links { list-style: none; display: flex; gap: 2rem; }
 .nav-links a { color: var(--text-color); text-decoration: none; font-weight: 600; transition: color 0.3s ease; }
 .nav-links a:hover { color: var(--accent-color); }
 
-/* --- RESTORED: Hero Section --- */
+/* --- Hero Section --- */
 .hero { padding: 10rem 0 6rem 0; text-align: center; }
 .hero h1 { font-family: var(--heading-font); font-size: 4rem; margin-bottom: 1rem; }
 .hero .subtitle { font-size: 1.2rem; max-width: 650px; margin: 0 auto 2.5rem auto; opacity: 0.9; }
@@ -56,21 +60,19 @@ body::before { content: ''; position: fixed; top: 0; left: 0; width: 100%; heigh
 .button.secondary:hover { background-color: var(--secondary-color); border-color: var(--secondary-color); }
 .discord-icon { width: 24px; height: auto; fill: currentColor; }
 
-/* --- RESTORED: Animated Title --- */
+/* --- Animated Title (Slower, Paler) --- */
 #animated-title {
     background-image: linear-gradient(45deg, var(--c1), var(--c2), var(--c3), var(--c4), var(--c5), var(--c1));
     background-size: 400% 400%;
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-    animation: gradient-animation 15s ease infinite;
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    animation: gradient-animation 25s ease infinite; /* Slower animation */
 }
 
 /* --- Universal Section Styling --- */
 main section { padding: 5rem 0; }
 main section h2 { font-family: var(--heading-font); font-size: 2.8rem; margin-bottom: 3.5rem; color: var(--heading-color); text-align: center; }
 
-/* --- RE-SKINNED: Pricing Section --- */
+/* --- Pricing Section --- */
 #pricing { background-color: transparent; }
 .pricing-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 2rem; align-items: flex-start; }
 .pricing-card { background-color: var(--primary-color); border-radius: 20px; position: relative; display: flex; flex-direction: column; border: 1px solid var(--border-color); transition: transform 0.3s ease, box-shadow 0.3s ease; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
@@ -110,7 +112,13 @@ main section h2 { font-family: var(--heading-font); font-size: 2.8rem; margin-bo
     transform: rotate(45deg); z-index: 10;
 }
 
-/* --- RE-SKINNED: Features Section ("Core Pillars") --- */
+/* --- NEW: Custom Scrollbar for Pricing Cards --- */
+.features-list::-webkit-scrollbar { width: 8px; }
+.features-list::-webkit-scrollbar-track { background: transparent; }
+.features-list::-webkit-scrollbar-thumb { background-color: #4a4861; border-radius: 4px; border: 2px solid var(--secondary-color); }
+.features-list::-webkit-scrollbar-thumb:hover { background-color: #5a5870; }
+
+/* --- Features Section ("Core Pillars") --- */
 #features { background-color: transparent; }
 .feature-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; text-align: left; }
 .feature-card { background-color: var(--primary-color); padding: 2.5rem; border-radius: 12px; border-left: 5px solid var(--accent-color); transition: transform 0.3s ease, box-shadow 0.3s ease; box-shadow: 0 10px 20px rgba(0,0,0,0.2); border: 1px solid var(--border-color); }
@@ -118,16 +126,23 @@ main section h2 { font-family: var(--heading-font); font-size: 2.8rem; margin-bo
 .feature-card h3 { font-family: var(--heading-font); margin-bottom: 1rem; color: var(--heading-color); display: flex; align-items: center; gap: 0.75rem; }
 .feature-card .icon { font-size: 1.5rem; color: var(--accent-color); }
 
-/* --- RESTORED: Footer --- */
+/* --- Footer --- */
 footer { text-align: center; padding: 3rem 0; background-color: #0e0e1a; font-size: 0.9rem; }
 footer a { color: var(--accent-color); text-decoration: none; }
 .disclaimer { opacity: 0.6; margin-top: 0.5rem; }
 
-/* --- TOS Page Specific (Dark Mode) --- */
-.tos-page .container { background-color: var(--primary-color); border: 1px solid var(--border-color); padding: 3rem; border-radius: 12px; margin-top: 8rem; margin-bottom: 3rem; text-align: left; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+/* --- TOS Page Specific --- */
+/* THIS IS THE FIX for the large gap */
+.tos-page .container {
+    background-color: var(--primary-color); border: 1px solid var(--border-color);
+    padding: 3rem; border-radius: 12px; text-align: left;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    margin-top: 100px; /* Provides space for the fixed navbar */
+    margin-bottom: 3rem;
+}
 .tos-page h1, .tos-page h2 { font-family: var(--heading-font); color: var(--heading-color); }
 
-/* --- RESTORED: Animations --- */
+/* --- Animations --- */
 .hidden { opacity: 0; transform: translateY(30px); transition: opacity 0.6s ease-out, transform 0.6s ease-out; }
 .hidden.show { opacity: 1; transform: translateY(0); }
 @keyframes gradient-animation { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
