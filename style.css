@@ -1,11 +1,11 @@
 /* --- Basic Setup --- */
 :root {
-    --bg-color: #121212;
+    --bg-color: #12121c; /* Darker, purplish background */
     --primary-color: #1a1a2e;
-    --secondary-color: #16213e;
-    --text-color: #e0e0e0;
+    --secondary-color: #2a2a4a;
+    --text-color: #d0d0e0;
     --heading-color: #ffffff;
-    --border-color: #2a2a4a;
+    --border-color: rgba(145, 120, 220, 0.2);
     --accent-color: #e94560;
     
     --heading-font: 'Poppins', sans-serif;
@@ -16,37 +16,29 @@
     --pro-color: #f39c12;
     --expert-color: #9b59b6;
 
-    /* NEW: Desaturated, paler title gradient colors */
-    --c1: #8cb4c4; /* Pale Cyan/Blue */
-    --c2: #c774c7; /* Pale Magenta */
-    --c3: #8f6acb; /* Pale Violet */
-    --c4: #6aab62; /* Pale Green */
-    --c5: #a8c9a4; /* Paler Green */
+    /* Title Gradient Colors */
+    --c1: #8cb4c4; --c2: #c774c7; --c3: #8f6acb; --c4: #6aab62; --c5: #a8c9a4;
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 html { scroll-behavior: smooth; }
 
-body {
-    font-family: var(--body-font);
-    background-color: var(--bg-color);
-    color: var(--text-color);
-    line-height: 1.6;
-}
+body { font-family: var(--body-font); background-color: var(--bg-color); color: var(--text-color); line-height: 1.6; }
 
 /* --- Animated Background & Overlay --- */
 .video-background { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -2; overflow: hidden; }
-.video-background img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; }
-body::before { content: ''; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(18, 18, 18, 0.85); z-index: -1; }
+.video-background img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0.5; }
+body::before { content: ''; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle, rgba(18,18,28,0.7) 0%, rgba(18,18,28,0.95) 100%); z-index: -1; }
 
 .container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
 
-/* --- Navbar --- */
-.navbar { background: rgba(26, 26, 46, 0.8); backdrop-filter: blur(10px); padding: 1rem 0; position: fixed; width: 100%; top: 0; z-index: 1000; border-bottom: 1px solid var(--secondary-color); }
+/* --- Navbar (Glassmorphism) --- */
+.navbar { background: rgba(26, 26, 46, 0.5); backdrop-filter: blur(10px); padding: 1rem 0; position: fixed; width: 100%; top: 0; z-index: 1000; border-bottom: 1px solid var(--border-color); }
 .nav-brand { font-family: var(--heading-font); font-size: 1.5rem; text-decoration: none; color: var(--heading-color); font-weight: 700; }
 .nav-links { list-style: none; display: flex; gap: 2rem; }
 .nav-links a { color: var(--text-color); text-decoration: none; font-weight: 600; transition: color 0.3s ease; }
 .nav-links a:hover { color: var(--accent-color); }
+.navbar .container { display: flex; justify-content: space-between; align-items: center; }
 
 /* --- Hero Section --- */
 .hero { padding: 10rem 0 6rem 0; text-align: center; }
@@ -56,24 +48,19 @@ body::before { content: ''; position: fixed; top: 0; left: 0; width: 100%; heigh
 .button { display: inline-flex; align-items: center; gap: 0.5rem; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 700; font-family: var(--heading-font); transition: all 0.3s ease; }
 .button.primary { background-color: var(--accent-color); color: #fff; }
 .button.primary:hover { background-color: #ff5e78; transform: translateY(-2px); }
-.button.secondary { background-color: transparent; color: var(--text-color); border: 2px solid var(--text-color); }
-.button.secondary:hover { background-color: var(--secondary-color); border-color: var(--secondary-color); }
+.button.secondary { background-color: var(--secondary-color); color: var(--text-color); border: 1px solid var(--border-color); }
+.button.secondary:hover { background-color: #3c3a52; border-color: #4a4861; }
 .discord-icon { width: 24px; height: auto; fill: currentColor; }
 
-/* --- Animated Title (Slower, Paler) --- */
-#animated-title {
-    background-image: linear-gradient(45deg, var(--c1), var(--c2), var(--c3), var(--c4), var(--c5), var(--c1));
-    background-size: 400% 400%;
-    -webkit-background-clip: text; background-clip: text; color: transparent;
-    animation: gradient-animation 25s ease infinite; /* Slower animation */
-}
+/* --- Animated Title --- */
+#animated-title { background-image: linear-gradient(45deg, var(--c1), var(--c2), var(--c3), var(--c4), var(--c5), var(--c1)); background-size: 400% 400%; -webkit-background-clip: text; background-clip: text; color: transparent; animation: gradient-animation 25s ease infinite; }
 
 /* --- Universal Section Styling --- */
 main section { padding: 5rem 0; }
-main section h2 { font-family: var(--heading-font); font-size: 2.8rem; margin-bottom: 3.5rem; color: var(--heading-color); text-align: center; }
+main section h2 { font-family: var(--heading-font); font-size: 2.8rem; margin-bottom: 1rem; color: var(--heading-color); text-align: center; }
+.section-subtitle { text-align: center; max-width: 700px; margin: 0 auto 3.5rem auto; opacity: 0.8; }
 
-/* --- Pricing Section --- */
-#pricing { background-color: transparent; }
+/* --- RE-SKINNED: Pricing Section --- */
 .pricing-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 2rem; align-items: flex-start; }
 .pricing-card { background-color: var(--primary-color); border-radius: 20px; position: relative; display: flex; flex-direction: column; border: 1px solid var(--border-color); transition: transform 0.3s ease, box-shadow 0.3s ease; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
 .pricing-card:hover { transform: translateY(-10px); }
@@ -87,42 +74,29 @@ main section h2 { font-family: var(--heading-font); font-size: 2.8rem; margin-bo
 .card-footer { padding: 1.5rem; text-align: center; background-color: var(--secondary-color); border-radius: 0 0 18px 18px; border-top: 1px solid var(--border-color); }
 .purchase-button { display: inline-block; width: 100%; padding: 1rem; text-align: center; text-decoration: none; font-family: var(--heading-font); font-size: 1.2rem; font-weight: 700; border-radius: 12px; transition: all 0.3s ease; border: none; }
 .pricing-note { text-align: center; margin-top: 2.5rem; font-size: 0.9rem; opacity: 0.7; }
-
-/* Tier-Specific Colors */
 .pricing-card.basic { border-color: var(--basic-color); }
 .pricing-card.basic .card-header { background: var(--basic-color); }
 .pricing-card.basic .purchase-button { background-color: var(--basic-color); color: #fff; }
 .pricing-card.basic .features-list li::before { color: var(--basic-color); }
-
 .pricing-card.pro { border-color: var(--pro-color); }
 .pricing-card.pro .card-header { background: var(--pro-color); }
 .pricing-card.pro .purchase-button { background-color: var(--pro-color); color: #fff; }
 .pricing-card.pro .features-list li::before { color: var(--pro-color); }
-
 .pricing-card.expert { border-color: var(--expert-color); }
 .pricing-card.expert .card-header { background: var(--expert-color); }
 .pricing-card.expert .purchase-button { background-color: var(--expert-color); color: #fff; }
 .pricing-card.expert .features-list li::before { color: var(--expert-color); }
-
 .pricing-card.recommended { transform: scale(1.05); }
-.pricing-card.recommended::before {
-    content: 'Most Popular'; position: absolute; top: 20px; right: -30px;
-    background-color: #2ecc71; color: white; padding: 5px 30px;
-    font-family: var(--heading-font); font-size: 0.9rem; font-weight: 700;
-    transform: rotate(45deg); z-index: 10;
-}
-
-/* --- NEW: Custom Scrollbar for Pricing Cards --- */
+.pricing-card.recommended::before { content: 'Most Popular'; position: absolute; top: 20px; right: -30px; background-color: #2ecc71; color: white; padding: 5px 30px; font-family: var(--heading-font); font-size: 0.9rem; font-weight: 700; transform: rotate(45deg); z-index: 10; }
 .features-list::-webkit-scrollbar { width: 8px; }
 .features-list::-webkit-scrollbar-track { background: transparent; }
 .features-list::-webkit-scrollbar-thumb { background-color: #4a4861; border-radius: 4px; border: 2px solid var(--secondary-color); }
 .features-list::-webkit-scrollbar-thumb:hover { background-color: #5a5870; }
 
-/* --- Features Section ("Core Pillars") --- */
-#features { background-color: transparent; }
+/* --- RE-SKINNED: Features Section ("Core Pillars") --- */
 .feature-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; text-align: left; }
-.feature-card { background-color: var(--primary-color); padding: 2.5rem; border-radius: 12px; border-left: 5px solid var(--accent-color); transition: transform 0.3s ease, box-shadow 0.3s ease; box-shadow: 0 10px 20px rgba(0,0,0,0.2); border: 1px solid var(--border-color); }
-.feature-card:hover { transform: translateY(-10px); }
+.feature-card { background: rgba(42, 42, 74, 0.5); padding: 2.5rem; border-radius: 12px; transition: transform 0.3s ease, background-color 0.3s ease; border: 1px solid var(--border-color); }
+.feature-card:hover { transform: translateY(-10px); background-color: var(--secondary-color); }
 .feature-card h3 { font-family: var(--heading-font); margin-bottom: 1rem; color: var(--heading-color); display: flex; align-items: center; gap: 0.75rem; }
 .feature-card .icon { font-size: 1.5rem; color: var(--accent-color); }
 
@@ -131,15 +105,8 @@ footer { text-align: center; padding: 3rem 0; background-color: #0e0e1a; font-si
 footer a { color: var(--accent-color); text-decoration: none; }
 .disclaimer { opacity: 0.6; margin-top: 0.5rem; }
 
-/* --- TOS Page Specific --- */
-/* THIS IS THE FIX for the large gap */
-.tos-page .container {
-    background-color: var(--primary-color); border: 1px solid var(--border-color);
-    padding: 3rem; border-radius: 12px; text-align: left;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-    margin-top: 100px; /* Provides space for the fixed navbar */
-    margin-bottom: 3rem;
-}
+/* --- TOS Page Specific (Glassmorphism) --- */
+.tos-page .container { background: rgba(26, 26, 46, 0.6); backdrop-filter: blur(8px); border: 1px solid var(--border-color); padding: 3rem; border-radius: 12px; text-align: left; box-shadow: 0 10px 30px rgba(0,0,0,0.2); margin-top: 120px; margin-bottom: 3rem; }
 .tos-page h1, .tos-page h2 { font-family: var(--heading-font); color: var(--heading-color); }
 
 /* --- Animations --- */
