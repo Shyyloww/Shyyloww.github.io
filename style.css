@@ -59,6 +59,7 @@ main section h2 { font-family: var(--heading-font); font-size: 2.8rem; margin-bo
 .features-list li::before { content: '•'; font-size: 1.5rem; line-height: 1; margin-right: 0.75rem; }
 .card-footer { padding: 1.5rem; text-align: center; background-color: var(--secondary-color); border-radius: 0 0 18px 18px; border-top: 1px solid var(--border-color); }
 .purchase-button { display: inline-block; width: 100%; padding: 1rem; text-align: center; text-decoration: none; font-family: var(--heading-font); font-size: 1.2rem; font-weight: 700; border-radius: 12px; transition: all 0.3s ease; border: none; position: relative; overflow: hidden; }
+.purchase-button span { position: relative; z-index: 1; } /* THIS IS THE FIX for button text */
 .pricing-note { text-align: center; margin-top: 2.5rem; font-size: 0.9rem; opacity: 0.7; }
 .pricing-card.basic { border-color: var(--basic-color); } .pricing-card.basic .card-header { background: var(--basic-color); } .pricing-card.basic .purchase-button { background-color: var(--basic-color); color: #fff; } .pricing-card.basic .features-list li::before { color: var(--basic-color); }
 .pricing-card.pro { border-color: var(--pro-color); } .pricing-card.pro .card-header { background: var(--pro-color); } .pricing-card.pro .purchase-button { background-color: var(--pro-color); color: #fff; } .pricing-card.pro .features-list li::before { color: var(--pro-color); }
@@ -81,9 +82,9 @@ main section h2 { font-family: var(--heading-font); font-size: 2.8rem; margin-bo
     z-index: 0;
 }
 /* MODIFIED: Increased opacity for Basic tier */
-.pricing-card.basic .card-header::before { content: '⚙️ ⚙️ ⚙️ ⚙️ ⚙️ ⚙️ ⚙️ ⚙️ ⚙️ ⚙️ ⚙️ ⚙️ ⚙️ ⚙️ ⚙️ ⚙️ ⚙️ ⚙️ ⚙️ ⚙️ ⚙️ ⚙️ ⚙️ ⚙️ ⚙️ ⚙️ ⚙️ ⚙️ ⚙️ ⚙️ ⚙️ ⚙️ ⚙️ ⚙️ ⚙️ ⚙️ ⚙️ ⚙️ ⚙️ ⚙️ ⚙️ ⚙️ ⚙️ ⚙️'; opacity: 0.25; }
+.pricing-card.basic .card-header::before { content: '⚙️ ⚙️ ⚙️ ⚙️ ⚙️ ⚙️ ⚙️ ⚙️ ⚙️ ⚙️ ⚙️ ⚙️ ⚙️ ⚙️ ⚙️ ⚙️ ⚙️ ⚙️ ⚙️ ⚙️ ⚙️ ⚙️ ⚙️ ⚙️ ⚙️ ⚙️ ⚙️ ⚙️ ⚙️ ⚙️ ⚙️ ⚙️ ⚙️ ⚙️ ⚙️ ⚙️ ⚙️ ⚙️ ⚙️ ⚙️ ⚙️ ⚙️ ⚙️ ⚙️'; opacity: 0.32; }
 /* MODIFIED: Changed emoji for Pro tier */
-.pricing-card.pro .card-header::before { content: '💸 💸 💸 💸 💸 💸 💸 💸 💸 💸 💸 💸 💸 💸 💸 💸 💸 💸 💸 💸 💸 💸 💸 💸 💸 💸 💸 💸 💸 💸 💸 💸 💸 💸 💸 💸 💸 💸 💸 💸 💸 💸 💸 💸'; opacity: 0.15; }
+.pricing-card.pro .card-header::before { content: '💎 💎 💎 💎 💎 💎 💎 💎 💎 💎 💎 💎 💎 💎 💎 💎 💎 💎 💎 💎 💎 💎 💎 💎 💎 💎 💎 💎 💎 💎 💎 💎 💎 💎 💎 💎 💎 💎 💎 💎 💎 💎 💎 💎'; opacity: 0.15; }
 .pricing-card.expert .card-header::before { content: '👑 👑 👑 👑 👑 👑 👑 👑 👑 👑 👑 👑 👑 👑 👑 👑 👑 👑 👑 👑 👑 👑 👑 👑 👑 👑 👑 👑 👑 👑 👑 👑 👑 👑 👑 👑 👑 👑 👑 👑 👑 👑 👑 👑'; opacity: 0.15; }
 /* MODIFIED: Changed emoji for all buttons */
 .purchase-button::before { content: '💸 💸 💸 💸 💸 💸 💸 💸 💸 💸 💸 💸 💸 💸 💸 💸 💸 💸 💸 💸 💸 💸 💸 💸 💸 💸 💸 💸 💸 💸 💸 💸 💸 💸 💸 💸 💸 💸 💸 💸 💸 💸 💸 💸'; opacity: 0.15; }
