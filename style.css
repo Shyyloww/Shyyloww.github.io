@@ -39,7 +39,7 @@ body::before { content: ''; position: fixed; top: 0; left: 0; width: 100%; heigh
 
 /* --- Animated Title --- */
 #animated-title { background-image: linear-gradient(45deg, var(--c1), var(--c2), var(--c3), var(--c4), var(--c5), var(--c1)); background-size: 400% 400%; -webkit-background-clip: text; background-clip: text; color: transparent; animation: gradient-animation 25s ease infinite; }
-.highlight-title { background-image: linear-gradient(45deg, var(--c1), var(--c2), var(--c3), var(--c4), var(--c5), var(--c1)); background-size: 400% 400%; -webkit-background-clip: text; background-clip: text; color: transparent; animation: gradient-animation 25s ease infinite; }
+.highlight-title { background-image: linear-gradient(45deg, var(--c1), var(--c2), var(--c3), var(--c4), var(--c5), var(--c1)); background-size: 400% 400%; -webkit-background-clip: text; background-clip: text; color: transparent; animation: gradient-animation 25s ease infinite; display: inline; }
 
 /* --- Universal Section Styling --- */
 main .container > section { background: var(--glass-bg); border: 1px solid var(--border-color); padding: 3rem; border-radius: 20px; margin-bottom: 3rem; backdrop-filter: blur(8px); }
@@ -51,7 +51,9 @@ main section h2 { font-family: var(--heading-font); font-size: 2.8rem; margin-bo
 /* --- Pricing Section --- */
 .pricing-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 2rem; align-items: stretch; }
 .pricing-card { background-color: var(--primary-color); border-radius: 20px; position: relative; display: flex; flex-direction: column; border: 1px solid var(--border-color); transition: transform 0.3s ease, box-shadow 0.3s ease; box-shadow: 0 10px 30px rgba(0,0,0,0.2); overflow: hidden; }
-.pricing-card:hover, .pricing-card.recommended:hover { transform: translateY(-10px) scale(1.05); }
+.pricing-card:hover { transform: translateY(-10px); box-shadow: 0 20px 40px rgba(0,0,0,0.3); }
+/* CORRECTED: Specific hover for recommended card */
+.pricing-card.recommended:hover { transform: translateY(-10px) scale(1.05); }
 .card-header { padding: 1.5rem; text-align: center; border-radius: 18px 18px 0 0; position: relative; overflow: hidden; }
 .card-header h3 { font-family: var(--heading-font); font-size: 2.5rem; color: #fff; font-weight: 700; position: relative; z-index: 1; }
 .card-body { padding: 1.5rem; background-color: var(--secondary-color); flex-grow: 1; display: flex; flex-direction: column; }
@@ -93,17 +95,18 @@ footer a { color: var(--accent-color); text-decoration: none; }
 .tier-detail-page main.container, .tos-page main.container { background: var(--glass-bg); backdrop-filter: blur(8px); border: 1px solid var(--border-color); padding: 3rem; border-radius: 20px; text-align: left; box-shadow: 0 10px 30px rgba(0,0,0,0.2); margin-top: 120px; margin-bottom: 3rem; }
 .tier-detail-grid { display: grid; grid-template-columns: 420px 1fr; gap: 2rem; align-items: start; }
 @media (max-width: 900px) { .tier-detail-grid { grid-template-columns: 1fr; } }
-.tier-detail-page .pricing-card { transform: none !important; box-shadow: none !important; }
-.tier-detail-page .pricing-card .features-list { height: auto; } /* Let it expand to its content */
+.tier-detail-page .pricing-card.static { transform: none !important; box-shadow: none !important; }
+.tier-detail-page .pricing-card .features-list { height: auto; }
 .tier-deep-dive h2 { text-align: left; margin-bottom: 1.5rem; }
 .tier-deep-dive h3 { font-family: var(--heading-font); color: var(--heading-color); margin-top: 2rem; margin-bottom: 1rem; }
 .use-case-list { list-style: none; }
 .use-case-list li { margin-bottom: 0.75rem; display: flex; align-items: center; }
 .use-case-list li::before { content: '✅'; margin-right: 0.75rem; color: #2ecc71; }
 .pros-cons-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 1.5rem; }
-.pros ul, .cons ul { list-style: none; }
-.pros li::before { content: '+'; margin-right: 0.5rem; color: #2ecc71; font-weight: 700; }
-.cons li::before { content: '-'; margin-right: 0.5rem; color: var(--accent-color); font-weight: 700; }
+.pros h4, .cons h4 { font-size: 1.2rem; margin-bottom: 1rem; color: var(--heading-color); }
+.pros-list p, .cons-list p { display: flex; align-items: flex-start; margin-bottom: 0.5rem; }
+.pro-marker { color: #2ecc71; font-weight: 700; margin-right: 0.5rem; }
+.con-marker { color: var(--accent-color); font-weight: 700; margin-right: 0.5rem; }
 .feature-chart { margin-top: 1.5rem; }
 .chart-bar-container { background-color: var(--primary-color); border-radius: 5px; padding: 3px; border: 1px solid var(--border-color); margin-bottom: 0.75rem; }
 .chart-bar { height: 30px; border-radius: 3px; color: white; padding: 0.5rem 1rem; font-weight: 600; box-shadow: 0 2px 5px rgba(0,0,0,0.2); display: flex; align-items: center; }
