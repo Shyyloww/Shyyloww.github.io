@@ -51,9 +51,7 @@ main section h2 { font-family: var(--heading-font); font-size: 2.8rem; margin-bo
 /* --- Pricing Section --- */
 .pricing-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 2rem; align-items: stretch; }
 .pricing-card { background-color: var(--primary-color); border-radius: 20px; position: relative; display: flex; flex-direction: column; border: 1px solid var(--border-color); transition: transform 0.3s ease, box-shadow 0.3s ease; box-shadow: 0 10px 30px rgba(0,0,0,0.2); overflow: hidden; }
-.pricing-card:hover { transform: translateY(-10px); box-shadow: 0 20px 40px rgba(0,0,0,0.3); }
-/* CORRECTED: Specific hover for recommended card */
-.pricing-card.recommended:hover { transform: translateY(-10px) scale(1.05); }
+.pricing-card:hover, .pricing-card.recommended:hover { transform: translateY(-10px) scale(1.05); }
 .card-header { padding: 1.5rem; text-align: center; border-radius: 18px 18px 0 0; position: relative; overflow: hidden; }
 .card-header h3 { font-family: var(--heading-font); font-size: 2.5rem; color: #fff; font-weight: 700; position: relative; z-index: 1; }
 .card-body { padding: 1.5rem; background-color: var(--secondary-color); flex-grow: 1; display: flex; flex-direction: column; }
@@ -104,7 +102,7 @@ footer a { color: var(--accent-color); text-decoration: none; }
 .use-case-list li::before { content: '✅'; margin-right: 0.75rem; color: #2ecc71; }
 .pros-cons-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 1.5rem; }
 .pros h4, .cons h4 { font-size: 1.2rem; margin-bottom: 1rem; color: var(--heading-color); }
-.pros-list p, .cons-list p { display: flex; align-items: flex-start; margin-bottom: 0.5rem; }
+.pros-list p, .cons-list p { display: flex; align-items: flex-start; margin-bottom: 0.5rem; white-space: nowrap; }
 .pro-marker { color: #2ecc71; font-weight: 700; margin-right: 0.5rem; }
 .con-marker { color: var(--accent-color); font-weight: 700; margin-right: 0.5rem; }
 .feature-chart { margin-top: 1.5rem; }
