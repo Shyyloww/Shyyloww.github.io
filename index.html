@@ -7,11 +7,11 @@
     <link rel="stylesheet" href="style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&family=Orbitron:wght@700&display=swap" rel="stylesheet">
+    <!-- NEW: Importing a more professional, modern font -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
 
-    <!-- THE NEW BACKGROUND GIF ELEMENT -->
     <div class="video-background">
         <img src="background.gif" alt="Animated pixelverse background">
     </div>
@@ -29,7 +29,8 @@
 
     <header class="hero">
         <div class="container">
-            <h1 id="animated-title">Tether C2</h1>
+            <!-- MODIFIED: Added a span for the crossfade animation -->
+            <h1 id="animated-title"><span>Tether C2</span>Tether C2</h1>
             <p class="subtitle">A powerful, modular remote administration and data harvesting tool designed for security professionals and researchers.</p>
             <div class="cta-buttons">
                 <a href="#download" class="button primary">Get Access</a>
@@ -60,7 +61,6 @@
         <section id="showcase" class="hidden">
             <h2>Modern & Intuitive Control</h2>
             <div class="showcase-content">
-                <!-- Replace with an actual screenshot of your C2 GUI -->
                 <img src="https://via.placeholder.com/600x400.png/1a1a2e/e0e0e0?text=Your+C2+Screenshot" alt="Tether C2 Interface Showcase" class="showcase-img">
                 <p>A clean, tabbed interface built with CustomTkinter allows for easy management of multiple sessions. Switch between a comprehensive data vault and a live action command center with a single click.</p>
             </div>
