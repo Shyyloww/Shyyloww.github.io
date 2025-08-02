@@ -45,9 +45,25 @@ document.addEventListener('DOMContentLoaded', () => {
         alignCardHeight();
     };
 
-    // Run the entire setup only on tier detail pages
+    // Run the alignment setup only on tier detail pages
     if (document.body.classList.contains('tier-detail-page')) {
         setupAlignment();
+    }
+
+    // --- NEW: FAQ Accordion Logic ---
+    const accordions = document.getElementsByClassName("faq-accordion");
+    for (let i = 0; i < accordions.length; i++) {
+        accordions[i].addEventListener("click", function() {
+            this.classList.toggle("active");
+            const panel = this.nextElementSibling;
+            if (panel.style.maxHeight) {
+                panel.style.maxHeight = null;
+                panel.style.padding = "0px 20px";
+            } else {
+                panel.style.maxHeight = panel.scrollHeight + "px";
+                panel.style.padding = "0px 20px"; // Keep padding consistent
+            }
+        });
     }
 
 });

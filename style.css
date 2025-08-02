@@ -94,9 +94,39 @@ main section h2 { font-family: var(--heading-font); font-size: 2.8rem; margin-bo
 /* --- Footer --- */
 footer { text-align: center; padding: 3rem 0; background-color: #0e0e1a; font-size: 0.9rem; }
 footer a { color: var(--accent-color); text-decoration: none; }
+footer a:hover { text-decoration: underline; }
 
-/* --- NEW: TOS PAGE STYLING --- */
-.tos-container { display: flex; gap: 3rem; margin-top: 120px; margin-bottom: 5rem; align-items: flex-start; }
+/* --- General Content Page (Changelog, FAQ) --- */
+.content-page main.container { margin-top: 120px; margin-bottom: 5rem; }
+.content-wrapper { background: var(--glass-bg); backdrop-filter: blur(8px); border: 1px solid var(--border-color); padding: 3rem; border-radius: 20px; }
+.content-wrapper h1 { font-size: 3rem; text-align: center; margin-bottom: 0.5rem; }
+
+/* --- Changelog Page --- */
+.changelog-entry { border: 1px solid var(--border-color); border-radius: 15px; margin-bottom: 2.5rem; overflow: hidden; background-color: var(--primary-color); }
+.entry-header { display: flex; justify-content: space-between; align-items: center; background-color: var(--secondary-color); padding: 1rem 1.5rem; border-bottom: 1px solid var(--border-color); }
+.entry-header h2 { font-size: 1.5rem; margin: 0; }
+.entry-date { font-weight: 600; color: var(--text-color); }
+.entry-body { padding: 1.5rem; }
+.change-list { list-style: none; }
+.change-list li { display: flex; align-items: center; margin-bottom: 0.75rem; }
+.change-tag { display: inline-block; padding: 4px 10px; border-radius: 5px; font-weight: 700; color: #fff; margin-right: 1rem; font-size: 0.8rem; }
+.change-tag.added { background-color: #27ae60; }
+.change-tag.improved { background-color: #2980b9; }
+.change-tag.fixed { background-color: #c0392b; }
+
+/* --- FAQ Page --- */
+.faq-container { margin-top: 2rem; }
+.faq-container h3 { font-size: 1.5rem; color: var(--accent-color); margin-top: 2.5rem; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; }
+.faq-accordion { background-color: var(--secondary-color); color: var(--heading-color); cursor: pointer; padding: 18px 25px; width: 100%; border: none; text-align: left; outline: none; font-size: 1.1rem; font-weight: 600; transition: background-color 0.3s ease; border-radius: 8px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+.faq-accordion:hover, .faq-accordion.active { background-color: #3c3a52; }
+.faq-accordion::after { content: '＋'; font-size: 1.3rem; color: var(--text-color); }
+.faq-accordion.active::after { content: "−"; }
+.faq-panel { padding: 0 20px; background-color: var(--primary-color); max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out, padding 0.3s ease-out; border-radius: 0 0 8px 8px; margin-bottom: 8px; }
+.faq-panel p { padding: 20px 0; margin: 0; }
+
+/* --- TOS Page --- */
+.tos-page main.container { margin-bottom: 5rem; }
+.tos-container { display: flex; gap: 3rem; align-items: flex-start; }
 .tos-sidebar { width: 280px; flex-shrink: 0; position: sticky; top: 120px; }
 .tos-sidebar h3 { font-size: 1.5rem; color: var(--heading-color); margin-bottom: 1.5rem; border-bottom: 2px solid var(--border-color); padding-bottom: 0.5rem; }
 .tos-sidebar ul { list-style: none; }
@@ -114,7 +144,7 @@ footer a { color: var(--accent-color); text-decoration: none; }
 .tos-summary { background-color: var(--primary-color); padding: 1.5rem; border-radius: 8px; border-left: 4px solid var(--accent-color); margin-bottom: 2rem; }
 @media (max-width: 900px) { .tos-container { flex-direction: column; } .tos-sidebar { position: static; width: 100%; margin-bottom: 2rem; } }
 
-/* --- Tier Detail Page Specific --- */
+/* --- Tier Detail Page --- */
 .tier-detail-page main.container { background: var(--glass-bg); backdrop-filter: blur(8px); border: 1px solid var(--border-color); padding: 3rem; border-radius: 20px; text-align: left; box-shadow: 0 10px 30px rgba(0,0,0,0.2); margin-top: 120px; margin-bottom: 3rem; }
 .tier-detail-grid { display: grid; grid-template-columns: 420px 1fr; gap: 2rem; align-items: start; }
 @media (max-width: 900px) { .tier-detail-grid { grid-template-columns: 1fr; } }
