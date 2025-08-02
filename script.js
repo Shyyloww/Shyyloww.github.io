@@ -22,15 +22,16 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const pricingCard = tierGrid.querySelector('.pricing-card.static');
-        const featureChart = tierGrid.querySelector('.feature-chart');
+        // UPDATED: The anchor is now the large "Continue to Discord" button
+        const anchorButton = tierGrid.querySelector('.button.primary.large');
 
-        if (pricingCard && featureChart) {
+        if (pricingCard && anchorButton) {
             // Use getBoundingClientRect for accurate positioning relative to the viewport
             const cardTop = pricingCard.getBoundingClientRect().top;
-            const chartBottom = featureChart.getBoundingClientRect().bottom;
+            const anchorBottom = anchorButton.getBoundingClientRect().bottom;
 
             // Calculate the required height
-            const requiredHeight = chartBottom - cardTop;
+            const requiredHeight = anchorBottom - cardTop;
 
             // Apply the calculated height to the pricing card, ensuring a positive value
             if (requiredHeight > 0) {
