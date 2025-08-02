@@ -28,13 +28,12 @@ document.addEventListener('DOMContentLoaded', () => {
             return; // Exit if elements are missing
         }
 
-        // Create a function to set the height
+        // This function sets the card's height to match the right column's height
         const alignCardHeight = () => {
-            // Set height of the pricing card to match the height of the right column
             pricingCard.style.height = `${rightColumn.offsetHeight}px`;
         };
 
-        // Create a ResizeObserver to watch the right column for size changes
+        // Create a ResizeObserver to watch the right column for any size changes
         const resizeObserver = new ResizeObserver(() => {
             alignCardHeight();
         });
@@ -42,10 +41,13 @@ document.addEventListener('DOMContentLoaded', () => {
         // Start observing the right column
         resizeObserver.observe(rightColumn);
 
-        // Run it once initially to set the correct height on page load
+        // Run it once initially in case the page loads static content
         alignCardHeight();
     };
 
-    setupAlignment();
+    // Run the entire setup only on tier detail pages
+    if (document.body.classList.contains('tier-detail-page')) {
+        setupAlignment();
+    }
 
 });
