@@ -17,23 +17,22 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Tier Detail Page Card Alignment Logic ---
     const alignTierCardHeight = () => {
         const tierGrid = document.querySelector('.tier-detail-grid');
-        if (!tierGrid) {
-            return; // Exit if not on a tier detail page
-        }
+        // Exit if we are not on a tier detail page
+        if (!tierGrid) return;
 
         const pricingCard = tierGrid.querySelector('.pricing-card.static');
-        // UPDATED: The anchor is now the large "Continue to Discord" button
         const anchorButton = tierGrid.querySelector('.button.primary.large');
 
+        // Ensure both elements exist before doing calculations
         if (pricingCard && anchorButton) {
             // Use getBoundingClientRect for accurate positioning relative to the viewport
-            const cardTop = pricingCard.getBoundingClientRect().top;
-            const anchorBottom = anchorButton.getBoundingClientRect().bottom;
+            const cardRect = pricingCard.getBoundingClientRect();
+            const anchorRect = anchorButton.getBoundingClientRect();
 
-            // Calculate the required height
-            const requiredHeight = anchorBottom - cardTop;
+            // Calculate the required height from the top of the card to the bottom of the anchor
+            const requiredHeight = anchorRect.bottom - cardRect.top;
 
-            // Apply the calculated height to the pricing card, ensuring a positive value
+            // Apply the calculated height to the pricing card, if it's a valid number
             if (requiredHeight > 0) {
                 pricingCard.style.height = `${requiredHeight}px`;
             }

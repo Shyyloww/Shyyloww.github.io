@@ -95,8 +95,8 @@ footer a { color: var(--accent-color); text-decoration: none; }
 .tier-detail-grid { display: grid; grid-template-columns: 420px 1fr; gap: 2rem; align-items: start; }
 @media (max-width: 900px) { .tier-detail-grid { grid-template-columns: 1fr; } }
 .tier-detail-page .pricing-card.static { transform: none !important; box-shadow: none !important; }
-/* UPDATED: Flexbox layout for the card body on detail pages */
-.tier-detail-page .pricing-card .card-body { align-items: stretch; overflow: hidden; }
+/* UPDATED: Add min-height: 0 to allow the flex child (features-list) to shrink and scroll properly */
+.tier-detail-page .pricing-card .card-body { align-items: stretch; min-height: 0; }
 .tier-detail-page .pricing-card .price-tag { align-self: center; }
 /* UPDATED: Ensure features list grows and scrolls correctly */
 .tier-detail-page .pricing-card .features-list { height: auto; flex-grow: 1; overflow-y: auto; padding-right: 1rem; }
