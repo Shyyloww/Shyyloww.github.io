@@ -42,28 +42,15 @@ body::before { content: ''; position: fixed; top: 0; left: 0; width: 100%; heigh
 .highlight-title { background-image: linear-gradient(45deg, var(--c1), var(--c2), var(--c3), var(--c4), var(--c5), var(--c1)); background-size: 400% 400%; -webkit-background-clip: text; background-clip: text; color: transparent; animation: gradient-animation 25s ease infinite; display: inline; }
 
 /* --- Universal Section Styling --- */
-main .container > section { 
-    background: var(--glass-bg); 
-    border: 1px solid var(--border-color); 
-    padding: 3rem; 
-    border-radius: 20px; 
-    backdrop-filter: blur(8px);
-    margin-bottom: 0; /* Let separators handle the spacing */
-}
+main .container > section { background: var(--glass-bg); border: 1px solid var(--border-color); padding: 3rem; border-radius: 20px; backdrop-filter: blur(8px); margin-bottom: 0; }
 main section h2 { font-family: var(--heading-font); font-size: 2.8rem; margin-bottom: 1rem; color: var(--heading-color); text-align: center; }
 .section-subtitle { text-align: center; max-width: 700px; margin: 0 auto 3.5rem auto; opacity: 0.8; line-height: 1.8; }
 .highlight-accent { color: var(--accent-color); font-weight: 700; }
 .highlight-strong { color: #ffffff; font-weight: 600; }
-
-/* --- Section Separator --- */
-.section-separator {
-    width: 100%;
-    height: 10rem; /* Creates the spacing between sections */
-    display: block;
-}
+.section-separator { width: 100%; height: 10rem; display: block; }
 
 /* --- Pricing Section --- */
-#pricing h2 { margin-bottom: 3.5rem; /* Increased spacing for this title */ }
+#pricing h2 { margin-bottom: 3.5rem; }
 .pricing-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 2rem; align-items: stretch; }
 .pricing-card { background-color: var(--primary-color); border-radius: 20px; position: relative; display: flex; flex-direction: column; border: 1px solid var(--border-color); transition: transform 0.3s ease, box-shadow 0.3s ease; box-shadow: 0 10px 30px rgba(0,0,0,0.2); overflow: hidden; }
 .pricing-card:hover { transform: translateY(-10px) scale(1.02); box-shadow: 0 20px 40px rgba(0,0,0,0.3); }
@@ -95,10 +82,7 @@ main section h2 { font-family: var(--heading-font); font-size: 2.8rem; margin-bo
 .purchase-button::before { content: '💸 💸 💸 💸 💸 💸 💸 💸 💸 💸 💸 💸 💸 💸 💸 💸 💸 💸 💸 💸 💸 💸 💸 💸 💸 💸 💸 💸 💸 💸 💸 💸 💸 💸 💸 💸 💸 💸 💸 💸 💸 💸 💸 💸'; opacity: 0.15; }
 
 /* --- About Section --- */
-#about .section-subtitle {
-    font-size: 1.25rem; /* Increased font size */
-    line-height: 1.9;   /* Adjusted line height for readability */
-}
+#about .section-subtitle { font-size: 1.25rem; line-height: 1.9; }
 
 /* --- Features Section ("Core Capabilities") --- */
 .feature-grid { display: flex; flex-wrap: wrap; gap: 2rem; text-align: left; }
@@ -111,8 +95,27 @@ main section h2 { font-family: var(--heading-font); font-size: 2.8rem; margin-bo
 footer { text-align: center; padding: 3rem 0; background-color: #0e0e1a; font-size: 0.9rem; }
 footer a { color: var(--accent-color); text-decoration: none; }
 
-/* --- Tier Detail & TOS Page Specific --- */
-.tier-detail-page main.container, .tos-page main.container { background: var(--glass-bg); backdrop-filter: blur(8px); border: 1px solid var(--border-color); padding: 3rem; border-radius: 20px; text-align: left; box-shadow: 0 10px 30px rgba(0,0,0,0.2); margin-top: 120px; margin-bottom: 3rem; }
+/* --- NEW: TOS PAGE STYLING --- */
+.tos-container { display: flex; gap: 3rem; margin-top: 120px; margin-bottom: 5rem; align-items: flex-start; }
+.tos-sidebar { width: 280px; flex-shrink: 0; position: sticky; top: 120px; }
+.tos-sidebar h3 { font-size: 1.5rem; color: var(--heading-color); margin-bottom: 1.5rem; border-bottom: 2px solid var(--border-color); padding-bottom: 0.5rem; }
+.tos-sidebar ul { list-style: none; }
+.tos-sidebar li a { display: block; padding: 0.75rem 1rem; color: var(--text-color); text-decoration: none; border-radius: 6px; font-weight: 600; transition: background-color 0.2s ease, color 0.2s ease; }
+.tos-sidebar li a:hover { background-color: var(--primary-color); color: var(--heading-color); }
+.tos-content { flex-grow: 1; background: var(--glass-bg); backdrop-filter: blur(8px); border: 1px solid var(--border-color); padding: 3rem; border-radius: 20px; }
+.tos-content h1 { font-size: 3rem; margin-bottom: 0.5rem; }
+.tos-content h2 { font-size: 1.8rem; color: var(--heading-color); margin-top: 2.5rem; margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; }
+.tos-content p { margin-bottom: 1.25rem; line-height: 1.8; }
+.tos-content ul { list-style-position: inside; padding-left: 1rem; margin-bottom: 1.25rem; }
+.tos-content li { margin-bottom: 0.75rem; }
+.tos-content a { color: var(--accent-color); font-weight: 600; text-decoration: none; }
+.tos-content a:hover { text-decoration: underline; }
+.last-updated { font-style: italic; opacity: 0.7; margin-bottom: 2rem; }
+.tos-summary { background-color: var(--primary-color); padding: 1.5rem; border-radius: 8px; border-left: 4px solid var(--accent-color); margin-bottom: 2rem; }
+@media (max-width: 900px) { .tos-container { flex-direction: column; } .tos-sidebar { position: static; width: 100%; margin-bottom: 2rem; } }
+
+/* --- Tier Detail Page Specific --- */
+.tier-detail-page main.container { background: var(--glass-bg); backdrop-filter: blur(8px); border: 1px solid var(--border-color); padding: 3rem; border-radius: 20px; text-align: left; box-shadow: 0 10px 30px rgba(0,0,0,0.2); margin-top: 120px; margin-bottom: 3rem; }
 .tier-detail-grid { display: grid; grid-template-columns: 420px 1fr; gap: 2rem; align-items: start; }
 @media (max-width: 900px) { .tier-detail-grid { grid-template-columns: 1fr; } }
 .tier-detail-page .pricing-card.static { transform: none !important; box-shadow: none !important; display: flex; flex-direction: column; }
@@ -137,7 +140,6 @@ footer a { color: var(--accent-color); text-decoration: none; }
 .back-button { display: inline-block; margin-bottom: 2rem; color: var(--text-color); text-decoration: none; font-weight: 600; }
 .back-button:hover { color: var(--accent-color); }
 .button.large { margin-top: 2rem; }
-.tos-page h1, .tos-page h2 { font-family: var(--heading-font); color: var(--heading-color); }
 
 /* --- Animations --- */
 .hidden { opacity: 0; transform: translateY(30px); transition: opacity 0.6s ease-out, transform 0.6s ease-out; }
