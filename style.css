@@ -94,7 +94,7 @@ footer a { color: var(--accent-color); text-decoration: none; }
 .tier-detail-page main.container, .tos-page main.container { background: var(--glass-bg); backdrop-filter: blur(8px); border: 1px solid var(--border-color); padding: 3rem; border-radius: 20px; text-align: left; box-shadow: 0 10px 30px rgba(0,0,0,0.2); margin-top: 120px; margin-bottom: 3rem; }
 .tier-detail-grid { display: grid; grid-template-columns: 420px 1fr; gap: 2rem; align-items: start; }
 @media (max-width: 900px) { .tier-detail-grid { grid-template-columns: 1fr; } }
-.tier-detail-page .pricing-card.static { transform: none !important; box-shadow: none !important; }
+.tier-detail-page .pricing-card.static { transform: none !important; box-shadow: none !important; display: flex; flex-direction: column; }
 /* UPDATED: Add min-height: 0 to allow the flex child (features-list) to shrink and scroll properly */
 .tier-detail-page .pricing-card .card-body { align-items: stretch; min-height: 0; }
 .tier-detail-page .pricing-card .price-tag { align-self: center; }
