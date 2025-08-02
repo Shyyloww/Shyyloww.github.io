@@ -104,7 +104,7 @@ footer a { color: var(--accent-color); text-decoration: none; }
 .use-case-list li::before { content: '✅'; margin-right: 0.75rem; color: #2ecc71; }
 .pros-cons-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 1.5rem; }
 .pros h4, .cons h4 { font-size: 1.2rem; margin-bottom: 1rem; color: var(--heading-color); }
-.pros-list p, .cons-list p { display: flex; align-items: flex-start; margin-bottom: 0.5rem; white-space: nowrap; }
+.pros-list p, .cons-list p { display: flex; align-items: flex-start; margin-bottom: 0.5rem; }
 .pro-marker { color: #2ecc71; font-weight: 700; margin-right: 0.5rem; }
 .con-marker { color: var(--accent-color); font-weight: 700; margin-right: 0.5rem; }
 .feature-chart { margin-top: 1.5rem; }
