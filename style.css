@@ -51,13 +51,15 @@ main section h2 { font-family: var(--heading-font); font-size: 2.8rem; margin-bo
 /* --- Pricing Section --- */
 .pricing-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 2rem; align-items: stretch; }
 .pricing-card { background-color: var(--primary-color); border-radius: 20px; position: relative; display: flex; flex-direction: column; border: 1px solid var(--border-color); transition: transform 0.3s ease, box-shadow 0.3s ease; box-shadow: 0 10px 30px rgba(0,0,0,0.2); overflow: hidden; }
-.pricing-card:hover, .pricing-card.recommended:hover { transform: translateY(-10px) scale(1.05); }
+.pricing-card:hover { transform: translateY(-10px); box-shadow: 0 20px 40px rgba(0,0,0,0.3); }
+/* CORRECTED: Specific hover for recommended card */
+.pricing-card.recommended:hover { transform: translateY(-10px) scale(1.05); }
 .card-header { padding: 1.5rem; text-align: center; border-radius: 18px 18px 0 0; position: relative; overflow: hidden; }
 .card-header h3 { font-family: var(--heading-font); font-size: 2.5rem; color: #fff; font-weight: 700; position: relative; z-index: 1; }
 .card-body { padding: 1.5rem; background-color: var(--secondary-color); flex-grow: 1; display: flex; flex-direction: column; }
 .price-tag { background-color: var(--primary-color); color: var(--text-color); font-size: 1.8rem; font-weight: 700; padding: 10px 20px; border-radius: 12px; display: inline-block; margin-bottom: 2rem; position: relative; left: 50%; transform: translateX(-50%); border: 1px solid var(--border-color); }
 .price-tag del { font-size: 1.2rem; color: #ff8a8a; opacity: 0.9; margin-right: 0.75rem; }
-.features-list { list-style: none; text-align: left; height: 280px; overflow-y: auto; padding-right: 10px; flex-grow: 1; }
+.features-list { list-style: none; text-align: left; height: 280px; flex-grow: 1; }
 .features-list li { margin-bottom: 1rem; display: flex; align-items: flex-start; font-size: 0.95rem; }
 .features-list li::before { content: '•'; font-size: 1.5rem; line-height: 1; margin-right: 0.75rem; }
 .card-footer { padding: 1.5rem; text-align: center; background-color: var(--secondary-color); border-radius: 0 0 18px 18px; border-top: 1px solid var(--border-color); }
