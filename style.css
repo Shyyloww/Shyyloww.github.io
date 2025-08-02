@@ -95,10 +95,10 @@ footer a { color: var(--accent-color); text-decoration: none; }
 .tier-detail-grid { display: grid; grid-template-columns: 420px 1fr; gap: 2rem; align-items: start; }
 @media (max-width: 900px) { .tier-detail-grid { grid-template-columns: 1fr; } }
 .tier-detail-page .pricing-card.static { transform: none !important; box-shadow: none !important; display: flex; flex-direction: column; }
-/* UPDATED: Add min-height: 0 to allow the flex child (features-list) to shrink and scroll properly */
+/* UPDATED: Add min-height: 0 and align-items: stretch to create the correct flex context */
 .tier-detail-page .pricing-card .card-body { align-items: stretch; min-height: 0; }
 .tier-detail-page .pricing-card .price-tag { align-self: center; }
-/* UPDATED: Ensure features list grows and scrolls correctly */
+/* UPDATED: Ensure features list grows and scrolls correctly within the flex parent */
 .tier-detail-page .pricing-card .features-list { height: auto; flex-grow: 1; overflow-y: auto; padding-right: 1rem; }
 .tier-deep-dive h2 { text-align: left; margin-bottom: 1.5rem; }
 .tier-deep-dive h3 { font-family: var(--heading-font); color: var(--heading-color); margin-top: 2rem; margin-bottom: 1rem; }

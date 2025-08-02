@@ -8,45 +8,44 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }, {
-        threshold: 0.15 // Trigger when 15% of the element is visible
+        threshold: 0.15
     });
 
     const hiddenElements = document.querySelectorAll('.hidden');
     hiddenElements.forEach(el => observer.observe(el));
 
     // --- Tier Detail Page Card Alignment Logic ---
-    function setupAlignment() {
+    const setupAlignment = () => {
         const tierGrid = document.querySelector('.tier-detail-grid');
-        // Exit if we are not on a tier detail page
         if (!tierGrid) {
-            return;
+            return; // Exit if not on a tier detail page
         }
 
-        const alignCard = () => {
-            const pricingCard = tierGrid.querySelector('.pricing-card.static');
-            const anchorButton = tierGrid.querySelector('.button.primary.large');
+        const pricingCard = tierGrid.querySelector('.pricing-card.static');
+        const rightColumn = tierGrid.querySelector('.tier-deep-dive');
 
-            // Ensure both elements exist before doing calculations
-            if (pricingCard && anchorButton) {
-                const cardRect = pricingCard.getBoundingClientRect();
-                const anchorRect = anchorButton.getBoundingClientRect();
+        if (!pricingCard || !rightColumn) {
+            return; // Exit if elements are missing
+        }
 
-                // Calculate the required height from the top of the card to the bottom of the anchor
-                const requiredHeight = anchorRect.bottom - cardRect.top;
-
-                // Apply the calculated height, with a sanity check
-                if (requiredHeight > 100) {
-                    pricingCard.style.height = `${requiredHeight}px`;
-                }
-            }
+        // Create a function to set the height
+        const alignCardHeight = () => {
+            // Set height of the pricing card to match the height of the right column
+            pricingCard.style.height = `${rightColumn.offsetHeight}px`;
         };
 
-        // Run on load and resize for robust performance
-        window.addEventListener('load', alignCard);
-        window.addEventListener('resize', alignCard);
-        // Also run immediately in case 'load' has already fired
-        alignCard();
-    }
+        // Create a ResizeObserver to watch the right column for size changes
+        const resizeObserver = new ResizeObserver(() => {
+            alignCardHeight();
+        });
+
+        // Start observing the right column
+        resizeObserver.observe(rightColumn);
+
+        // Run it once initially to set the correct height on page load
+        alignCardHeight();
+    };
 
     setupAlignment();
+
 });
