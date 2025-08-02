@@ -57,7 +57,12 @@ main section h2 { font-family: var(--heading-font); font-size: 2.8rem; margin-bo
 .card-body { padding: 1.5rem; background-color: var(--secondary-color); flex-grow: 1; display: flex; flex-direction: column; }
 .price-tag { background-color: var(--primary-color); color: var(--text-color); font-size: 1.8rem; font-weight: 700; padding: 10px 20px; border-radius: 12px; display: inline-block; margin-bottom: 2rem; position: relative; left: 50%; transform: translateX(-50%); border: 1px solid var(--border-color); }
 .price-tag del { font-size: 1.2rem; color: #ff8a8a; opacity: 0.9; margin-right: 0.75rem; }
-.features-list { list-style: none; text-align: left; height: 280px; overflow-y: auto; padding-right: 10px; flex-grow: 1; }
+
+/* --- THIS IS THE FIX --- */
+/* The scrollbar is now only applied on the detail pages, not the homepage */
+.tier-detail-page .features-list { list-style: none; text-align: left; height: 100%; overflow-y: auto; padding-right: 10px; flex-grow: 1; }
+.features-list { list-style: none; text-align: left; flex-grow: 1; } /* Homepage version without scrollbar */
+
 .features-list li { margin-bottom: 1rem; display: flex; align-items: flex-start; font-size: 0.95rem; }
 .features-list li::before { content: '•'; font-size: 1.5rem; line-height: 1; margin-right: 0.75rem; }
 .card-footer { padding: 1.5rem; text-align: center; background-color: var(--secondary-color); border-radius: 0 0 18px 18px; border-top: 1px solid var(--border-color); }
