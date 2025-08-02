@@ -26,7 +26,7 @@ body::before { content: ''; position: fixed; top: 0; left: 0; width: 100%; heigh
 .navbar .container { display: flex; justify-content: space-between; align-items: center; }
 
 /* --- Hero Section --- */
-.hero { padding: 10rem 0 6rem 0; text-align: center; }
+.hero { padding: 10rem 0 0 0; text-align: center; }
 .hero h1 { font-family: var(--heading-font); font-size: 4rem; margin-bottom: 1rem; }
 .hero .subtitle { font-size: 1.2rem; max-width: 650px; margin: 0 auto 2.5rem auto; opacity: 0.9; }
 .cta-buttons { display: flex; justify-content: center; gap: 1rem; align-items: center; }
@@ -48,6 +48,7 @@ main section h2 { font-family: var(--heading-font); font-size: 2.8rem; margin-bo
 .highlight-accent { color: var(--accent-color); font-weight: 700; }
 .highlight-strong { color: #ffffff; font-weight: 600; }
 .section-separator { width: 100%; height: 10rem; display: block; }
+.small-separator { width: 100%; height: 2.5rem; display: block; }
 
 /* --- Pricing Section --- */
 #pricing h2 { margin-bottom: 3.5rem; }
