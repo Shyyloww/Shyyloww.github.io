@@ -55,12 +55,10 @@ main section h2 { font-family: var(--heading-font); font-size: 2.8rem; margin-bo
 .pricing-card.recommended:hover { transform: translateY(-10px) scale(1.05); }
 .card-header { padding: 1.5rem; text-align: center; border-radius: 18px 18px 0 0; position: relative; overflow: hidden; }
 .card-header h3 { font-family: var(--heading-font); font-size: 2.5rem; color: #fff; font-weight: 700; position: relative; z-index: 1; }
-/* UPDATED: Added align-items to center the price tag correctly */
 .card-body { padding: 1.5rem; background-color: var(--secondary-color); flex-grow: 1; display: flex; flex-direction: column; align-items: center; }
-/* UPDATED: Removed positioning hack for centering. Flexbox on parent handles it now. */
 .price-tag { background-color: var(--primary-color); color: var(--text-color); font-size: 1.8rem; font-weight: 700; padding: 10px 20px; border-radius: 12px; display: inline-block; margin-bottom: 2rem; border: 1px solid var(--border-color); }
 .price-tag del { font-size: 1.2rem; color: #ff8a8a; opacity: 0.9; margin-right: 0.75rem; }
-.features-list { list-style: none; text-align: left; height: 280px; flex-grow: 1; width: 100%; /* Ensure list takes full width */ }
+.features-list { list-style: none; text-align: left; height: 280px; flex-grow: 1; width: 100%; }
 .features-list li { margin-bottom: 1rem; display: flex; align-items: flex-start; font-size: 0.95rem; }
 .features-list li::before { content: '•'; font-size: 1.5rem; line-height: 1; margin-right: 0.75rem; }
 .card-footer { padding: 1.5rem; text-align: center; background-color: var(--secondary-color); border-radius: 0 0 18px 18px; border-top: 1px solid var(--border-color); }
@@ -97,8 +95,10 @@ footer a { color: var(--accent-color); text-decoration: none; }
 .tier-detail-grid { display: grid; grid-template-columns: 420px 1fr; gap: 2rem; align-items: start; }
 @media (max-width: 900px) { .tier-detail-grid { grid-template-columns: 1fr; } }
 .tier-detail-page .pricing-card.static { transform: none !important; box-shadow: none !important; }
-/* UPDATED: Removed fixed height properties to allow JS to control the height */
-.tier-detail-page .pricing-card .features-list { height: auto; overflow-y: auto; padding-right: 1rem; }
+/* UPDATED: Add overflow: hidden to contain the flex child */
+.tier-detail-page .pricing-card .card-body { overflow: hidden; }
+/* UPDATED: Remove fixed height and ensure it grows and scrolls */
+.tier-detail-page .pricing-card .features-list { height: auto; flex-grow: 1; overflow-y: auto; padding-right: 1rem; }
 .tier-deep-dive h2 { text-align: left; margin-bottom: 1.5rem; }
 .tier-deep-dive h3 { font-family: var(--heading-font); color: var(--heading-color); margin-top: 2rem; margin-bottom: 1rem; }
 .use-case-list { list-style: none; }

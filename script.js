@@ -22,21 +22,20 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const pricingCard = tierGrid.querySelector('.pricing-card.static');
-        const deepDive = tierGrid.querySelector('.tier-deep-dive');
-        const featureChart = deepDive.querySelector('.feature-chart');
+        const featureChart = tierGrid.querySelector('.feature-chart');
 
-        if (pricingCard && deepDive && featureChart) {
-            // Reset height first to get natural dimensions for calculation
-            pricingCard.style.height = 'auto';
+        if (pricingCard && featureChart) {
+            // Use getBoundingClientRect for accurate positioning relative to the viewport
+            const cardTop = pricingCard.getBoundingClientRect().top;
+            const chartBottom = featureChart.getBoundingClientRect().bottom;
 
-            // Calculate the height from the top of the deepDive content
-            // to the bottom of the featureChart.
-            const deepDiveTopOffset = deepDive.offsetTop;
-            const chartBottomOffset = featureChart.offsetTop + featureChart.offsetHeight;
-            const requiredHeight = chartBottomOffset - deepDiveTopOffset;
+            // Calculate the required height
+            const requiredHeight = chartBottom - cardTop;
 
-            // Apply the calculated height to the pricing card
-            pricingCard.style.height = `${requiredHeight}px`;
+            // Apply the calculated height to the pricing card, ensuring a positive value
+            if (requiredHeight > 0) {
+                pricingCard.style.height = `${requiredHeight}px`;
+            }
         }
     };
 
