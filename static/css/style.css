@@ -1,62 +1,136 @@
 body {
     background-color: #121212;
     color: #e0e0e0;
-    font-family: sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 100vh;
+    min-height: 100vh;
     margin: 0;
 }
 
-.form-container {
-    display: flex;
-    gap: 40px;
+/* Main container for login/signup */
+.auth-container {
+    text-align: center;
+    animation: fadeIn 0.5s ease-in-out;
 }
 
+@keyframes fadeIn {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+.logo {
+    width: 100px;
+    height: 100px;
+    margin-bottom: 10px;
+}
+
+h1 {
+    font-size: 2.5em;
+    color: #e0e0e0;
+    margin-bottom: 30px;
+}
+
+/* Card styling */
 .form-card {
     background-color: #1e1e1e;
-    padding: 30px;
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
-    width: 300px;
+    padding: 30px 40px;
+    border-radius: 12px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+    width: 320px;
     text-align: center;
 }
 
 h2 {
-    color: #bb86fc; /* Pastel Purple */
-    margin-bottom: 20px;
+    color: #bb86fc;
+    margin-bottom: 25px;
+    font-weight: 500;
 }
 
-input {
+input[type="text"],
+input[type="password"] {
     width: 100%;
-    padding: 10px;
+    padding: 12px;
     margin-bottom: 15px;
     border: 1px solid #333;
     background-color: #2c2c2c;
     color: #e0e0e0;
-    border-radius: 4px;
-    box-sizing: border-box; /* Important */
+    border-radius: 6px;
+    box-sizing: border-box;
+    transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+input:focus {
+    outline: none;
+    border-color: #bb86fc;
+    box-shadow: 0 0 0 3px rgba(187, 134, 252, 0.2);
 }
 
 button {
     width: 100%;
-    padding: 10px;
+    padding: 12px;
     border: none;
-    border-radius: 4px;
-    background-color: #03dac6; /* Pastel Teal */
+    border-radius: 6px;
+    background-color: #03dac6;
     color: #121212;
+    font-size: 1em;
     font-weight: bold;
     cursor: pointer;
-    transition: background-color 0.3s;
+    transition: background-color 0.3s, transform 0.2s;
 }
 
 button:hover {
     background-color: #018786;
+    transform: translateY(-2px);
 }
 
+/* Remember Me Checkbox */
+.remember-me {
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+    font-size: 0.9em;
+    color: #aaa;
+}
+
+#remember-me {
+    margin-right: 8px;
+}
+
+/* Helper text and links */
 .message {
     margin-top: 15px;
     height: 20px;
     font-size: 0.9em;
+}
+
+.toggle-form {
+    margin-top: 20px;
+    font-size: 0.9em;
+}
+
+.toggle-form a {
+    color: #03dac6;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.hidden {
+    display: none;
+}
+
+/* Dashboard Styles */
+.dashboard-container {
+    text-align: center;
+    padding: 50px;
+}
+.logout-button {
+    display: inline-block;
+    margin-top: 20px;
+    padding: 10px 20px;
+    background-color: #cf6679;
+    color: white;
+    text-decoration: none;
+    border-radius: 6px;
 }
