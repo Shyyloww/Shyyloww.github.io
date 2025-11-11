@@ -1,42 +1,86 @@
 import os
-from flask import Flask, render_template
+import bcrypt
+from flask import Flask, render_template, request, jsonify
 from supabase import create_client, Client
 from dotenv import load_dotenv
 
-# Load environment variables from a .env file if it exists (for local development)
 load_dotenv()
 
-# Initialize the Flask app
 app = Flask(__name__)
 
-# Get Supabase credentials from environment variables
+# --- Supabase Connection ---
 supabase_url = os.environ.get("SUPABASE_URL")
 supabase_key = os.environ.get("SUPABASE_KEY")
 
-# Check if the credentials are set
 if not supabase_url or not supabase_key:
-    raise RuntimeError("Supabase URL and Key must be set in environment variables.")
-
-# Create the Supabase client
+    raise RuntimeError("Supabase credentials must be set.")
 supabase: Client = create_client(supabase_url, supabase_key)
 
-# This is the main route for your website
+# --- Routes ---
+
 @app.route('/')
 def home():
-    # Let's test the connection by fetching the list of exercises
+    return render_template('index.html')
+
+@app.route('/signup', methods=['POST'])
+def signup():
     try:
-        response = supabase.table('exercises').select('name').limit(5).execute()
-        # The actual data is in response.data
-        exercises = response.data
-        print("Successfully connected to Supabase and fetched exercises.")
+        data = request.get_json()
+        email = data.get('email')
+        username = data.get('username')
+        password = data.get('password')
+
+        if not email or not password or not username:
+            return jsonify({"error": "Email, username, and password are required."}), 400
+
+        # Hash the password for security
+        hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+
+        # Insert new user into the database
+        user_data, count = supabase.table('users').insert({
+            "email": email,
+            "username": username,
+            "password_hash": hashed_password
+        }).execute()
+
+        # user_data[1] contains the actual user record
+        if user_data[1]:
+            return jsonify({"success": True, "message": "Account created successfully!"})
+        else:
+            return jsonify({"error": "Signup failed. Email or username might already exist."}), 500
+
     except Exception as e:
-        exercises = []
-        print(f"Error connecting to Supabase: {e}")
+        # This will catch duplicate email/username errors from the database
+        return jsonify({"error": f"An error occurred: {e}"}), 500
 
-    # This will look for 'index.html' in your 'templates' folder and display it
-    return render_template('index.html', exercises=exercises)
+@app.route('/login', methods=['POST'])
+def login():
+    try:
+        data = request.get_json()
+        email = data.get('email')
+        password = data.get('password')
 
+        if not email or not password:
+            return jsonify({"error": "Email and password are required."}), 400
 
-# This is needed for Render to run the app
+        # Find the user by email
+        query = supabase.table('users').select("*").eq('email', email).execute()
+        
+        if not query.data:
+            return jsonify({"error": "Invalid email or password."}), 401
+
+        user = query.data[0]
+        stored_hash = user.get('password_hash')
+
+        # Check if the provided password matches the stored hash
+        if bcrypt.checkpw(password.encode('utf-8'), stored_hash.encode('utf-8')):
+            # In a real app, you would create a session token here
+            return jsonify({"success": True, "message": "Login successful!"})
+        else:
+            return jsonify({"error": "Invalid email or password."}), 401
+
+    except Exception as e:
+        return jsonify({"error": f"An error occurred: {e}"}), 500
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)

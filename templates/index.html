@@ -3,20 +3,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fitness Tracker</title>
+    <title>Welcome - Fitness Tracker</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
-    <h1>Welcome to Your Fitness App!</h1>
+    <div class="form-container">
+        <!-- Signup Form -->
+        <div class="form-card">
+            <h2>Create Account</h2>
+            <form id="signup-form">
+                <input type="email" id="signup-email" placeholder="Email" required>
+                <input type="text" id="signup-username" placeholder="Username" required>
+                <input type="password" id="signup-password" placeholder="Password" required>
+                <button type="submit">Sign Up</button>
+            </form>
+            <p id="signup-message" class="message"></p>
+        </div>
 
-    <h2>Connection Test: First 5 Exercises</h2>
-    {% if exercises %}
-        <ul>
-            {% for exercise in exercises %}
-                <li>{{ exercise.name }}</li>
-            {% endfor %}
-        </ul>
-    {% else %}
-        <p>Could not fetch exercises from the database. Check the logs.</p>
-    {% endif %}
+        <!-- Login Form -->
+        <div class="form-card">
+            <h2>Login</h2>
+            <form id="login-form">
+                <input type="email" id="login-email" placeholder="Email" required>
+                <input type="password" id="login-password" placeholder="Password" required>
+                <button type="submit">Login</button>
+            </form>
+            <p id="login-message" class="message"></p>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
 </body>
 </html>
