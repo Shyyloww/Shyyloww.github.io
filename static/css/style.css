@@ -305,3 +305,8 @@ h3 {
     color: #FFFFFF;                 /* White */
     text-shadow: 0 0 5px #FFD700, 0 0 10px #FFD700; /* Gold Glow */
 }
+
+/* Add this to the end of style.css */
+.hidden {
+    display: none;
+}

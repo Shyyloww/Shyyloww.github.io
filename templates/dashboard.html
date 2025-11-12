@@ -13,7 +13,7 @@
     </nav>
 
     <main class="dashboard-grid">
-        <!-- The New Body Chart -->
+        <!-- The Body Chart section remains the same -->
         <div class="grid-item body-chart-container">
             <h3>Body Chart</h3>
             <table class="body-chart-table">
@@ -22,7 +22,7 @@
                         <th>Muscle Group</th>
                         <th>Rank</th>
                         <th>Top Exercise</th>
-                        <th>Details (Weight/Reps/Sets)</th>
+                        <th>Details</th>
                         <th>Strength Score</th>
                     </tr>
                 </thead>
@@ -32,18 +32,31 @@
             </table>
         </div>
 
-        <!-- The Workout Logger (remains the same) -->
+        <!-- The Workout Logger is updated -->
         <div class="grid-item log-workout-container">
             <h3>Log a Workout</h3>
             <form id="log-workout-form">
                 <label for="exercise-select">Exercise</label>
                 <select id="exercise-select" required><option value="">Loading exercises...</option></select>
-                <label for="weight-input">Weight (kg)</label>
-                <input type="number" id="weight-input" step="0.5" placeholder="e.g., 50.5" required>
-                <label for="reps-input">Reps</label>
-                <input type="number" id="reps-input" placeholder="e.g., 8" required>
-                <label for="sets-input">Sets</label>
-                <input type="number" id="sets-input" placeholder="e.g., 3" required>
+                
+                <!-- This group will be shown for rep-based exercises by default -->
+                <div id="reps-group">
+                    <label for="weight-input">Weight (kg)</label>
+                    <input type="number" id="weight-input" step="0.5" placeholder="e.g., 50.5" required>
+                    
+                    <label for="reps-input">Reps</label>
+                    <input type="number" id="reps-input" placeholder="e.g., 8" required>
+                    
+                    <label for="sets-input">Sets</label>
+                    <input type="number" id="sets-input" placeholder="e.g., 3" required>
+                </div>
+
+                <!-- This group will be hidden by default and shown for duration-based exercises -->
+                <div id="duration-group" class="hidden">
+                    <label for="duration-input">Duration (seconds)</label>
+                    <input type="number" id="duration-input" placeholder="e.g., 60" required>
+                </div>
+
                 <button type="submit">Log Workout</button>
             </form>
             <p id="log-message" class="message"></p>
