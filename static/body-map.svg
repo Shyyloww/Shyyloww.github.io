@@ -1,0 +1,47 @@
+<svg width="250" height="500" viewBox="0 0 250 500" fill="none" xmlns="http://www.w3.org/2000/svg">
+<style>
+    .muscle {
+        fill: #444; /* Default unranked color */
+        stroke: #121212;
+        stroke-width: 2;
+        transition: fill 0.3s ease-in-out;
+    }
+</style>
+<g id="body-outline">
+    <!-- Head -->
+    <circle cx="125" cy="50" r="30" fill="#333"/>
+    <!-- Neck -->
+    <rect x="115" y="80" width="20" height="15" fill="#333"/>
+    <!-- Torso -->
+    <path d="M100 95 H150 L160 250 H90 Z" fill="#333"/>
+    <!-- Legs -->
+    <rect x="90" y="250" width="30" height="150" fill="#333"/>
+    <rect x="130" y="250" width="30" height="150" fill="#333"/>
+    <!-- Arms -->
+    <rect x="70" y="95" width="30" height="130" fill="#333"/>
+    <rect x="150" y="95" width="30" height="130" fill="#333"/>
+</g>
+<g id="muscles">
+    <!-- Upper Body -->
+    <path id="chest" class="muscle" d="M105 110 C 110 120, 140 120, 145 110 L 140 160 H 110 Z" />
+    <path id="front-delts" class="muscle" d="M100 95 C 90 105, 95 125, 105 120 Z" />
+    <path id="side-delts" class="muscle" d="M 80 100 C 70 110, 75 130, 85 130 Z" />
+    <path id="biceps" class="muscle" d="M75 140 H95 V180 H75 Z" />
+    <path id="abs" class="muscle" d="M115 170 H135 V240 H115 Z" />
+    <path id="obliques" class="muscle" d="M100 170 H115 V240 H100 Z M135 170 H150 V240 H135 Z" />
+    
+    <!-- Mirror Right Side -->
+    <path id="front-delts-r" class="muscle" transform="translate(250, 0) scale(-1, 1)" d="M100 95 C 90 105, 95 125, 105 120 Z" />
+    <path id="side-delts-r" class="muscle" transform="translate(250, 0) scale(-1, 1)" d="M 80 100 C 70 110, 75 130, 85 130 Z" />
+    <path id="biceps-r" class="muscle" transform="translate(250, 0) scale(-1, 1)" d="M75 140 H95 V180 H75 Z" />
+
+    <!-- Lower Body -->
+    <path id="quads" class="muscle" d="M90 250 H120 V350 H90 Z" />
+    <path id="calves" class="muscle" d="M90 400 H120 V450 H90 Z" />
+    
+    <!-- Mirror Right Side -->
+    <path id="quads-r" class="muscle" transform="translate(250, 0) scale(-1, 1)" d="M90 250 H120 V350 H90 Z" />
+    <path id="calves-r" class="muscle" transform="translate(250, 0) scale(-1, 1)" d="M90 400 H120 V450 H90 Z" />
+
+</g>
+</svg>
