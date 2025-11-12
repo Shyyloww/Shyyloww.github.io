@@ -1,58 +1,33 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - Weighted Ranks</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-</head>
-<body>
-    <nav class="navbar">
-        <div class="nav-brand">Weighted Ranks</div>
-        <div class="nav-links">
-            <a href="/logout">Logout</a>
-        </div>
-    </nav>
+<svg viewBox="0 0 400 500" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    .muscle { fill: #444; stroke: #121212; stroke-width: 0.5; transition: fill 0.3s ease-in-out; }
+    .hidden { display: none; }
+  </style>
+  
+  <!-- FRONT VIEW -->
+  <g id="front-view">
+    <path id="traps" class="muscle" d="M100,58 h23 v8 h-4 v-2 h-7 v2 h-5 v-2 h-7z M127,58 h23 v8 h-4 v-2 h-7 v2 h-5 v-2 h-7z" />
+    <path id="front-delts" class="muscle" d="M101,67 l-13,5 v12 l13,-5z M149,67 l13,5 v12 l-13,-5z" />
+    <path id="side-delts" class="muscle" d="M88,72 l-8,8 v10 l8,-8z M162,72 l8,8 v10 l-8,-8z" />
+    <path id="chest" class="muscle" d="M102,77 h46 v30 h-4 v-10 h-10 v10 h-18 v-10 h-10 v10 h-4z" />
+    <path id="biceps" class="muscle" d="M82,98 h10 v25 h-10z M158,98 h10 v25 h-10z" />
+    <path id="forearms" class="muscle" d="M78,125 h18 v25 h-18z M154,125 h18 v25 h-18z" />
+    <path id="abs" class="muscle" d="M118,109 h14 v12 h-14z M118,123 h14 v12 h-14z M118,137 h14 v12 h-14z" />
+    <path id="obliques" class="muscle" d="M106,109 h10 v40 h-10z M134,109 h10 v40 h-10z" />
+    <path id="quads" class="muscle" d="M102,155 h18 v60 h-18z M130,155 h18 v60 h-18z" />
+    <path id="calves" class="muscle" d="M104,220 h14 v30 h-14z M132,220 h14 v30 h-14z" />
+  </g>
 
-    <main class="dashboard-grid">
-        <div class="grid-item body-map-container">
-            <h3>Body Map</h3>
-            <div class="body-map-wrapper">
-                <div class="map-view">
-                    <h4>Front</h4>
-                    <div id="front-map-container"><p>Loading...</p></div>
-                </div>
-                <div class="map-view">
-                    <h4>Back</h4>
-                    <div id="back-map-container"><p>Loading...</p></div>
-                </div>
-            </div>
-        </div>
-
-        <div class="grid-item log-workout-container">
-            <h3>Log a Workout</h3>
-            <form id="log-workout-form">
-                <label for="exercise-select">Exercise</label>
-                <select id="exercise-select" required>
-                    <option value="">Select an exercise...</option>
-                </select>
-                <label for="weight-input">Weight (kg)</label>
-                <input type="number" id="weight-input" step="0.5" placeholder="e.g., 50.5" required>
-                <label for="reps-input">Reps</label>
-                <input type="number" id="reps-input" placeholder="e.g., 8" required>
-                <label for="sets-input">Sets</label>
-                <input type="number" id="sets-input" placeholder="e.g., 3" required>
-                <button type="submit">Log Workout</button>
-            </form>
-            <p id="log-message" class="message"></p>
-        </div>
-
-        <div class="grid-item stats-container">
-            <h3>Your Stats</h3>
-            <!-- Stats will go here later -->
-        </div>
-    </main>
-
-    <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
-</body>
-</html>
+  <!-- BACK VIEW -->
+  <g id="back-view" class="hidden">
+    <path id="traps-back" class="muscle" d="M275,58 h50 v15 l-25,20 l-25,-20z" />
+    <path id="rear-delts" class="muscle" d="M260,68 l-10,5 v15 l10,-5z M340,68 l10,5 v15 l-10,-5z" />
+    <path id="triceps" class="muscle" d="M255,95 h10 v25 h-10z M335,95 h10 v25 h-10z" />
+    <path id="forearms-back" class="muscle" d="M252,122 h16 v25 h-16z M332,122 h16 v25 h-16z" />
+    <path id="lats" class="muscle" d="M278,85 l-15,40 h15z M322,85 l15,40 h-15z" />
+    <path id="lower-back" class="muscle" d="M280,127 h40 v25 h-40z" />
+    <path id="glutes" class="muscle" d="M275,155 h23 v25 h-23z M302,155 h23 v25 h-23z" />
+    <path id="hamstrings" class="muscle" d="M278,182 h18 v40 h-18z M304,182 h18 v40 h-18z" />
+    <path id="calves-back" class="muscle" d="M280,225 h14 v30 h-14z M306,225 h14 v30 h-14z" />
+  </g>
+</svg>
