@@ -22,6 +22,8 @@ if not app.config['SECRET_KEY'] or not supabase_url or not supabase_key:
 
 supabase: Client = create_client(supabase_url, supabase_key)
 
+SCORE_MULTIPLIER = 3.0
+
 # --- Helper Function to get user data from the browser cookie ---
 def get_user_from_token():
     token = request.cookies.get('token')
@@ -126,7 +128,7 @@ def log_workout():
         workout_payload['reps'] = reps
         workout_payload['sets'] = sets
 
-    workout_payload['strength_score'] = strength_score
+    workout_payload['strength_score'] = unmultiplied_score * SCORE_MULTIPLIER
     supabase.table('workouts').insert(workout_payload).execute()
     
     # After logging, refetch the full chart data and send it back to update the UI
