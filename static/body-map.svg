@@ -1,3 +1,4 @@
+<!-- THE DEFINITIVE HIGH-DETAIL SVG -->
 <svg viewBox="0 0 400 600" xmlns="http://www.w3.org/2000/svg">
   <style>
     .muscle { 
@@ -48,7 +49,8 @@
     
     <!-- Deltoids -->
     <path id="rear-delts" class="muscle" d="M278,80 C270,90 270,100 278,105 L285,100 Z M322,80 C330,90 330,100 322,105 L315,100 Z"/>
-    
+    <path id="side-delts" class="muscle" d="M278,80 L262,85 C260,100 262,115 268,120 L275,110 Z M322,80 L338,85 C340,100 338,115 332,120 L325,110 Z"/>
+
     <!-- Arms -->
     <path id="triceps" class="muscle" d="M275,108 C270,125 275,145 280,150 L285,145 V110 Z M325,108 C330,125 325,145 320,150 L315,145 V110 Z"/>
     <path id="forearms-back" class="muscle" d="M282,152 C280,165 282,185 284,190 L288,188 V155 Z M318,152 C320,165 318,185 316,190 L312,188 V155 Z"/>
