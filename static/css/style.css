@@ -221,3 +221,32 @@ h3 {
 #log-workout-form button {
     margin-top: 10px; /* Reuses button styles from login */
 }
+
+/* --- New Body Map Styles --- */
+.body-map-wrapper {
+    display: flex;
+    justify-content: space-around;
+    align-items: flex-start;
+    gap: 20px;
+}
+
+.map-view {
+    flex: 1;
+    text-align: center;
+}
+
+.map-view h4 {
+    margin-top: 0;
+    margin-bottom: 10px;
+    color: #aaa;
+    font-weight: 500;
+}
+
+/* Make the new SVG fill its container */
+#front-map-container, #back-map-container {
+    max-width: 100%;
+}
+
+#front-map-container g, #back-map-container g {
+    transform: scale(2.5) translate(25%, 30%); /* Zoom and center the figures */
+}

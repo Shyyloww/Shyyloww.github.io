@@ -1,47 +1,58 @@
-<svg width="250" height="500" viewBox="0 0 250 500" fill="none" xmlns="http://www.w3.org/2000/svg">
-<style>
-    .muscle {
-        fill: #444; /* Default unranked color */
-        stroke: #121212;
-        stroke-width: 2;
-        transition: fill 0.3s ease-in-out;
-    }
-</style>
-<g id="body-outline">
-    <!-- Head -->
-    <circle cx="125" cy="50" r="30" fill="#333"/>
-    <!-- Neck -->
-    <rect x="115" y="80" width="20" height="15" fill="#333"/>
-    <!-- Torso -->
-    <path d="M100 95 H150 L160 250 H90 Z" fill="#333"/>
-    <!-- Legs -->
-    <rect x="90" y="250" width="30" height="150" fill="#333"/>
-    <rect x="130" y="250" width="30" height="150" fill="#333"/>
-    <!-- Arms -->
-    <rect x="70" y="95" width="30" height="130" fill="#333"/>
-    <rect x="150" y="95" width="30" height="130" fill="#333"/>
-</g>
-<g id="muscles">
-    <!-- Upper Body -->
-    <path id="chest" class="muscle" d="M105 110 C 110 120, 140 120, 145 110 L 140 160 H 110 Z" />
-    <path id="front-delts" class="muscle" d="M100 95 C 90 105, 95 125, 105 120 Z" />
-    <path id="side-delts" class="muscle" d="M 80 100 C 70 110, 75 130, 85 130 Z" />
-    <path id="biceps" class="muscle" d="M75 140 H95 V180 H75 Z" />
-    <path id="abs" class="muscle" d="M115 170 H135 V240 H115 Z" />
-    <path id="obliques" class="muscle" d="M100 170 H115 V240 H100 Z M135 170 H150 V240 H135 Z" />
-    
-    <!-- Mirror Right Side -->
-    <path id="front-delts-r" class="muscle" transform="translate(250, 0) scale(-1, 1)" d="M100 95 C 90 105, 95 125, 105 120 Z" />
-    <path id="side-delts-r" class="muscle" transform="translate(250, 0) scale(-1, 1)" d="M 80 100 C 70 110, 75 130, 85 130 Z" />
-    <path id="biceps-r" class="muscle" transform="translate(250, 0) scale(-1, 1)" d="M75 140 H95 V180 H75 Z" />
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Weighted Ranks</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-brand">Weighted Ranks</div>
+        <div class="nav-links">
+            <a href="/logout">Logout</a>
+        </div>
+    </nav>
 
-    <!-- Lower Body -->
-    <path id="quads" class="muscle" d="M90 250 H120 V350 H90 Z" />
-    <path id="calves" class="muscle" d="M90 400 H120 V450 H90 Z" />
-    
-    <!-- Mirror Right Side -->
-    <path id="quads-r" class="muscle" transform="translate(250, 0) scale(-1, 1)" d="M90 250 H120 V350 H90 Z" />
-    <path id="calves-r" class="muscle" transform="translate(250, 0) scale(-1, 1)" d="M90 400 H120 V450 H90 Z" />
+    <main class="dashboard-grid">
+        <div class="grid-item body-map-container">
+            <h3>Body Map</h3>
+            <div class="body-map-wrapper">
+                <div class="map-view">
+                    <h4>Front</h4>
+                    <div id="front-map-container"><p>Loading...</p></div>
+                </div>
+                <div class="map-view">
+                    <h4>Back</h4>
+                    <div id="back-map-container"><p>Loading...</p></div>
+                </div>
+            </div>
+        </div>
 
-</g>
-</svg>
+        <div class="grid-item log-workout-container">
+            <h3>Log a Workout</h3>
+            <form id="log-workout-form">
+                <label for="exercise-select">Exercise</label>
+                <select id="exercise-select" required>
+                    <option value="">Select an exercise...</option>
+                </select>
+                <label for="weight-input">Weight (kg)</label>
+                <input type="number" id="weight-input" step="0.5" placeholder="e.g., 50.5" required>
+                <label for="reps-input">Reps</label>
+                <input type="number" id="reps-input" placeholder="e.g., 8" required>
+                <label for="sets-input">Sets</label>
+                <input type="number" id="sets-input" placeholder="e.g., 3" required>
+                <button type="submit">Log Workout</button>
+            </form>
+            <p id="log-message" class="message"></p>
+        </div>
+
+        <div class="grid-item stats-container">
+            <h3>Your Stats</h3>
+            <!-- Stats will go here later -->
+        </div>
+    </main>
+
+    <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+</body>
+</html>
