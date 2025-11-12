@@ -1,33 +1,61 @@
-<svg viewBox="0 0 400 500" xmlns="http://www.w3.org/2000/svg">
+<svg viewBox="0 0 400 600" xmlns="http://www.w3.org/2000/svg">
   <style>
-    .muscle { fill: #444; stroke: #121212; stroke-width: 0.5; transition: fill 0.3s ease-in-out; }
-    .hidden { display: none; }
+    .muscle { 
+      fill: #444; /* Default unranked color */
+      stroke: #121212; /* Outline color */
+      stroke-width: 0.75; 
+      transition: fill 0.3s ease-in-out; 
+    }
   </style>
-  
-  <!-- FRONT VIEW -->
+
+  <!-- =================================================================== -->
+  <!--                             FRONT VIEW                              -->
+  <!-- =================================================================== -->
   <g id="front-view">
-    <path id="traps" class="muscle" d="M100,58 h23 v8 h-4 v-2 h-7 v2 h-5 v-2 h-7z M127,58 h23 v8 h-4 v-2 h-7 v2 h-5 v-2 h-7z" />
-    <path id="front-delts" class="muscle" d="M101,67 l-13,5 v12 l13,-5z M149,67 l13,5 v12 l-13,-5z" />
-    <path id="side-delts" class="muscle" d="M88,72 l-8,8 v10 l8,-8z M162,72 l8,8 v10 l-8,-8z" />
-    <path id="chest" class="muscle" d="M102,77 h46 v30 h-4 v-10 h-10 v10 h-18 v-10 h-10 v10 h-4z" />
-    <path id="biceps" class="muscle" d="M82,98 h10 v25 h-10z M158,98 h10 v25 h-10z" />
-    <path id="forearms" class="muscle" d="M78,125 h18 v25 h-18z M154,125 h18 v25 h-18z" />
-    <path id="abs" class="muscle" d="M118,109 h14 v12 h-14z M118,123 h14 v12 h-14z M118,137 h14 v12 h-14z" />
-    <path id="obliques" class="muscle" d="M106,109 h10 v40 h-10z M134,109 h10 v40 h-10z" />
-    <path id="quads" class="muscle" d="M102,155 h18 v60 h-18z M130,155 h18 v60 h-18z" />
-    <path id="calves" class="muscle" d="M104,220 h14 v30 h-14z M132,220 h14 v30 h-14z" />
+    <!-- Chest -->
+    <path id="chest" class="muscle" d="M105,98 C120,95 130,95 145,98 L148,135 C135,145 115,145 102,135 Z"/>
+    
+    <!-- Abs -->
+    <path id="abs" class="muscle" d="M118,148 H132 V162 H118 Z M118,164 H132 V178 H118 Z M118,180 H132 V194 H118 Z"/>
+    
+    <!-- Obliques -->
+    <path id="obliques" class="muscle" d="M104,140 L116,148 V194 L104,188 Z M146,140 L134,148 V194 L146,188 Z"/>
+
+    <!-- Deltoids -->
+    <path id="front-delts" class="muscle" d="M102,80 C100,85 100,95 105,98 L112,98 C110,88 108,80 102,80 Z M148,80 C150,85 150,95 145,98 L138,98 C140,88 142,80 148,80 Z"/>
+    <path id="side-delts" class="muscle" d="M102,80 L88,85 C85,100 88,115 92,120 L100,110 Z M148,80 L162,85 C165,100 162,115 158,120 L150,110 Z"/>
+
+    <!-- Arms -->
+    <path id="biceps" class="muscle" d="M92,122 C90,130 92,145 94,150 L100,145 V122 Z M158,122 C160,130 158,145 156,150 L150,145 V122 Z"/>
+    <path id="forearms" class="muscle" d="M96,152 C94,165 96,185 98,190 L102,188 V155 Z M154,152 C156,165 154,185 152,190 L148,188 V155 Z"/>
+
+    <!-- Legs -->
+    <path id="quads" class="muscle" d="M105,200 C100,250 105,300 110,320 L120,320 C125,250 120,200 115,200 Z M145,200 C150,250 145,300 140,320 L130,320 C125,250 130,200 135,200 Z"/>
+    <path id="calves" class="muscle" d="M112,335 C108,360 112,385 115,390 L120,390 V335 Z M138,335 C142,360 138,385 135,390 L130,390 V335 Z"/>
+    
+    <!-- Traps -->
+    <path id="traps" class="muscle" d="M108,80 C115,75 135,75 142,80 L130,90 L120,90 Z"/>
   </g>
 
-  <!-- BACK VIEW -->
-  <g id="back-view" class="hidden">
-    <path id="traps-back" class="muscle" d="M275,58 h50 v15 l-25,20 l-25,-20z" />
-    <path id="rear-delts" class="muscle" d="M260,68 l-10,5 v15 l10,-5z M340,68 l10,5 v15 l-10,-5z" />
-    <path id="triceps" class="muscle" d="M255,95 h10 v25 h-10z M335,95 h10 v25 h-10z" />
-    <path id="forearms-back" class="muscle" d="M252,122 h16 v25 h-16z M332,122 h16 v25 h-16z" />
-    <path id="lats" class="muscle" d="M278,85 l-15,40 h15z M322,85 l15,40 h-15z" />
-    <path id="lower-back" class="muscle" d="M280,127 h40 v25 h-40z" />
-    <path id="glutes" class="muscle" d="M275,155 h23 v25 h-23z M302,155 h23 v25 h-23z" />
-    <path id="hamstrings" class="muscle" d="M278,182 h18 v40 h-18z M304,182 h18 v40 h-18z" />
-    <path id="calves-back" class="muscle" d="M280,225 h14 v30 h-14z M306,225 h14 v30 h-14z" />
+  <!-- =================================================================== -->
+  <!--                              BACK VIEW                              -->
+  <!-- =================================================================== -->
+  <g id="back-view">
+    <!-- Back -->
+    <path id="traps-back" class="muscle" d="M280,78 C290,75 310,75 320,78 L310,100 L290,100 Z"/>
+    <path id="lats" class="muscle" d="M280,105 C270,125 275,150 285,160 L295,160 C295,135 290,115 285,105 Z M320,105 C330,125 325,150 315,160 L305,160 C305,135 310,115 315,105 Z"/>
+    <path id="lower-back" class="muscle" d="M290,162 H310 V180 H290 Z"/>
+    
+    <!-- Deltoids -->
+    <path id="rear-delts" class="muscle" d="M278,80 C270,90 270,100 278,105 L285,100 Z M322,80 C330,90 330,100 322,105 L315,100 Z"/>
+    
+    <!-- Arms -->
+    <path id="triceps" class="muscle" d="M275,108 C270,125 275,145 280,150 L285,145 V110 Z M325,108 C330,125 325,145 320,150 L315,145 V110 Z"/>
+    <path id="forearms-back" class="muscle" d="M282,152 C280,165 282,185 284,190 L288,188 V155 Z M318,152 C320,165 318,185 316,190 L312,188 V155 Z"/>
+
+    <!-- Legs -->
+    <path id="glutes" class="muscle" d="M285,182 C280,195 285,210 290,215 L298,212 V182 Z M315,182 C320,195 315,210 310,215 L302,212 V182 Z"/>
+    <path id="hamstrings" class="muscle" d="M288,218 C285,250 288,280 292,290 L298,290 V218 Z M312,218 C315,250 312,280 308,290 L302,290 V218 Z"/>
+    <path id="calves-back" class="muscle" d="M290,305 C285,330 290,355 294,360 L298,360 V305 Z M310,305 C315,330 310,355 306,360 L302,360 V305 Z"/>
   </g>
 </svg>
