@@ -134,3 +134,90 @@ button:hover {
     text-decoration: none;
     border-radius: 6px;
 }
+
+/* --- Dashboard Layout --- */
+.navbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    background-color: #1e1e1e;
+    padding: 15px 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+    z-index: 1000;
+}
+
+.nav-brand {
+    font-size: 1.5em;
+    font-weight: bold;
+    color: #e0e0e0;
+}
+
+.nav-links a {
+    color: #03dac6;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+main.dashboard-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    grid-template-rows: auto auto;
+    gap: 20px;
+    width: 100%;
+    max-width: 1200px;
+    padding: 80px 20px 20px 20px;
+    box-sizing: border-box;
+}
+
+.grid-item {
+    background-color: #1e1e1e;
+    padding: 20px;
+    border-radius: 8px;
+}
+
+h3 {
+    margin-top: 0;
+    color: #bb86fc;
+    border-bottom: 1px solid #333;
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+}
+
+.body-map-container {
+    grid-column: 1 / 2;
+    grid-row: 1 / 3;
+}
+
+#body-map-svg-container svg {
+    width: 100%;
+    height: auto;
+}
+
+.log-workout-container, .stats-container {
+    grid-column: 2 / 3;
+}
+
+/* Workout Form Styling */
+#log-workout-form {
+    display: flex;
+    flex-direction: column;
+}
+
+#log-workout-form label {
+    margin-bottom: 5px;
+    color: #aaa;
+    font-size: 0.9em;
+}
+
+#log-workout-form select,
+#log-workout-form input {
+    margin-bottom: 15px; /* Reuses input styles from login */
+}
+
+#log-workout-form button {
+    margin-top: 10px; /* Reuses button styles from login */
+}
