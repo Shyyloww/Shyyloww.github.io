@@ -290,3 +290,18 @@ h3 {
 .rank-intermediate { color: #2196F3; }
 .rank-advanced { color: #9C27B0; }
 .rank-elite { color: #FF9800; }
+
+/* --- New Rank Colors --- */
+.rank-unranked { color: #888; }
+.rank-wood { color: #A0522D; }      /* Sienna Brown */
+.rank-bronze { color: #CD7F32; }   /* Bronze */
+.rank-silver { color: #C0C0C0; }   /* Silver */
+.rank-gold { color: #FFD700; }     /* Gold */
+.rank-platinum { color: #00BFFF; } /* Deep Sky Blue */
+.rank-diamond { color: #00FFFF; }  /* Cyan/Aqua */
+.rank-champion { color: #9400D3; } /* Dark Violet */
+.rank-titan { color: #DC143C; }    /* Crimson Red */
+.rank-olympian { 
+    color: #FFFFFF;                 /* White */
+    text-shadow: 0 0 5px #FFD700, 0 0 10px #FFD700; /* Gold Glow */
+}

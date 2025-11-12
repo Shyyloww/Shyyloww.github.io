@@ -72,26 +72,29 @@ def log_workout():
     data = request.get_json()
     user_id = user['user_id']
     exercise_id = int(data.get('exercise_id'))
-    weight = float(data.get('weight'))
+    # Use .get with a default of 0 for weight
+    weight_str = data.get('weight', '0')
+    weight = float(weight_str) if weight_str else 0.0
     reps = int(data.get('reps'))
     sets = int(data.get('sets'))
 
-    # --- NEW LOGIC START ---
-    
-    # Fetch the exercise details to check its type
+    # Fetch the exercise details to check its type and multiplier
     exercise_details_res = supabase.table('exercises').select('type, bodyweight_multiplier').eq('id', exercise_id).single().execute()
     exercise_info = exercise_details_res.data
     
+    # Server-side validation: if it's a 'Weighted' type, weight must be > 0
+    if exercise_info['type'] == 'Weighted' and weight <= 0:
+        return jsonify({"error": f"Weight is required for {exercise_info['name']}."}), 400
+
     strength_score = 0
-    if exercise_info['type'] == 'Weighted':
-        # Use the Epley formula for weighted lifts
+    # NEW UNIFIED LOGIC:
+    if weight > 0:
+        # If any weight is added (even to a bodyweight exercise), use the Epley formula.
         strength_score = weight * (1 + (reps / 30))
-    elif exercise_info['type'] == 'Bodyweight/Calisthenics':
-        # Use the new multiplier formula for bodyweight lifts
+    else:
+        # If weight is 0, use the bodyweight multiplier.
         multiplier = exercise_info.get('bodyweight_multiplier') or 1.0
         strength_score = reps * multiplier
-
-    # --- NEW LOGIC END ---
 
     supabase.table('workouts').insert({
         'user_id': user_id, 'exercise_id': exercise_id, 'weight_kg': weight,
