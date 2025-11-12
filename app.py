@@ -75,15 +75,29 @@ def log_workout():
     weight = float(data.get('weight'))
     reps = int(data.get('reps'))
     sets = int(data.get('sets'))
+
+    # --- NEW LOGIC START ---
     
-    strength_score = weight * (1 + (reps / 30))
+    # Fetch the exercise details to check its type
+    exercise_details_res = supabase.table('exercises').select('type, bodyweight_multiplier').eq('id', exercise_id).single().execute()
+    exercise_info = exercise_details_res.data
+    
+    strength_score = 0
+    if exercise_info['type'] == 'Weighted':
+        # Use the Epley formula for weighted lifts
+        strength_score = weight * (1 + (reps / 30))
+    elif exercise_info['type'] == 'Bodyweight/Calisthenics':
+        # Use the new multiplier formula for bodyweight lifts
+        multiplier = exercise_info.get('bodyweight_multiplier') or 1.0
+        strength_score = reps * multiplier
+
+    # --- NEW LOGIC END ---
 
     supabase.table('workouts').insert({
         'user_id': user_id, 'exercise_id': exercise_id, 'weight_kg': weight,
         'reps': reps, 'sets': sets, 'strength_score': strength_score
     }).execute()
     
-    # After logging, refetch the full chart data and send it back
     chart_data_res = supabase.rpc('get_user_body_chart_data', {'p_user_id': user_id}).execute()
     
     return jsonify({"success": True, "updated_chart": chart_data_res.data})
