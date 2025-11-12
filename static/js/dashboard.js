@@ -1,62 +1,54 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // --- Element Selections ---
     const exerciseSelect = document.getElementById('exercise-select');
     const weightInput = document.getElementById('weight-input');
     const chartTbody = document.getElementById('body-chart-tbody');
     const logWorkoutForm = document.getElementById('log-workout-form');
     const logMessage = document.getElementById('log-message');
 
-    let exercisesData = [];
+    let exercisesData = []; // To store exercise details locally
 
-    // --- Core Functions (no changes to fetchDashboardData, updateBodyChart, getRankFromScore) ---
-    const fetchDashboardData = async () => { /* ... same as before ... */ };
-    const updateBodyChart = (chartData) => { /* ... same as before ... */ };
-    const getRankFromScore = (score) => { /* ... same as before ... */ };
-    const populateExerciseDropdown = (exercises) => { /* ... same as before ... */ };
-    
-    // --- NEW LOGIC for Exercise Selection ---
-    exerciseSelect.addEventListener('change', (e) => {
-        const selectedId = parseInt(e.target.value);
-        if (!selectedId) return;
+    // --- Core Functions ---
 
-        const selectedExercise = exercisesData.find(ex => ex.id === selectedId);
-        
-        // If the exercise is primarily bodyweight, weight is OPTIONAL.
-        if (selectedExercise && selectedExercise.type === 'Bodyweight/Calisthenics') {
-            weightInput.required = false;
-            weightInput.placeholder = "Add weight (optional)";
-        } else {
-            // Otherwise, for weighted exercises, it is REQUIRED.
-            weightInput.required = true;
-            weightInput.placeholder = "e.g., 50.5";
-        }
-    });
-
-    // --- Form Submission (no changes) ---
-    logWorkoutForm.addEventListener('submit', async (e) => { /* ... same as before ... */ });
-
-    // --- Helper Functions to copy/paste ---
-    // (To avoid errors, let's include the full code for the unchanged functions)
-    fetchDashboardData = async () => {
+    // Fetches all necessary data when the page loads
+    const fetchDashboardData = async () => {
         try {
             const response = await fetch('/api/dashboard_data');
-            if (!response.ok) throw new Error('Failed to fetch data');
+            if (!response.ok) {
+                throw new Error('Failed to fetch dashboard data from server.');
+            }
             const data = await response.json();
-            exercisesData = data.exercises;
+            
+            exercisesData = data.exercises; // Save the exercise list
             populateExerciseDropdown(exercisesData);
             updateBodyChart(data.body_chart);
-        } catch (error) { console.error("Error fetching dashboard data:", error); chartTbody.innerHTML = `<tr><td colspan="5">Could not load data.</td></tr>`; }
+
+        } catch (error) {
+            console.error("Error in fetchDashboardData:", error);
+            chartTbody.innerHTML = `<tr><td colspan="5" style="color: #cf6679;">Error: Could not load data.</td></tr>`;
+        }
     };
-    updateBodyChart = (chartData) => {
+
+    // Populates the Body Chart table with data
+    const updateBodyChart = (chartData) => {
         if (!chartData) return;
-        chartTbody.innerHTML = '';
+        chartTbody.innerHTML = ''; // Clear existing rows
         chartData.forEach(muscle => {
             const row = document.createElement('tr');
             const rank = getRankFromScore(muscle.strength_score);
-            row.innerHTML = `<td>${muscle.muscle_group}</td><td class="rank-cell ${rank.className}">${rank.name}</td><td>${muscle.exercise_name || 'N/A'}</td><td>${muscle.weight_kg !== null ? `${muscle.weight_kg}kg / ${muscle.reps} reps / ${muscle.sets} sets` : 'N/A'}</td><td>${muscle.strength_score.toFixed(1)}</td>`;
+            row.innerHTML = `
+                <td>${muscle.muscle_group}</td>
+                <td class="rank-cell ${rank.className}">${rank.name}</td>
+                <td>${muscle.exercise_name || 'N/A'}</td>
+                <td>${muscle.weight_kg !== null ? `${muscle.weight_kg}kg / ${muscle.reps} reps / ${muscle.sets} sets` : 'N/A'}</td>
+                <td>${muscle.strength_score.toFixed(1)}</td>
+            `;
             chartTbody.appendChild(row);
         });
     };
-    getRankFromScore = (score) => {
+
+    // Calculates the correct rank string and color class from a score
+    const getRankFromScore = (score) => {
         const tiers = [{ name: 'Wood', threshold: 15, className: 'rank-wood' },{ name: 'Bronze', threshold: 40, className: 'rank-bronze' },{ name: 'Silver', threshold: 70, className: 'rank-silver' },{ name: 'Gold', threshold: 110, className: 'rank-gold' },{ name: 'Platinum', threshold: 160, className: 'rank-platinum' },{ name: 'Diamond', threshold: 220, className: 'rank-diamond' },{ name: 'Champion', threshold: 290, className: 'rank-champion' },{ name: 'Titan', threshold: 370, className: 'rank-titan' },{ name: 'Olympian', threshold: Infinity, className: 'rank-olympian' }];
         if (score <= 0) return { name: 'Unranked', className: 'rank-unranked' };
         let previousThreshold = 0;
@@ -70,7 +62,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         return { name: 'Olympian 3', className: 'rank-olympian' };
     };
-    populateExerciseDropdown = (exercises) => {
+
+    // Populates the exercise dropdown list
+    const populateExerciseDropdown = (exercises) => {
         if (!exercises) return;
         exerciseSelect.innerHTML = '<option value="">Select an exercise...</option>';
         exercises.forEach(ex => {
@@ -80,6 +74,28 @@ document.addEventListener('DOMContentLoaded', () => {
             exerciseSelect.appendChild(option);
         });
     };
+
+    // --- Event Listeners ---
+
+    // Handles logic for when a new exercise is selected
+    exerciseSelect.addEventListener('change', (e) => {
+        const selectedId = parseInt(e.target.value);
+        if (!selectedId) {
+            weightInput.required = true;
+            weightInput.placeholder = "e.g., 50.5";
+            return;
+        }
+        const selectedExercise = exercisesData.find(ex => ex.id === selectedId);
+        if (selectedExercise && selectedExercise.type === 'Bodyweight/Calisthenics') {
+            weightInput.required = false;
+            weightInput.placeholder = "Add weight (optional)";
+        } else {
+            weightInput.required = true;
+            weightInput.placeholder = "e.g., 50.5";
+        }
+    });
+
+    // Handles the workout logging form submission
     logWorkoutForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         logMessage.textContent = '';
@@ -88,9 +104,20 @@ document.addEventListener('DOMContentLoaded', () => {
             const response = await fetch('/api/log_workout', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(formData) });
             const result = await response.json();
             if (response.ok && result.success) {
-                logMessage.textContent = 'Workout logged!'; logMessage.style.color = '#03dac6'; updateBodyChart(result.updated_chart); logWorkoutForm.reset(); weightInput.required = true; weightInput.placeholder = "e.g., 50.5";
-            } else { logMessage.textContent = result.error || 'Failed to log.'; logMessage.style.color = '#cf6679'; }
-        } catch (error) { logMessage.textContent = 'Server error.'; logMessage.style.color = '#cf6679'; }
+                logMessage.textContent = 'Workout logged!'; 
+                logMessage.style.color = '#03dac6'; 
+                updateBodyChart(result.updated_chart); 
+                logWorkoutForm.reset(); 
+                weightInput.required = true; 
+                weightInput.placeholder = "e.g., 50.5";
+            } else { 
+                logMessage.textContent = result.error || 'Failed to log.'; 
+                logMessage.style.color = '#cf6679'; 
+            }
+        } catch (error) { 
+            logMessage.textContent = 'Server error during submission.'; 
+            logMessage.style.color = '#cf6679'; 
+        }
     });
 
     // --- Initial Load ---
