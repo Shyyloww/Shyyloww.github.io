@@ -1,11 +1,11 @@
 document.addEventListener('DOMContentLoaded', () => {
     const exerciseSelect = document.getElementById('exercise-select');
-    const frontMapContainer = document.getElementById('front-map-container');
-    const backMapContainer = document.getElementById('back-map-container');
+    const weightInput = document.getElementById('weight-input');
+    const chartTbody = document.getElementById('body-chart-tbody');
     const logWorkoutForm = document.getElementById('log-workout-form');
     const logMessage = document.getElementById('log-message');
 
-    let frontMapSVG, backMapSVG;
+    let exercisesData = [];
 
     // --- Core Functions ---
 
@@ -14,71 +14,48 @@ document.addEventListener('DOMContentLoaded', () => {
             const response = await fetch('/api/dashboard_data');
             if (!response.ok) throw new Error('Failed to fetch data');
             const data = await response.json();
-
-            populateExerciseDropdown(data.exercises);
-            await loadBodyMaps();
-            updateBodyMapColors(data.muscle_ranks);
+            
+            exercisesData = data.exercises;
+            populateExerciseDropdown(exercisesData);
+            updateBodyChart(data.body_chart);
 
         } catch (error) {
             console.error("Error fetching dashboard data:", error);
+            chartTbody.innerHTML = `<tr><td colspan="5">Could not load data.</td></tr>`;
         }
     };
 
-    const loadBodyMaps = async () => {
-        try {
-            const response = await fetch('/static/body-map.svg');
-            const svgText = await response.text();
+    const updateBodyChart = (chartData) => {
+        if (!chartData) return;
+        
+        chartTbody.innerHTML = ''; // Clear existing rows
+
+        chartData.forEach(muscle => {
+            const row = document.createElement('tr');
+            const rank = getRankFromScore(muscle.strength_score);
             
-            const parser = new DOMParser();
-            const svgDoc = parser.parseFromString(svgText, "image/svg+xml");
-
-            // Prepare and load Front View
-            const frontView = svgDoc.getElementById('front-view');
-            frontMapContainer.innerHTML = '';
-            frontMapContainer.appendChild(frontView.cloneNode(true));
-            frontMapSVG = frontMapContainer.querySelector('g');
-            
-            // Prepare and load Back View
-            const backView = svgDoc.getElementById('back-view');
-            backView.classList.remove('hidden'); // Make it visible
-            backMapContainer.innerHTML = '';
-            backMapContainer.appendChild(backView.cloneNode(true));
-            backMapSVG = backMapContainer.querySelector('g');
-
-        } catch (error) {
-            console.error('Error loading SVG:', error);
-            frontMapContainer.innerHTML = "<p>Could not load map.</p>";
-            backMapContainer.innerHTML = "<p>Could not load map.</p>";
-        }
-    };
-
-    const updateBodyMapColors = (muscleRanks) => {
-        if (!frontMapSVG || !backMapSVG || !muscleRanks) return;
-
-        muscleRanks.forEach(rank => {
-            const color = getRankColor(rank.strength_score);
-            // Convert DB name to SVG ID format (e.g., "Front Delts" -> "front-delts")
-            const baseId = rank.muscle_group.toLowerCase().replace(/\s+/g, '-');
-            
-            // Select all parts for a muscle (e.g., front-delts, front-delts-r)
-            const frontElements = frontMapSVG.querySelectorAll(`#${baseId}`);
-            const backElements = backMapSVG.querySelectorAll(`#${baseId}-back`); // e.g., calves-back
-
-            frontElements.forEach(el => el.style.fill = color);
-            backElements.forEach(el => el.style.fill = color);
+            row.innerHTML = `
+                <td>${muscle.muscle_group}</td>
+                <td class="rank-cell ${rank.className}">${rank.name}</td>
+                <td>${muscle.exercise_name || 'N/A'}</td>
+                <td>${muscle.weight_kg !== null ? `${muscle.weight_kg}kg / ${muscle.reps} reps / ${muscle.sets} sets` : 'N/A'}</td>
+                <td>${muscle.strength_score.toFixed(1)}</td>
+            `;
+            chartTbody.appendChild(row);
         });
     };
 
-    const getRankColor = (score) => {
-        if (score <= 0) return '#444444';    // Unranked
-        if (score <= 50) return '#4CAF50';   // Novice (Green)
-        if (score <= 100) return '#2196F3';  // Intermediate (Blue)
-        if (score <= 150) return '#9C27B0';  // Advanced (Purple)
-        return '#FF9800';                    // Elite (Orange)
+    const getRankFromScore = (score) => {
+        if (score <= 0) return { name: 'Unranked', className: 'rank-unranked' };
+        if (score <= 50) return { name: 'Novice', className: 'rank-novice' };
+        if (score <= 100) return { name: 'Intermediate', className: 'rank-intermediate' };
+        if (score <= 150) return { name: 'Advanced', className: 'rank-advanced' };
+        return { name: 'Elite', className: 'rank-elite' };
     };
-
+    
     const populateExerciseDropdown = (exercises) => {
         if (!exercises) return;
+        exerciseSelect.innerHTML = '<option value="">Select an exercise...</option>';
         exercises.forEach(ex => {
             const option = document.createElement('option');
             option.value = ex.id;
@@ -87,17 +64,30 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
-    // --- Event Listener for Form ---
+    // --- Event Listeners ---
+
+    exerciseSelect.addEventListener('change', (e) => {
+        const selectedId = parseInt(e.target.value);
+        const selectedExercise = exercisesData.find(ex => ex.id === selectedId);
+        if (selectedExercise && selectedExercise.type === 'Bodyweight/Calisthenics') {
+            weightInput.value = 0;
+            weightInput.disabled = true;
+        } else {
+            weightInput.value = '';
+            weightInput.disabled = false;
+        }
+    });
+
     logWorkoutForm.addEventListener('submit', async (e) => {
         e.preventDefault();
-        // ... (rest of the form submission logic remains the same)
         logMessage.textContent = '';
         const formData = {
-            exercise_id: document.getElementById('exercise-select').value,
-            weight: document.getElementById('weight-input').value,
+            exercise_id: exerciseSelect.value,
+            weight: weightInput.value,
             reps: document.getElementById('reps-input').value,
             sets: document.getElementById('sets-input').value
         };
+
         try {
             const response = await fetch('/api/log_workout', {
                 method: 'POST',
@@ -108,8 +98,9 @@ document.addEventListener('DOMContentLoaded', () => {
             if (response.ok && result.success) {
                 logMessage.textContent = 'Workout logged!';
                 logMessage.style.color = '#03dac6';
-                updateBodyMapColors(result.updated_ranks);
+                updateBodyChart(result.updated_chart); // Refresh the chart with new data
                 logWorkoutForm.reset();
+                weightInput.disabled = false;
             } else {
                 logMessage.textContent = result.error || 'Failed to log.';
                 logMessage.style.color = '#cf6679';

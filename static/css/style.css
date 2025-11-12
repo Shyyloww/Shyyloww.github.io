@@ -250,3 +250,43 @@ h3 {
 #front-map-container g, #back-map-container g {
     transform: scale(2.5) translate(25%, 30%); /* Zoom and center the figures */
 }
+
+/* --- New Body Chart Styles --- */
+.body-chart-container {
+    grid-column: 1 / 2;
+    grid-row: 1 / 3;
+}
+
+.body-chart-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9em;
+}
+
+.body-chart-table th, .body-chart-table td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid #333;
+}
+
+.body-chart-table th {
+    background-color: #2c2c2c;
+    color: #aaa;
+    font-weight: 500;
+}
+
+.body-chart-table tbody tr:hover {
+    background-color: #2c2c2c;
+}
+
+.rank-cell {
+    font-weight: bold;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+}
+
+/* Rank Colors */
+.rank-unranked { color: #888; }
+.rank-novice { color: #4CAF50; }
+.rank-intermediate { color: #2196F3; }
+.rank-advanced { color: #9C27B0; }
+.rank-elite { color: #FF9800; }
