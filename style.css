@@ -1,8 +1,19 @@
+:root {
+  --hue: 27;
+  --sat: 69%;
+  --white: hsl(0, 0%, 100%);
+  --purple-primary: rgba(132, 0, 255, 1);
+  --purple-glow: rgba(132, 0, 255, 0.2);
+  --purple-border: rgba(132, 0, 255, 0.8);
+  --border-color: #392e4e;
+  --background-dark: #060010;
+}
+
 body {
     margin: 0;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: #060010; /* Deep dark background */
-    color: #ffffff;
+    background-color: var(--background-dark);
+    color: var(--white);
     display: flex;
     height: 100vh;
     overflow: hidden;
@@ -26,7 +37,7 @@ body {
 }
 .sidebar button:hover { background-color: #1e1e24; color: white; }
 
-/* Content */
+/* Content Area */
 .content { flex: 1; padding: 40px; overflow-y: auto; position: relative; z-index: 10; }
 .page { animation: fadeIn 0.3s ease-in-out; }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
@@ -42,90 +53,152 @@ body {
 .progress-bar { width: 100%; height: 10px; background-color: #333; border-radius: 5px; margin-top: 10px; overflow: hidden; }
 #period-progress { height: 100%; background-color: #8400ff; transition: width 1s linear; }
 
-/* --- MAGIC BENTO GRID STYLES --- */
+/* --- MAGIC BENTO CSS --- */
+
 .card-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-    gap: 20px;
-    margin-top: 20px;
-    position: relative;
+  display: grid;
+  gap: 1em;
+  padding: 0.75em;
+  max-width: 70em; /* Made slightly wider for games */
+  font-size: clamp(1rem, 0.9rem + 0.5vw, 1.5rem);
+  position: relative;
 }
 
-.magic-card {
-    background-color: #0c0c14;
-    border-radius: 16px;
-    position: relative;
-    height: 200px;
-    cursor: pointer;
-    overflow: hidden;
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    transition: transform 0.1s;
-    /* CSS Variables for Glow */
-    --glow-x: 50%;
-    --glow-y: 50%;
-    --glow-intensity: 0;
-    --glow-radius: 300px;
+.magic-bento-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: relative;
+  aspect-ratio: 4/3;
+  min-height: 200px;
+  width: 100%;
+  padding: 1.25em;
+  border-radius: 20px;
+  border: 1px solid var(--border-color);
+  background: var(--background-dark);
+  font-weight: 300;
+  overflow: hidden;
+  transition: transform 0.1s;
+  cursor: pointer;
+
+  /* Default CSS Variables for Glow */
+  --glow-x: 50%;
+  --glow-y: 50%;
+  --glow-intensity: 0;
+  --glow-radius: 300px;
+  --glow-color: 132, 0, 255;
 }
 
-/* Inner glow effect */
-.magic-card::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: radial-gradient(
-        circle at var(--glow-x) var(--glow-y),
-        rgba(132, 0, 255, var(--glow-intensity)) 0%,
-        transparent 70%
-    );
-    opacity: 0.5;
-    pointer-events: none;
-    z-index: 1;
+.magic-bento-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
 }
 
-.card-content {
-    position: relative;
-    z-index: 2;
-    padding: 24px;
-    height: 100%;
-    box-sizing: border-box;
-    display: flex;
-    flex-direction: column;
+.magic-bento-card__header {
+  display: flex;
+  justify-content: space-between;
+  position: relative;
+  z-index: 2;
 }
 
-.card-content h3 { margin: 0 0 8px 0; font-size: 1.5rem; }
-.card-content p { color: #888; margin: 0; flex-grow: 1; }
-.card-content .label {
-    align-self: flex-start;
-    background: rgba(132, 0, 255, 0.2);
-    color: #bfa3ff;
-    padding: 4px 12px;
-    border-radius: 20px;
-    font-size: 0.8rem;
-    margin-top: auto;
+.magic-bento-card__content {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  z-index: 2;
 }
 
-/* Global Spotlight (The flashlight following mouse) */
-#global-spotlight {
-    position: fixed;
-    width: 600px;
-    height: 600px;
-    border-radius: 50%;
-    pointer-events: none;
-    background: radial-gradient(circle, rgba(132, 0, 255, 0.15), transparent 70%);
-    transform: translate(-50%, -50%);
-    z-index: 5;
-    opacity: 0;
-    transition: opacity 0.3s;
+.magic-bento-card__label {
+  font-size: 14px;
+  background: rgba(132, 0, 255, 0.2);
+  padding: 4px 10px;
+  border-radius: 12px;
+  color: #bfa3ff;
 }
 
-/* Particles */
+.magic-bento-card__title {
+  font-weight: 600;
+  font-size: 20px;
+  margin: 0 0 0.25em;
+}
+
+.magic-bento-card__description {
+  font-size: 14px;
+  line-height: 1.4;
+  opacity: 0.8;
+  margin: 0;
+}
+
+/* Grid Layout Logic */
+@media (max-width: 599px) {
+  .card-grid { grid-template-columns: 1fr; }
+}
+@media (min-width: 600px) {
+  .card-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (min-width: 1024px) {
+  .card-grid { grid-template-columns: repeat(4, 1fr); }
+  
+  /* Make Minecraft Card Big (2x2) */
+  .magic-bento-card:nth-child(3) {
+    grid-column: span 2;
+    grid-row: span 2;
+  }
+  
+  /* Make Retro Bowl Card Tall (1x2) */
+  .magic-bento-card:nth-child(4) {
+    grid-column: 1 / span 2; /* Adjust placement */
+    grid-row: 2 / span 2;
+  }
+}
+
+/* Border Glow Logic */
+.magic-bento-card--border-glow::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  padding: 2px; /* Thinner sophisticated border */
+  background: radial-gradient(
+    var(--glow-radius) circle at var(--glow-x) var(--glow-y),
+    rgba(var(--glow-color), calc(var(--glow-intensity) * 1)) 0%,
+    transparent 60%
+  );
+  border-radius: inherit;
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  opacity: 1;
+  z-index: 3;
+}
+
+/* Particle Styles */
 .particle {
     position: absolute;
     width: 4px;
     height: 4px;
     border-radius: 50%;
-    background: #8400ff;
+    background: rgba(132, 0, 255, 1);
+    box-shadow: 0 0 6px rgba(132, 0, 255, 0.6);
     pointer-events: none;
-    z-index: 3;
-    opacity: 0;
+    z-index: 100;
+}
+
+/* Global Spotlight (Flashlight) */
+.global-spotlight {
+  position: fixed;
+  width: 800px;
+  height: 800px;
+  border-radius: 50%;
+  pointer-events: none;
+  background: radial-gradient(circle,
+    rgba(132, 0, 255, 0.15) 0%,
+    rgba(132, 0, 255, 0.08) 15%,
+    transparent 70%
+  );
+  z-index: 200;
+  opacity: 0;
+  transform: translate(-50%, -50%);
+  mix-blend-mode: screen;
+  transition: opacity 0.3s;
 }

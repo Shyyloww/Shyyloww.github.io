@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Unblocked Hub</title>
     <link rel="stylesheet" href="style.css">
-    <!-- Import GSAP for animations -->
+    <!-- Import GSAP for the animations -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
 </head>
 <body>
@@ -35,75 +35,101 @@
             </div>
         </div>
 
-        <!-- Games Page (Magic Bento Style) -->
+        <!-- Games Page (Magic Bento Grid) -->
         <div id="games" class="page" style="display: none;">
             <h1>Games Library</h1>
-            <!-- The Spotlight Effect Container -->
-            <div id="spotlight-grid" class="card-grid">
+            
+            <div class="card-grid bento-section" id="gridRef">
                 
-                <!-- Card 1 -->
-                <div class="magic-card">
-                    <div class="card-content">
-                        <h3>Slope</h3>
-                        <p>High speed 3D runner.</p>
-                        <div class="label">Arcade</div>
+                <!-- Card 1: Analytics Style -->
+                <div class="magic-bento-card magic-bento-card--border-glow">
+                    <div class="magic-bento-card__header">
+                        <div class="magic-bento-card__label">Popular</div>
+                    </div>
+                    <div class="magic-bento-card__content">
+                        <h2 class="magic-bento-card__title">Slope</h2>
+                        <p class="magic-bento-card__description">High speed 3D runner game.</p>
                     </div>
                 </div>
 
-                <!-- Card 2 -->
-                <div class="magic-card">
-                    <div class="card-content">
-                        <h3>1v1.LOL</h3>
-                        <p>Building and shooting simulator.</p>
-                        <div class="label">Shooter</div>
+                <!-- Card 2: Dashboard Style -->
+                <div class="magic-bento-card magic-bento-card--border-glow">
+                    <div class="magic-bento-card__header">
+                        <div class="magic-bento-card__label">Shooter</div>
+                    </div>
+                    <div class="magic-bento-card__content">
+                        <h2 class="magic-bento-card__title">1v1.LOL</h2>
+                        <p class="magic-bento-card__description">Battle royale building simulator.</p>
                     </div>
                 </div>
 
-                <!-- Card 3 -->
-                <div class="magic-card">
-                    <div class="card-content">
-                        <h3>Retro Bowl</h3>
-                        <p>American football management.</p>
-                        <div class="label">Sports</div>
+                <!-- Card 3: Large Box (Collaboration Style) -->
+                <div class="magic-bento-card magic-bento-card--border-glow">
+                    <div class="magic-bento-card__header">
+                        <div class="magic-bento-card__label">Featured</div>
+                    </div>
+                    <div class="magic-bento-card__content">
+                        <h2 class="magic-bento-card__title">Minecraft</h2>
+                        <p class="magic-bento-card__description">The classic sandbox builder. Play with friends or solo.</p>
                     </div>
                 </div>
 
-                <!-- Card 4 -->
-                <div class="magic-card">
-                    <div class="card-content">
-                        <h3>Minecraft</h3>
-                        <p>Classic block building game.</p>
-                        <div class="label">Sandbox</div>
+                <!-- Card 4: Tall Box (Automation Style) -->
+                <div class="magic-bento-card magic-bento-card--border-glow">
+                    <div class="magic-bento-card__header">
+                        <div class="magic-bento-card__label">Sports</div>
+                    </div>
+                    <div class="magic-bento-card__content">
+                        <h2 class="magic-bento-card__title">Retro Bowl</h2>
+                        <p class="magic-bento-card__description">Manage your football team to victory.</p>
+                    </div>
+                </div>
+
+                <!-- Card 5: Connectivity Style -->
+                <div class="magic-bento-card magic-bento-card--border-glow">
+                    <div class="magic-bento-card__header">
+                        <div class="magic-bento-card__label">Music</div>
+                    </div>
+                    <div class="magic-bento-card__content">
+                        <h2 class="magic-bento-card__title">Incredibox</h2>
+                        <p class="magic-bento-card__description">Create your own music mixes.</p>
+                    </div>
+                </div>
+
+                <!-- Card 6: Security Style -->
+                <div class="magic-bento-card magic-bento-card--border-glow">
+                    <div class="magic-bento-card__header">
+                        <div class="magic-bento-card__label">Arcade</div>
+                    </div>
+                    <div class="magic-bento-card__content">
+                        <h2 class="magic-bento-card__title">Subway Surfers</h2>
+                        <p class="magic-bento-card__description">Run as far as you can.</p>
                     </div>
                 </div>
 
             </div>
         </div>
 
-        <!-- AI Page -->
+        <!-- Other Pages -->
         <div id="ai" class="page" style="display: none;">
             <h1>AI Tools</h1>
             <p>Unblocked AI utilities go here.</p>
         </div>
 
-        <!-- Info Page -->
         <div id="info" class="page" style="display: none;">
             <h1>Information</h1>
             <p>School Unblocked Site v1.0</p>
         </div>
 
-        <!-- Settings Page -->
         <div id="settings" class="page" style="display: none;">
             <h1>Settings</h1>
-            <label>
-                <input type="checkbox" id="panic-mode-toggle"> Enable Panic Button (Press `)
-            </label>
+            <label><input type="checkbox" id="panic-mode-toggle"> Enable Panic Button</label>
         </div>
 
     </main>
     
-    <!-- The Global Spotlight Element -->
-    <div id="global-spotlight"></div>
+    <!-- This is the moving flashlight element -->
+    <div class="global-spotlight"></div>
 
     <script src="script.js"></script>
 </body>
