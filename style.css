@@ -2,10 +2,8 @@
   --hue: 27;
   --sat: 69%;
   --white: hsl(0, 0%, 100%);
-  --purple-primary: rgba(132, 0, 255, 1);
-  --purple-glow: rgba(132, 0, 255, 0.2);
-  --border-color: #392e4e;
   --background-dark: #060010;
+  --border-color: #222;
 }
 
 body {
@@ -19,11 +17,10 @@ body {
     overflow: hidden;
 }
 
-/* Content Area */
 .content { 
     flex: 1; 
     padding: 40px; 
-    padding-bottom: 120px; 
+    padding-bottom: 150px; /* Extra space for the floating dock */
     overflow-y: auto; 
     position: relative; 
     z-index: 10; 
@@ -32,34 +29,27 @@ body {
 .page { 
     animation: fadeIn 0.3s ease-in-out; 
     width: 100%; 
-    max-width: 1200px; 
+    max-width: 1400px; 
     margin: 0 auto; 
 }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-/* --- UNIFORM GRID SYSTEM --- */
+/* --- STRICT UNIFORM GRID --- */
 .card-grid {
     display: grid;
-    /* This forces columns to be at least 240px wide */
+    /* This forces every column to be equal width */
     grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-    /* This forces every row to be exactly 240px tall */
-    grid-auto-rows: 240px; 
     gap: 20px;
     padding: 10px;
 }
 
-/* Dashboard & Settings use a list view instead of grid boxes */
+/* Dashboard List View */
 .card-grid.single-col {
     display: flex;
     flex-direction: column;
     gap: 20px;
 }
-.card-grid.single-col .magic-bento-card {
-    height: auto; /* Let these grow based on content */
-    min-height: 150px;
-}
 
-/* --- MAGIC CARD STYLING --- */
 .magic-bento-card {
     display: flex; 
     flex-direction: column; 
@@ -67,19 +57,30 @@ body {
     position: relative; 
     padding: 1.5em;
     border-radius: 20px; 
-    border: 1px solid #222; /* Darker border */
-    background: #060010;    /* Dark background */
-    transition: transform 0.1s; 
+    border: 1px solid var(--border-color);
+    background: var(--background-dark);
     cursor: pointer;
     overflow: hidden;
-    height: 100%; /* Fill the grid cell */
     box-sizing: border-box;
+    
+    /* FORCE EXACT SIZE */
+    height: 240px; 
+    width: 100%;
+    
+    /* Reset any potential spans */
+    grid-column: auto !important;
+    grid-row: auto !important;
 
-    /* Glow Variables */
+    /* Glow Vars */
     --glow-x: 50%; --glow-y: 50%; --glow-intensity: 0;
 }
 
-.magic-bento-card:hover { transform: translateY(-2px); }
+.magic-bento-card.auto-height {
+    height: auto; /* Only for dashboard widgets */
+    min-height: 150px;
+}
+
+.magic-bento-card:hover { transform: translateY(-2px); transition: transform 0.2s; }
 
 .magic-bento-card--border-glow::after {
     content: ''; position: absolute; inset: 0; padding: 2px;
@@ -104,70 +105,87 @@ body {
 .progress-container { width: 100%; height: 6px; background: #222; border-radius: 4px; overflow: hidden; }
 .progress-fill { height: 100%; background: #8400ff; transition: width 1s linear; }
 
-/* --- NEW DOCK STYLES (From your snippet) --- */
-.dock-outer {
-    position: fixed;
-    bottom: 20px;
-    width: 100%;
-    display: flex;
-    justify-content: center;
-    z-index: 1000;
-    pointer-events: none; /* Allow clicks to pass through empty space */
-}
-
-.dock-panel {
-    pointer-events: auto;
-    display: flex;
-    align-items: flex-end;
-    gap: 1rem;
-    padding: 0 10px 10px 10px;
-    background-color: #060010;
-    border: 1px solid #222;
-    border-radius: 1rem;
-    height: 68px; /* Base panel height */
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-}
-
-.dock-item {
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 50px; /* Base Item Size */
-    height: 50px;
-    border-radius: 10px;
-    background-color: #060010;
-    border: 1px solid #222;
-    cursor: pointer;
-    color: white;
-    transition: border-color 0.2s;
-}
-
-.dock-item:hover { border-color: #8400ff; }
-
-.dock-icon svg { width: 50%; height: 50%; pointer-events: none; }
-
-.dock-label {
-    position: absolute;
-    top: -40px;
-    left: 50%;
-    transform: translateX(-50%);
-    background-color: #060010;
-    border: 1px solid #222;
-    padding: 4px 8px;
-    border-radius: 6px;
-    font-size: 12px;
-    color: #fff;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.2s, top 0.2s;
-}
-
-.dock-item:hover .dock-label { opacity: 1; top: -50px; }
-
 /* Global Spotlight */
 .global-spotlight {
     position: fixed; width: 800px; height: 800px; border-radius: 50%;
     pointer-events: none; background: radial-gradient(circle, rgba(132, 0, 255, 0.08), transparent 70%);
     z-index: 5; opacity: 0; transform: translate(-50%, -50%); mix-blend-mode: screen;
+}
+
+/* --- EXACT DOCK CSS FROM YOUR PROMPT --- */
+.dock-outer {
+  position: fixed;
+  bottom: 20px;
+  left: 0;
+  width: 100%;
+  margin: 0;
+  display: flex;
+  justify-content: center; /* Centering the dock */
+  align-items: center;
+  z-index: 1000;
+  pointer-events: none;
+}
+
+.dock-panel {
+  pointer-events: auto;
+  display: flex;
+  align-items: flex-end;
+  width: fit-content;
+  gap: 1rem;
+  border-radius: 1rem;
+  background-color: #060010;
+  border: 1px solid #222;
+  padding: 0 0.5rem 0.5rem; /* Padding to sit correctly */
+  height: 68px; /* Fixed panel height */
+  box-sizing: border-box;
+}
+
+.dock-item {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background-color: #060010;
+  border: 1px solid #222;
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  cursor: pointer;
+  outline: none;
+  /* Initial size */
+  width: 50px;
+  height: 50px;
+  margin-bottom: 5px; /* Lift it slightly */
+}
+
+.dock-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+.dock-icon svg {
+    width: 24px;
+    height: 24px;
+    fill: white;
+}
+
+.dock-label {
+  position: absolute;
+  top: -2.5rem; /* Adjusted for positioning */
+  left: 50%;
+  width: fit-content;
+  white-space: pre;
+  border-radius: 0.375rem;
+  border: 1px solid #222;
+  background-color: #060010;
+  padding: 0.125rem 0.5rem;
+  font-size: 0.75rem;
+  color: #fff;
+  transform: translateX(-50%);
+  opacity: 0;
+  transition: opacity 0.2s;
+  pointer-events: none;
 }
