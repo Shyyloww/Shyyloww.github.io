@@ -2,7 +2,7 @@ document.addEventListener('DOMContentLoaded', () => {
     showPage(localStorage.getItem('activePage') || 'dashboard');
     startClock();
     initMagicBento();
-    initDockPhysics();
+    initDockPhysics(); // The new Dock logic
 });
 
 // --- NAVIGATION ---
@@ -19,35 +19,73 @@ function showPage(pageId) {
     }
 }
 
-// --- DOCK PHYSICS ---
+// --- DOCK PHYSICS (Replicating the React Code) ---
 function initDockPhysics() {
     const dock = document.querySelector('.dock-panel');
     const items = document.querySelectorAll('.dock-item');
-    const baseSize = 50;
-    const maxScale = 1.8;
-    const distanceRange = 200;
+    
+    // Configuration from your React snippet
+    const CONFIG = {
+        baseItemSize: 50,
+        magnification: 70, // Max size
+        distance: 200,     // Effect radius
+    };
 
     dock.addEventListener('mousemove', (e) => {
+        const mouseX = e.clientX;
+
         items.forEach(item => {
             const rect = item.getBoundingClientRect();
-            const centerX = rect.left + rect.width / 2;
-            const distance = Math.abs(e.clientX - centerX);
-            let scale = 1;
-            if (distance < distanceRange) {
-                const strength = 1 - (distance / distanceRange);
-                const curve = Math.sin(strength * Math.PI / 2); 
-                scale = 1 + (maxScale - 1) * curve;
+            const itemCenterX = rect.left + rect.width / 2;
+            
+            // Calculate distance between mouse and item center
+            const distanceFromCenter = Math.abs(mouseX - itemCenterX);
+            
+            let targetSize = CONFIG.baseItemSize;
+
+            if (distanceFromCenter < CONFIG.distance) {
+                // Creates a bell-curve effect (Gaussian-ish)
+                // 1 at center, 0 at edge of distance
+                const scaleFactor = 1 - (distanceFromCenter / CONFIG.distance);
+                // Apply sine curve for smoother feel
+                const smoothFactor = Math.sin(scaleFactor * Math.PI / 2);
+                
+                // Calculate new size
+                targetSize = CONFIG.baseItemSize + (CONFIG.magnification - CONFIG.baseItemSize) * smoothFactor;
             }
-            gsap.to(item, { width: baseSize * scale, height: baseSize * scale, duration: 0.1, ease: 'power2.out' });
+
+            // Animate using GSAP (acts like the Spring)
+            gsap.to(item, {
+                width: targetSize,
+                height: targetSize,
+                duration: 0.1,
+                ease: 'power2.out'
+            });
+            
+            // Scale icon inside to match
+            const icon = item.querySelector('svg');
+            if(icon) {
+                 gsap.to(icon, { scale: targetSize / CONFIG.baseItemSize, duration: 0.1 });
+            }
         });
     });
 
+    // Reset when mouse leaves the dock area
     dock.addEventListener('mouseleave', () => {
-        items.forEach(item => gsap.to(item, { width: baseSize, height: baseSize, duration: 0.3, ease: 'elastic.out(1, 0.5)' }));
+        items.forEach(item => {
+            gsap.to(item, {
+                width: CONFIG.baseItemSize,
+                height: CONFIG.baseItemSize,
+                duration: 0.3,
+                ease: 'elastic.out(1, 0.5)' // Springy bounce back
+            });
+            const icon = item.querySelector('svg');
+            if(icon) gsap.to(icon, { scale: 1, duration: 0.3 });
+        });
     });
 }
 
-// --- CLOCK ---
+// --- CLOCK & SCHEDULE ---
 const schedule = [
     { name: "Period 1", start: "08:00", end: "08:50" },
     { name: "Period 2", start: "08:55", end: "09:45" },
@@ -92,13 +130,10 @@ function initMagicBento() {
     if(!spotlight) return;
 
     document.addEventListener('mousemove', (e) => {
-        // Move Global Spotlight
         gsap.to(spotlight, { left: e.clientX, top: e.clientY, duration: 0.1 });
 
-        // Calculate Glow for ALL cards on the current page
+        // Apply glow to all active cards
         const cards = document.querySelectorAll('.page.active .magic-bento-card');
-        
-        // Show spotlight if mouse is near any card on active page
         let isNearAny = false;
 
         cards.forEach(card => {
@@ -114,7 +149,6 @@ function initMagicBento() {
             const dist = Math.hypot(e.clientX - centerX, e.clientY - centerY) - Math.max(rect.width, rect.height)/2;
             
             if(dist < 300) isNearAny = true;
-
             const intensity = Math.max(0, 1 - (Math.max(0, dist) / 300));
             card.style.setProperty('--glow-intensity', intensity);
         });
