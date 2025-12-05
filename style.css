@@ -1,113 +1,131 @@
 body {
     margin: 0;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: #121212;
+    background-color: #060010; /* Deep dark background */
     color: #ffffff;
     display: flex;
     height: 100vh;
     overflow: hidden;
 }
 
-/* Sidebar Styling */
+/* Sidebar */
 .sidebar {
     width: 200px;
-    background-color: #1e1e1e;
+    background-color: #0a0a12;
     display: flex;
     flex-direction: column;
     padding: 20px;
     border-right: 1px solid #333;
+    z-index: 1000;
 }
-
-.sidebar h2 {
-    margin-bottom: 30px;
-    color: #4caf50;
-    text-align: center;
-}
-
+.sidebar h2 { color: #8400ff; text-align: center; margin-bottom: 30px; }
 .sidebar button {
-    background: none;
-    border: none;
-    color: #aaa;
-    padding: 15px;
-    text-align: left;
-    cursor: pointer;
-    font-size: 16px;
-    transition: 0.3s;
-    border-radius: 5px;
+    background: none; border: none; color: #aaa; padding: 15px;
+    text-align: left; cursor: pointer; font-size: 16px; transition: 0.3s;
+    border-radius: 5px; width: 100%;
 }
+.sidebar button:hover { background-color: #1e1e24; color: white; }
 
-.sidebar button:hover {
-    background-color: #333;
-    color: white;
-}
-
-/* Content Styling */
-.content {
-    flex: 1;
-    padding: 40px;
-    overflow-y: auto;
-}
-
-.page {
-    animation: fadeIn 0.3s ease-in-out;
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-}
+/* Content */
+.content { flex: 1; padding: 40px; overflow-y: auto; position: relative; z-index: 10; }
+.page { animation: fadeIn 0.3s ease-in-out; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
 /* Dashboard Clock */
 .clock-container {
-    background-color: #1e1e1e;
-    padding: 30px;
-    border-radius: 10px;
-    text-align: center;
-    max-width: 400px;
-    margin-top: 20px;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+    background-color: #13131f; padding: 30px; border-radius: 10px;
+    text-align: center; max-width: 400px; margin-top: 20px;
+    border: 1px solid rgba(132, 0, 255, 0.2);
 }
+#current-time { font-size: 3em; margin: 0; font-weight: bold; }
+#period-status { color: #8400ff; margin: 10px 0; }
+.progress-bar { width: 100%; height: 10px; background-color: #333; border-radius: 5px; margin-top: 10px; overflow: hidden; }
+#period-progress { height: 100%; background-color: #8400ff; transition: width 1s linear; }
 
-#current-time {
-    font-size: 3em;
-    margin: 0;
-    font-weight: bold;
-}
-
-#period-status {
-    color: #4caf50;
-    margin: 10px 0;
-}
-
-.progress-bar {
-    width: 100%;
-    height: 10px;
-    background-color: #333;
-    border-radius: 5px;
-    margin-top: 10px;
-    overflow: hidden;
-}
-
-#period-progress {
-    height: 100%;
-    background-color: #4caf50;
-    transition: width 1s linear;
-}
-
-/* Game Grid Placeholder */
-.game-grid {
+/* --- MAGIC BENTO GRID STYLES --- */
+.card-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
     gap: 20px;
     margin-top: 20px;
+    position: relative;
 }
 
-.card {
-    background-color: #2c2c2c;
-    height: 150px;
-    border-radius: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+.magic-card {
+    background-color: #0c0c14;
+    border-radius: 16px;
+    position: relative;
+    height: 200px;
     cursor: pointer;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    transition: transform 0.1s;
+    /* CSS Variables for Glow */
+    --glow-x: 50%;
+    --glow-y: 50%;
+    --glow-intensity: 0;
+    --glow-radius: 300px;
+}
+
+/* Inner glow effect */
+.magic-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: radial-gradient(
+        circle at var(--glow-x) var(--glow-y),
+        rgba(132, 0, 255, var(--glow-intensity)) 0%,
+        transparent 70%
+    );
+    opacity: 0.5;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.card-content {
+    position: relative;
+    z-index: 2;
+    padding: 24px;
+    height: 100%;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+}
+
+.card-content h3 { margin: 0 0 8px 0; font-size: 1.5rem; }
+.card-content p { color: #888; margin: 0; flex-grow: 1; }
+.card-content .label {
+    align-self: flex-start;
+    background: rgba(132, 0, 255, 0.2);
+    color: #bfa3ff;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    margin-top: auto;
+}
+
+/* Global Spotlight (The flashlight following mouse) */
+#global-spotlight {
+    position: fixed;
+    width: 600px;
+    height: 600px;
+    border-radius: 50%;
+    pointer-events: none;
+    background: radial-gradient(circle, rgba(132, 0, 255, 0.15), transparent 70%);
+    transform: translate(-50%, -50%);
+    z-index: 5;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+/* Particles */
+.particle {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: #8400ff;
+    pointer-events: none;
+    z-index: 3;
+    opacity: 0;
 }

@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Unblocked Hub</title>
     <link rel="stylesheet" href="style.css">
+    <!-- Import GSAP for animations -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
 </head>
 <body>
 
@@ -33,14 +35,48 @@
             </div>
         </div>
 
-        <!-- Games Page -->
+        <!-- Games Page (Magic Bento Style) -->
         <div id="games" class="page" style="display: none;">
             <h1>Games Library</h1>
-            <p>Games will be loaded here from source.</p>
-            <div class="game-grid">
-                <!-- We will inject games here later -->
-                <div class="card">Placeholder Game 1</div>
-                <div class="card">Placeholder Game 2</div>
+            <!-- The Spotlight Effect Container -->
+            <div id="spotlight-grid" class="card-grid">
+                
+                <!-- Card 1 -->
+                <div class="magic-card">
+                    <div class="card-content">
+                        <h3>Slope</h3>
+                        <p>High speed 3D runner.</p>
+                        <div class="label">Arcade</div>
+                    </div>
+                </div>
+
+                <!-- Card 2 -->
+                <div class="magic-card">
+                    <div class="card-content">
+                        <h3>1v1.LOL</h3>
+                        <p>Building and shooting simulator.</p>
+                        <div class="label">Shooter</div>
+                    </div>
+                </div>
+
+                <!-- Card 3 -->
+                <div class="magic-card">
+                    <div class="card-content">
+                        <h3>Retro Bowl</h3>
+                        <p>American football management.</p>
+                        <div class="label">Sports</div>
+                    </div>
+                </div>
+
+                <!-- Card 4 -->
+                <div class="magic-card">
+                    <div class="card-content">
+                        <h3>Minecraft</h3>
+                        <p>Classic block building game.</p>
+                        <div class="label">Sandbox</div>
+                    </div>
+                </div>
+
             </div>
         </div>
 
@@ -65,6 +101,9 @@
         </div>
 
     </main>
+    
+    <!-- The Global Spotlight Element -->
+    <div id="global-spotlight"></div>
 
     <script src="script.js"></script>
 </body>
