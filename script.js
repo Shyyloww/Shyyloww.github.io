@@ -1,13 +1,14 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // Restore Page State
+    // 1. Navigation Init
     const savedPage = localStorage.getItem('activePage') || 'dashboard';
     showPage(savedPage);
 
-    // Start Clock
+    // 2. Clock Init
     startClock();
 
-    // Initialize Magic Bento Effects
+    // 3. Effects Init
     initMagicBento();
+    initDockPhysics();
 });
 
 // --- NAVIGATION ---
@@ -24,7 +25,58 @@ function showPage(pageId) {
     }
 }
 
-// --- CLOCK & SCHEDULE ---
+// --- DOCK PHYSICS ---
+function initDockPhysics() {
+    const dock = document.querySelector('.dock-panel');
+    const items = document.querySelectorAll('.dock-item');
+    const baseSize = 50;
+    const maxScale = 1.8; // How much it grows (1.8x)
+    const distanceRange = 200; // Radius of effect
+
+    // Mouse Move on Dock
+    dock.addEventListener('mousemove', (e) => {
+        items.forEach(item => {
+            const rect = item.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            
+            // Calculate distance from mouse to center of this icon
+            const distance = Math.abs(e.clientX - centerX);
+
+            let scale = 1;
+            
+            // If mouse is close, scale up
+            if (distance < distanceRange) {
+                // Creates a bell-curve shape for smooth magnification
+                const strength = 1 - (distance / distanceRange); // 0 to 1
+                // Ease the strength to make it rounder (sine curve)
+                const curve = Math.sin(strength * Math.PI / 2); 
+                scale = 1 + (maxScale - 1) * curve;
+            }
+
+            // Apply size using GSAP for smoothness
+            gsap.to(item, {
+                width: baseSize * scale,
+                height: baseSize * scale,
+                duration: 0.1, // Very fast reaction
+                ease: 'power2.out'
+            });
+        });
+    });
+
+    // Mouse Leave Dock (Reset all)
+    dock.addEventListener('mouseleave', () => {
+        items.forEach(item => {
+            gsap.to(item, {
+                width: baseSize,
+                height: baseSize,
+                duration: 0.3, // Slower reset like a spring release
+                ease: 'elastic.out(1, 0.5)'
+            });
+        });
+    });
+}
+
+// --- CLOCK ---
 const schedule = [
     { name: "Period 1", start: "08:00", end: "08:50" },
     { name: "Period 2", start: "08:55", end: "09:45" },
@@ -63,185 +115,39 @@ function updateTime() {
     document.getElementById('period-progress').style.width = progress + "%";
 }
 
-// --- MAGIC BENTO LOGIC (Translated from React) ---
+// --- MAGIC BENTO & SPOTLIGHT ---
 function initMagicBento() {
     const cards = document.querySelectorAll('.magic-bento-card');
     const spotlight = document.querySelector('.global-spotlight');
     const grid = document.querySelector('.card-grid');
 
-    const CONFIG = {
-        proximity: 300 * 0.5,
-        fadeDistance: 300 * 0.75,
-        spotlightRadius: 300
-    };
+    if(!spotlight) return;
 
-    // 1. GLOBAL SPOTLIGHT & BORDER GLOW
     document.addEventListener('mousemove', (e) => {
-        // Move the giant flashlight
-        gsap.to(spotlight, {
-            left: e.clientX,
-            top: e.clientY,
-            duration: 0.1,
-            ease: 'power2.out'
-        });
+        // Move Global Spotlight
+        gsap.to(spotlight, { left: e.clientX, top: e.clientY, duration: 0.1 });
 
-        // Check if mouse is inside the grid to show/hide flashlight
-        const gridRect = grid.getBoundingClientRect();
-        const isInside = (
-            e.clientX >= gridRect.left && 
-            e.clientX <= gridRect.right && 
-            e.clientY >= gridRect.top && 
-            e.clientY <= gridRect.bottom
-        );
-        
-        gsap.to(spotlight, { opacity: isInside ? 0.8 : 0 });
+        // Spotlight Opacity Logic
+        const gridRect = grid ? grid.getBoundingClientRect() : null;
+        if(gridRect) {
+            const isInside = (e.clientX >= gridRect.left && e.clientX <= gridRect.right && e.clientY >= gridRect.top && e.clientY <= gridRect.bottom);
+            gsap.to(spotlight, { opacity: isInside ? 0.8 : 0 });
+        }
 
-        // Update every card's border glow based on distance
+        // Card Border Glow Logic
         cards.forEach(card => {
             const rect = card.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
             
-            // RelX and RelY for the local gradient
-            const relativeX = ((e.clientX - rect.left) / rect.width) * 100;
-            const relativeY = ((e.clientY - rect.top) / rect.height) * 100;
+            card.style.setProperty('--glow-x', `${x}px`);
+            card.style.setProperty('--glow-y', `${y}px`);
 
-            card.style.setProperty('--glow-x', `${relativeX}%`);
-            card.style.setProperty('--glow-y', `${relativeY}%`);
-
-            // Calculate Intensity
             const centerX = rect.left + rect.width / 2;
             const centerY = rect.top + rect.height / 2;
-            const distance = Math.hypot(e.clientX - centerX, e.clientY - centerY) - Math.max(rect.width, rect.height) / 2;
-            const effectiveDistance = Math.max(0, distance);
-
-            let intensity = 0;
-            if (effectiveDistance <= CONFIG.proximity) {
-                intensity = 1;
-            } else if (effectiveDistance <= CONFIG.fadeDistance) {
-                intensity = (CONFIG.fadeDistance - effectiveDistance) / (CONFIG.fadeDistance - CONFIG.proximity);
-            }
+            const dist = Math.hypot(e.clientX - centerX, e.clientY - centerY) - Math.max(rect.width, rect.height)/2;
+            const intensity = Math.max(0, 1 - (Math.max(0, dist) / 200));
             card.style.setProperty('--glow-intensity', intensity);
         });
-    });
-
-    // 2. CARD TILT, MAGNETISM & PARTICLES
-    cards.forEach(card => {
-        let isHovered = false;
-
-        // MOUSE MOVE (Tilt & Magnet)
-        card.addEventListener('mousemove', (e) => {
-            const rect = card.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
-            const centerX = rect.width / 2;
-            const centerY = rect.height / 2;
-
-            // Tilt
-            const rotateX = ((y - centerY) / centerY) * -10; // -10 deg
-            const rotateY = ((x - centerX) / centerX) * 10;  // 10 deg
-
-            // Magnetism (Move card slightly)
-            const magnetX = (x - centerX) * 0.05;
-            const magnetY = (y - centerY) * 0.05;
-
-            gsap.to(card, {
-                rotateX: rotateX,
-                rotateY: rotateY,
-                x: magnetX,
-                y: magnetY,
-                duration: 0.1,
-                ease: 'power2.out',
-                transformPerspective: 1000
-            });
-        });
-
-        // MOUSE ENTER (Spawn Particles)
-        card.addEventListener('mouseenter', () => {
-            isHovered = true;
-            
-            // Spawn 12 particles
-            for (let i = 0; i < 12; i++) {
-                setTimeout(() => {
-                    if (!isHovered) return;
-                    createParticle(card);
-                }, i * 100);
-            }
-        });
-
-        // MOUSE LEAVE (Reset)
-        card.addEventListener('mouseleave', () => {
-            isHovered = false;
-            // Reset position/tilt
-            gsap.to(card, {
-                rotateX: 0,
-                rotateY: 0,
-                x: 0,
-                y: 0,
-                duration: 0.5,
-                ease: 'power2.out'
-            });
-
-            // Kill all particles
-            const particles = card.querySelectorAll('.particle');
-            particles.forEach(p => {
-                gsap.to(p, { scale: 0, opacity: 0, onComplete: () => p.remove() });
-            });
-        });
-
-        // CLICK EFFECT (Ripple)
-        card.addEventListener('click', (e) => {
-            const rect = card.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
-            
-            const ripple = document.createElement('div');
-            ripple.style.position = 'absolute';
-            ripple.style.width = '600px';
-            ripple.style.height = '600px';
-            ripple.style.borderRadius = '50%';
-            ripple.style.background = 'radial-gradient(circle, rgba(132, 0, 255, 0.4) 0%, transparent 70%)';
-            ripple.style.left = `${x - 300}px`;
-            ripple.style.top = `${y - 300}px`;
-            ripple.style.pointerEvents = 'none';
-            ripple.style.zIndex = '1000';
-            
-            card.appendChild(ripple);
-            
-            gsap.fromTo(ripple, { scale: 0, opacity: 1 }, { 
-                scale: 1, opacity: 0, duration: 0.8, ease: 'power2.out',
-                onComplete: () => ripple.remove() 
-            });
-        });
-    });
-}
-
-// Helper to create a single particle
-function createParticle(card) {
-    const p = document.createElement('div');
-    p.classList.add('particle');
-    card.appendChild(p);
-
-    const rect = card.getBoundingClientRect();
-    const startX = Math.random() * rect.width;
-    const startY = Math.random() * rect.height;
-
-    gsap.set(p, { x: startX, y: startY, scale: 0, opacity: 0 });
-    gsap.to(p, {
-        scale: 1, opacity: 1, duration: 0.3, ease: 'back.out(1.7)'
-    });
-
-    // Random Float Animation
-    gsap.to(p, {
-        x: startX + (Math.random() - 0.5) * 100,
-        y: startY + (Math.random() - 0.5) * 100,
-        rotation: Math.random() * 360,
-        duration: 2 + Math.random() * 2,
-        ease: 'none',
-        repeat: -1,
-        yoyo: true
-    });
-
-    // Fade in/out loop
-    gsap.to(p, {
-        opacity: 0.3, duration: 1.5, repeat: -1, yoyo: true
     });
 }

@@ -4,7 +4,6 @@
   --white: hsl(0, 0%, 100%);
   --purple-primary: rgba(132, 0, 255, 1);
   --purple-glow: rgba(132, 0, 255, 0.2);
-  --purple-border: rgba(132, 0, 255, 0.8);
   --border-color: #392e4e;
   --background-dark: #060010;
 }
@@ -15,37 +14,27 @@ body {
     background-color: var(--background-dark);
     color: var(--white);
     display: flex;
+    flex-direction: column;
     height: 100vh;
     overflow: hidden;
 }
 
-/* Sidebar */
-.sidebar {
-    width: 200px;
-    background-color: #0a0a12;
-    display: flex;
-    flex-direction: column;
-    padding: 20px;
-    border-right: 1px solid #333;
-    z-index: 1000;
+/* Content Area - Now Full Screen */
+.content { 
+    flex: 1; 
+    padding: 40px; 
+    padding-bottom: 120px; /* Space for the Dock */
+    overflow-y: auto; 
+    position: relative; 
+    z-index: 10; 
 }
-.sidebar h2 { color: #8400ff; text-align: center; margin-bottom: 30px; }
-.sidebar button {
-    background: none; border: none; color: #aaa; padding: 15px;
-    text-align: left; cursor: pointer; font-size: 16px; transition: 0.3s;
-    border-radius: 5px; width: 100%;
-}
-.sidebar button:hover { background-color: #1e1e24; color: white; }
-
-/* Content Area */
-.content { flex: 1; padding: 40px; overflow-y: auto; position: relative; z-index: 10; }
 .page { animation: fadeIn 0.3s ease-in-out; }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
 /* Dashboard Clock */
 .clock-container {
     background-color: #13131f; padding: 30px; border-radius: 10px;
-    text-align: center; max-width: 400px; margin-top: 20px;
+    text-align: center; max-width: 400px; margin: 20px auto; /* Centered */
     border: 1px solid rgba(132, 0, 255, 0.2);
 }
 #current-time { font-size: 3em; margin: 0; font-weight: bold; }
@@ -53,152 +42,117 @@ body {
 .progress-bar { width: 100%; height: 10px; background-color: #333; border-radius: 5px; margin-top: 10px; overflow: hidden; }
 #period-progress { height: 100%; background-color: #8400ff; transition: width 1s linear; }
 
-/* --- MAGIC BENTO CSS --- */
+/* --- DOCK STYLES --- */
+.dock-container {
+    position: fixed;
+    bottom: 20px;
+    left: 0; 
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    z-index: 1000;
+    pointer-events: none; /* Let clicks pass through the container, but not items */
+}
 
+.dock-panel {
+    pointer-events: auto;
+    display: flex;
+    align-items: flex-end; /* Align bottom so they grow up */
+    gap: 12px;
+    padding: 10px 15px;
+    background-color: rgba(6, 0, 16, 0.85);
+    backdrop-filter: blur(10px);
+    border: 1px solid #333;
+    border-radius: 24px;
+    height: 60px; /* Base height container */
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    transition: width 0.2s;
+}
+
+.dock-item {
+    position: relative;
+    width: 50px; /* Base size */
+    height: 50px;
+    background-color: #13131f;
+    border: 1px solid #333;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: 0.1s; /* Slight transition for non-physics fallback */
+    color: white;
+    outline: none;
+    flex-shrink: 0; /* Prevent shrinking */
+}
+
+.dock-item:hover {
+    border-color: #8400ff;
+    box-shadow: 0 0 15px rgba(132, 0, 255, 0.4);
+}
+
+.dock-item svg {
+    pointer-events: none;
+    width: 60%;
+    height: 60%;
+}
+
+.dock-label {
+    position: absolute;
+    top: -40px;
+    left: 50%;
+    transform: translateX(-50%) translateY(10px);
+    background-color: #060010;
+    border: 1px solid #333;
+    padding: 5px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    color: white;
+    opacity: 0;
+    pointer-events: none;
+    transition: 0.2s;
+    white-space: nowrap;
+}
+
+.dock-item:hover .dock-label {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+/* --- MAGIC BENTO (Existing styles) --- */
 .card-grid {
-  display: grid;
-  gap: 1em;
-  padding: 0.75em;
-  max-width: 70em; /* Made slightly wider for games */
-  font-size: clamp(1rem, 0.9rem + 0.5vw, 1.5rem);
-  position: relative;
+  display: grid; gap: 1em; padding: 0.75em;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  max-width: 80em; margin: 0 auto;
 }
 
 .magic-bento-card {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  position: relative;
-  aspect-ratio: 4/3;
-  min-height: 200px;
-  width: 100%;
-  padding: 1.25em;
-  border-radius: 20px;
-  border: 1px solid var(--border-color);
+  display: flex; flex-direction: column; justify-content: space-between;
+  position: relative; height: 200px; padding: 1.25em;
+  border-radius: 20px; border: 1px solid var(--border-color);
   background: var(--background-dark);
-  font-weight: 300;
-  overflow: hidden;
-  transition: transform 0.1s;
-  cursor: pointer;
-
-  /* Default CSS Variables for Glow */
-  --glow-x: 50%;
-  --glow-y: 50%;
-  --glow-intensity: 0;
-  --glow-radius: 300px;
-  --glow-color: 132, 0, 255;
+  transition: transform 0.1s; cursor: pointer;
+  --glow-x: 50%; --glow-y: 50%; --glow-intensity: 0;
 }
 
-.magic-bento-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-}
+.magic-bento-card:hover { transform: translateY(-2px); }
 
-.magic-bento-card__header {
-  display: flex;
-  justify-content: space-between;
-  position: relative;
-  z-index: 2;
-}
-
-.magic-bento-card__content {
-  display: flex;
-  flex-direction: column;
-  position: relative;
-  z-index: 2;
-}
-
-.magic-bento-card__label {
-  font-size: 14px;
-  background: rgba(132, 0, 255, 0.2);
-  padding: 4px 10px;
-  border-radius: 12px;
-  color: #bfa3ff;
-}
-
-.magic-bento-card__title {
-  font-weight: 600;
-  font-size: 20px;
-  margin: 0 0 0.25em;
-}
-
-.magic-bento-card__description {
-  font-size: 14px;
-  line-height: 1.4;
-  opacity: 0.8;
-  margin: 0;
-}
-
-/* Grid Layout Logic */
-@media (max-width: 599px) {
-  .card-grid { grid-template-columns: 1fr; }
-}
-@media (min-width: 600px) {
-  .card-grid { grid-template-columns: repeat(2, 1fr); }
-}
-@media (min-width: 1024px) {
-  .card-grid { grid-template-columns: repeat(4, 1fr); }
-  
-  /* Make Minecraft Card Big (2x2) */
-  .magic-bento-card:nth-child(3) {
-    grid-column: span 2;
-    grid-row: span 2;
-  }
-  
-  /* Make Retro Bowl Card Tall (1x2) */
-  .magic-bento-card:nth-child(4) {
-    grid-column: 1 / span 2; /* Adjust placement */
-    grid-row: 2 / span 2;
-  }
-}
-
-/* Border Glow Logic */
 .magic-bento-card--border-glow::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  padding: 2px; /* Thinner sophisticated border */
-  background: radial-gradient(
-    var(--glow-radius) circle at var(--glow-x) var(--glow-y),
-    rgba(var(--glow-color), calc(var(--glow-intensity) * 1)) 0%,
-    transparent 60%
-  );
+  content: ''; position: absolute; inset: 0; padding: 2px;
+  background: radial-gradient(300px circle at var(--glow-x) var(--glow-y), rgba(132, 0, 255, var(--glow-intensity)) 0%, transparent 60%);
   border-radius: inherit;
   -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
+  -webkit-mask-composite: xor; mask-composite: exclude;
   pointer-events: none;
-  opacity: 1;
-  z-index: 3;
 }
 
-/* Particle Styles */
-.particle {
-    position: absolute;
-    width: 4px;
-    height: 4px;
-    border-radius: 50%;
-    background: rgba(132, 0, 255, 1);
-    box-shadow: 0 0 6px rgba(132, 0, 255, 0.6);
-    pointer-events: none;
-    z-index: 100;
-}
+.magic-bento-card__header { display: flex; justify-content: space-between; }
+.magic-bento-card__label { font-size: 12px; background: rgba(132, 0, 255, 0.2); padding: 4px 10px; border-radius: 12px; color: #bfa3ff; }
+.magic-bento-card__title { font-weight: 600; font-size: 20px; margin: 0; }
+.magic-bento-card__description { font-size: 14px; opacity: 0.8; margin: 0; }
 
-/* Global Spotlight (Flashlight) */
 .global-spotlight {
-  position: fixed;
-  width: 800px;
-  height: 800px;
-  border-radius: 50%;
-  pointer-events: none;
-  background: radial-gradient(circle,
-    rgba(132, 0, 255, 0.15) 0%,
-    rgba(132, 0, 255, 0.08) 15%,
-    transparent 70%
-  );
-  z-index: 200;
-  opacity: 0;
-  transform: translate(-50%, -50%);
-  mix-blend-mode: screen;
-  transition: opacity 0.3s;
+  position: fixed; width: 600px; height: 600px; border-radius: 50%;
+  pointer-events: none; background: radial-gradient(circle, rgba(132, 0, 255, 0.1), transparent 70%);
+  z-index: 200; opacity: 0; transform: translate(-50%, -50%); mix-blend-mode: screen;
 }

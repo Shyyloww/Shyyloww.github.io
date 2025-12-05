@@ -5,22 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Unblocked Hub</title>
     <link rel="stylesheet" href="style.css">
-    <!-- Import GSAP for the animations -->
+    <!-- GSAP for animations -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
 </head>
 <body>
 
-    <!-- Sidebar Navigation -->
-    <nav class="sidebar">
-        <h2>HUB</h2>
-        <button onclick="showPage('dashboard')">Dashboard</button>
-        <button onclick="showPage('games')">Games</button>
-        <button onclick="showPage('ai')">AI Tools</button>
-        <button onclick="showPage('info')">Info</button>
-        <button onclick="showPage('settings')">Settings</button>
-    </nav>
-
-    <!-- Main Content Area -->
+    <!-- Main Content Area (Now Full Width) -->
     <main class="content">
         
         <!-- Dashboard Page -->
@@ -38,89 +28,49 @@
         <!-- Games Page (Magic Bento Grid) -->
         <div id="games" class="page" style="display: none;">
             <h1>Games Library</h1>
-            
-            <div class="card-grid bento-section" id="gridRef">
-                
-                <!-- Card 1: Analytics Style -->
+            <div class="card-grid bento-section">
+                <!-- Card 1 -->
                 <div class="magic-bento-card magic-bento-card--border-glow">
-                    <div class="magic-bento-card__header">
-                        <div class="magic-bento-card__label">Popular</div>
-                    </div>
+                    <div class="magic-bento-card__header"><div class="magic-bento-card__label">Popular</div></div>
                     <div class="magic-bento-card__content">
                         <h2 class="magic-bento-card__title">Slope</h2>
                         <p class="magic-bento-card__description">High speed 3D runner game.</p>
                     </div>
                 </div>
-
-                <!-- Card 2: Dashboard Style -->
+                <!-- Card 2 -->
                 <div class="magic-bento-card magic-bento-card--border-glow">
-                    <div class="magic-bento-card__header">
-                        <div class="magic-bento-card__label">Shooter</div>
-                    </div>
+                    <div class="magic-bento-card__header"><div class="magic-bento-card__label">Shooter</div></div>
                     <div class="magic-bento-card__content">
                         <h2 class="magic-bento-card__title">1v1.LOL</h2>
                         <p class="magic-bento-card__description">Battle royale building simulator.</p>
                     </div>
                 </div>
-
-                <!-- Card 3: Large Box (Collaboration Style) -->
+                <!-- Card 3 -->
                 <div class="magic-bento-card magic-bento-card--border-glow">
-                    <div class="magic-bento-card__header">
-                        <div class="magic-bento-card__label">Featured</div>
-                    </div>
+                    <div class="magic-bento-card__header"><div class="magic-bento-card__label">Featured</div></div>
                     <div class="magic-bento-card__content">
                         <h2 class="magic-bento-card__title">Minecraft</h2>
-                        <p class="magic-bento-card__description">The classic sandbox builder. Play with friends or solo.</p>
+                        <p class="magic-bento-card__description">The classic sandbox builder.</p>
                     </div>
                 </div>
-
-                <!-- Card 4: Tall Box (Automation Style) -->
+                <!-- Card 4 -->
                 <div class="magic-bento-card magic-bento-card--border-glow">
-                    <div class="magic-bento-card__header">
-                        <div class="magic-bento-card__label">Sports</div>
-                    </div>
+                    <div class="magic-bento-card__header"><div class="magic-bento-card__label">Sports</div></div>
                     <div class="magic-bento-card__content">
                         <h2 class="magic-bento-card__title">Retro Bowl</h2>
-                        <p class="magic-bento-card__description">Manage your football team to victory.</p>
+                        <p class="magic-bento-card__description">Manage your football team.</p>
                     </div>
                 </div>
-
-                <!-- Card 5: Connectivity Style -->
-                <div class="magic-bento-card magic-bento-card--border-glow">
-                    <div class="magic-bento-card__header">
-                        <div class="magic-bento-card__label">Music</div>
-                    </div>
-                    <div class="magic-bento-card__content">
-                        <h2 class="magic-bento-card__title">Incredibox</h2>
-                        <p class="magic-bento-card__description">Create your own music mixes.</p>
-                    </div>
-                </div>
-
-                <!-- Card 6: Security Style -->
-                <div class="magic-bento-card magic-bento-card--border-glow">
-                    <div class="magic-bento-card__header">
-                        <div class="magic-bento-card__label">Arcade</div>
-                    </div>
-                    <div class="magic-bento-card__content">
-                        <h2 class="magic-bento-card__title">Subway Surfers</h2>
-                        <p class="magic-bento-card__description">Run as far as you can.</p>
-                    </div>
-                </div>
-
             </div>
         </div>
 
-        <!-- Other Pages -->
+        <!-- AI Page -->
         <div id="ai" class="page" style="display: none;">
             <h1>AI Tools</h1>
             <p>Unblocked AI utilities go here.</p>
         </div>
 
-        <div id="info" class="page" style="display: none;">
-            <h1>Information</h1>
-            <p>School Unblocked Site v1.0</p>
-        </div>
-
+        <!-- Settings Page -->
         <div id="settings" class="page" style="display: none;">
             <h1>Settings</h1>
             <label><input type="checkbox" id="panic-mode-toggle"> Enable Panic Button</label>
@@ -128,8 +78,39 @@
 
     </main>
     
-    <!-- This is the moving flashlight element -->
+    <!-- The Global Spotlight Element -->
     <div class="global-spotlight"></div>
+
+    <!-- THE DOCK -->
+    <div class="dock-container">
+        <div class="dock-panel">
+            
+            <!-- Dashboard Button -->
+            <button class="dock-item" onclick="showPage('dashboard')">
+                <div class="dock-label">Dashboard</div>
+                <svg viewBox="0 0 24 24" fill="white" width="24" height="24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+            </button>
+
+            <!-- Games Button -->
+            <button class="dock-item" onclick="showPage('games')">
+                <div class="dock-label">Games</div>
+                <svg viewBox="0 0 24 24" fill="white" width="24" height="24"><path d="M21 6H3c-1.1 0-2 .9-2 2v8c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-10 7H8v3H6v-3H3v-2h3V8h2v3h3v2zm4.5 2c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm4-3c-.83 0-1.5-.67-1.5-1.5S18.67 9 19.5 9s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>
+            </button>
+
+            <!-- AI Button -->
+            <button class="dock-item" onclick="showPage('ai')">
+                <div class="dock-label">AI Tools</div>
+                <svg viewBox="0 0 24 24" fill="white" width="24" height="24"><path d="M12 2c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2 .9-2 2-2zm9 7h-6v13h-2v-6h-2v6H9V9H3V7h18v2z"/></svg>
+            </button>
+
+            <!-- Settings Button -->
+            <button class="dock-item" onclick="showPage('settings')">
+                <div class="dock-label">Settings</div>
+                <svg viewBox="0 0 24 24" fill="white" width="24" height="24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L3.16 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.04.64.09.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+            </button>
+            
+        </div>
+    </div>
 
     <script src="script.js"></script>
 </body>
