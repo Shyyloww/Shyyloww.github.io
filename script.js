@@ -1,12 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // 1. Navigation Init
-    const savedPage = localStorage.getItem('activePage') || 'dashboard';
-    showPage(savedPage);
-
-    // 2. Clock Init
+    showPage(localStorage.getItem('activePage') || 'dashboard');
     startClock();
-
-    // 3. Effects Init
     initMagicBento();
     initDockPhysics();
 });
@@ -30,49 +24,26 @@ function initDockPhysics() {
     const dock = document.querySelector('.dock-panel');
     const items = document.querySelectorAll('.dock-item');
     const baseSize = 50;
-    const maxScale = 1.8; // How much it grows (1.8x)
-    const distanceRange = 200; // Radius of effect
+    const maxScale = 1.8;
+    const distanceRange = 200;
 
-    // Mouse Move on Dock
     dock.addEventListener('mousemove', (e) => {
         items.forEach(item => {
             const rect = item.getBoundingClientRect();
             const centerX = rect.left + rect.width / 2;
-            
-            // Calculate distance from mouse to center of this icon
             const distance = Math.abs(e.clientX - centerX);
-
             let scale = 1;
-            
-            // If mouse is close, scale up
             if (distance < distanceRange) {
-                // Creates a bell-curve shape for smooth magnification
-                const strength = 1 - (distance / distanceRange); // 0 to 1
-                // Ease the strength to make it rounder (sine curve)
+                const strength = 1 - (distance / distanceRange);
                 const curve = Math.sin(strength * Math.PI / 2); 
                 scale = 1 + (maxScale - 1) * curve;
             }
-
-            // Apply size using GSAP for smoothness
-            gsap.to(item, {
-                width: baseSize * scale,
-                height: baseSize * scale,
-                duration: 0.1, // Very fast reaction
-                ease: 'power2.out'
-            });
+            gsap.to(item, { width: baseSize * scale, height: baseSize * scale, duration: 0.1, ease: 'power2.out' });
         });
     });
 
-    // Mouse Leave Dock (Reset all)
     dock.addEventListener('mouseleave', () => {
-        items.forEach(item => {
-            gsap.to(item, {
-                width: baseSize,
-                height: baseSize,
-                duration: 0.3, // Slower reset like a spring release
-                ease: 'elastic.out(1, 0.5)'
-            });
-        });
+        items.forEach(item => gsap.to(item, { width: baseSize, height: baseSize, duration: 0.3, ease: 'elastic.out(1, 0.5)' }));
     });
 }
 
@@ -115,26 +86,21 @@ function updateTime() {
     document.getElementById('period-progress').style.width = progress + "%";
 }
 
-// --- MAGIC BENTO & SPOTLIGHT ---
+// --- MAGIC BENTO ---
 function initMagicBento() {
-    const cards = document.querySelectorAll('.magic-bento-card');
     const spotlight = document.querySelector('.global-spotlight');
-    const grid = document.querySelector('.card-grid');
-
     if(!spotlight) return;
 
     document.addEventListener('mousemove', (e) => {
         // Move Global Spotlight
         gsap.to(spotlight, { left: e.clientX, top: e.clientY, duration: 0.1 });
 
-        // Spotlight Opacity Logic
-        const gridRect = grid ? grid.getBoundingClientRect() : null;
-        if(gridRect) {
-            const isInside = (e.clientX >= gridRect.left && e.clientX <= gridRect.right && e.clientY >= gridRect.top && e.clientY <= gridRect.bottom);
-            gsap.to(spotlight, { opacity: isInside ? 0.8 : 0 });
-        }
+        // Calculate Glow for ALL cards on the current page
+        const cards = document.querySelectorAll('.page.active .magic-bento-card');
+        
+        // Show spotlight if mouse is near any card on active page
+        let isNearAny = false;
 
-        // Card Border Glow Logic
         cards.forEach(card => {
             const rect = card.getBoundingClientRect();
             const x = e.clientX - rect.left;
@@ -146,8 +112,13 @@ function initMagicBento() {
             const centerX = rect.left + rect.width / 2;
             const centerY = rect.top + rect.height / 2;
             const dist = Math.hypot(e.clientX - centerX, e.clientY - centerY) - Math.max(rect.width, rect.height)/2;
-            const intensity = Math.max(0, 1 - (Math.max(0, dist) / 200));
+            
+            if(dist < 300) isNearAny = true;
+
+            const intensity = Math.max(0, 1 - (Math.max(0, dist) / 300));
             card.style.setProperty('--glow-intensity', intensity);
         });
+
+        gsap.to(spotlight, { opacity: isNearAny ? 0.8 : 0, duration: 0.2 });
     });
 }

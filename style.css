@@ -19,28 +19,17 @@ body {
     overflow: hidden;
 }
 
-/* Content Area - Now Full Screen */
+/* Content Area */
 .content { 
     flex: 1; 
     padding: 40px; 
-    padding-bottom: 120px; /* Space for the Dock */
+    padding-bottom: 120px; 
     overflow-y: auto; 
     position: relative; 
     z-index: 10; 
 }
-.page { animation: fadeIn 0.3s ease-in-out; }
+.page { animation: fadeIn 0.3s ease-in-out; width: 100%; height: 100%; }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-/* Dashboard Clock */
-.clock-container {
-    background-color: #13131f; padding: 30px; border-radius: 10px;
-    text-align: center; max-width: 400px; margin: 20px auto; /* Centered */
-    border: 1px solid rgba(132, 0, 255, 0.2);
-}
-#current-time { font-size: 3em; margin: 0; font-weight: bold; }
-#period-status { color: #8400ff; margin: 10px 0; }
-.progress-bar { width: 100%; height: 10px; background-color: #333; border-radius: 5px; margin-top: 10px; overflow: hidden; }
-#period-progress { height: 100%; background-color: #8400ff; transition: width 1s linear; }
 
 /* --- DOCK STYLES --- */
 .dock-container {
@@ -51,27 +40,26 @@ body {
     display: flex;
     justify-content: center;
     z-index: 1000;
-    pointer-events: none; /* Let clicks pass through the container, but not items */
+    pointer-events: none;
 }
 
 .dock-panel {
     pointer-events: auto;
     display: flex;
-    align-items: flex-end; /* Align bottom so they grow up */
+    align-items: flex-end;
     gap: 12px;
     padding: 10px 15px;
     background-color: rgba(6, 0, 16, 0.85);
     backdrop-filter: blur(10px);
     border: 1px solid #333;
     border-radius: 24px;
-    height: 60px; /* Base height container */
+    height: 60px;
     box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-    transition: width 0.2s;
 }
 
 .dock-item {
     position: relative;
-    width: 50px; /* Base size */
+    width: 50px;
     height: 50px;
     background-color: #13131f;
     border: 1px solid #333;
@@ -80,10 +68,9 @@ body {
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: 0.1s; /* Slight transition for non-physics fallback */
     color: white;
     outline: none;
-    flex-shrink: 0; /* Prevent shrinking */
+    flex-shrink: 0;
 }
 
 .dock-item:hover {
@@ -91,11 +78,7 @@ body {
     box-shadow: 0 0 15px rgba(132, 0, 255, 0.4);
 }
 
-.dock-item svg {
-    pointer-events: none;
-    width: 60%;
-    height: 60%;
-}
+.dock-item svg { pointer-events: none; width: 60%; height: 60%; }
 
 .dock-label {
     position: absolute;
@@ -113,46 +96,74 @@ body {
     transition: 0.2s;
     white-space: nowrap;
 }
+.dock-item:hover .dock-label { opacity: 1; transform: translateX(-50%) translateY(0); }
 
-.dock-item:hover .dock-label {
-    opacity: 1;
-    transform: translateX(-50%) translateY(0);
+/* --- MAGIC BENTO STYLES --- */
+.card-grid {
+    display: grid; 
+    gap: 20px; 
+    padding: 0.75em;
+    /* UNIFORM SIZING: This ensures all cards are the same size */
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    grid-auto-rows: 250px; /* Fixed height for uniformity */
+    max-width: 80em; 
+    margin: 0 auto;
+    position: relative;
 }
 
-/* --- MAGIC BENTO (Existing styles) --- */
-.card-grid {
-  display: grid; gap: 1em; padding: 0.75em;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-  max-width: 80em; margin: 0 auto;
+/* Special single-column layout for dashboard/settings to look cleaner */
+.card-grid.single-col {
+    grid-template-columns: 1fr;
+    max-width: 800px;
+    grid-auto-rows: auto;
 }
 
 .magic-bento-card {
-  display: flex; flex-direction: column; justify-content: space-between;
-  position: relative; height: 200px; padding: 1.25em;
-  border-radius: 20px; border: 1px solid var(--border-color);
-  background: var(--background-dark);
-  transition: transform 0.1s; cursor: pointer;
-  --glow-x: 50%; --glow-y: 50%; --glow-intensity: 0;
+    display: flex; 
+    flex-direction: column; 
+    justify-content: space-between;
+    position: relative; 
+    padding: 1.5em;
+    border-radius: 20px; 
+    border: 1px solid var(--border-color);
+    background: var(--background-dark);
+    transition: transform 0.1s; 
+    cursor: pointer;
+    overflow: hidden;
+    /* Glow Variables */
+    --glow-x: 50%; 
+    --glow-y: 50%; 
+    --glow-intensity: 0;
 }
 
 .magic-bento-card:hover { transform: translateY(-2px); }
 
 .magic-bento-card--border-glow::after {
-  content: ''; position: absolute; inset: 0; padding: 2px;
-  background: radial-gradient(300px circle at var(--glow-x) var(--glow-y), rgba(132, 0, 255, var(--glow-intensity)) 0%, transparent 60%);
-  border-radius: inherit;
-  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  -webkit-mask-composite: xor; mask-composite: exclude;
-  pointer-events: none;
+    content: ''; position: absolute; inset: 0; padding: 2px;
+    background: radial-gradient(300px circle at var(--glow-x) var(--glow-y), rgba(132, 0, 255, var(--glow-intensity)) 0%, transparent 60%);
+    border-radius: inherit;
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor; mask-composite: exclude;
+    pointer-events: none;
+    z-index: 2;
 }
 
-.magic-bento-card__header { display: flex; justify-content: space-between; }
+/* Card Content Typography */
+.magic-bento-card__header { display: flex; justify-content: space-between; margin-bottom: 15px; position: relative; z-index: 3;}
 .magic-bento-card__label { font-size: 12px; background: rgba(132, 0, 255, 0.2); padding: 4px 10px; border-radius: 12px; color: #bfa3ff; }
-.magic-bento-card__title { font-weight: 600; font-size: 20px; margin: 0; }
-.magic-bento-card__description { font-size: 14px; opacity: 0.8; margin: 0; }
+.magic-bento-card__content { position: relative; z-index: 3; flex-grow: 1; display: flex; flex-direction: column; }
+.magic-bento-card__title { font-weight: 600; font-size: 1.5rem; margin: 0 0 10px 0; }
+.magic-bento-card__description { font-size: 0.9rem; opacity: 0.7; margin: 0; line-height: 1.5; }
 
+/* Dashboard Clock Specifics */
+.clock-display { font-size: 3.5em; font-weight: bold; margin: 10px 0; text-align: center; }
+.status-display { color: #8400ff; text-align: center; font-size: 1.2em; margin-bottom: 15px; }
+.progress-container { width: 100%; height: 8px; background: #333; border-radius: 4px; overflow: hidden; }
+.progress-fill { height: 100%; background: #8400ff; transition: width 1s linear; }
+
+/* Global Spotlight */
 .global-spotlight {
-  position: fixed; width: 600px; height: 600px; border-radius: 50%;
-  pointer-events: none; background: radial-gradient(circle, rgba(132, 0, 255, 0.1), transparent 70%);
-  z-index: 200; opacity: 0; transform: translate(-50%, -50%); mix-blend-mode: screen;
+    position: fixed; width: 800px; height: 800px; border-radius: 50%;
+    pointer-events: none; background: radial-gradient(circle, rgba(132, 0, 255, 0.1), transparent 70%);
+    z-index: 5; opacity: 0; transform: translate(-50%, -50%); mix-blend-mode: screen;
 }
