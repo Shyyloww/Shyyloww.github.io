@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unblocked Hub</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- Sidebar Navigation -->
+    <nav class="sidebar">
+        <h2>HUB</h2>
+        <button onclick="showPage('dashboard')">Dashboard</button>
+        <button onclick="showPage('games')">Games</button>
+        <button onclick="showPage('ai')">AI Tools</button>
+        <button onclick="showPage('info')">Info</button>
+        <button onclick="showPage('settings')">Settings</button>
+    </nav>
+
+    <!-- Main Content Area -->
+    <main class="content">
+        
+        <!-- Dashboard Page -->
+        <div id="dashboard" class="page active">
+            <h1>Dashboard</h1>
+            <div class="clock-container">
+                <h2 id="current-time">00:00:00</h2>
+                <h3 id="period-status">Loading Period...</h3>
+                <div class="progress-bar">
+                    <div id="period-progress" style="width: 0%;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Games Page -->
+        <div id="games" class="page" style="display: none;">
+            <h1>Games Library</h1>
+            <p>Games will be loaded here from source.</p>
+            <div class="game-grid">
+                <!-- We will inject games here later -->
+                <div class="card">Placeholder Game 1</div>
+                <div class="card">Placeholder Game 2</div>
+            </div>
+        </div>
+
+        <!-- AI Page -->
+        <div id="ai" class="page" style="display: none;">
+            <h1>AI Tools</h1>
+            <p>Unblocked AI utilities go here.</p>
+        </div>
+
+        <!-- Info Page -->
+        <div id="info" class="page" style="display: none;">
+            <h1>Information</h1>
+            <p>School Unblocked Site v1.0</p>
+        </div>
+
+        <!-- Settings Page -->
+        <div id="settings" class="page" style="display: none;">
+            <h1>Settings</h1>
+            <label>
+                <input type="checkbox" id="panic-mode-toggle"> Enable Panic Button (Press `)
+            </label>
+        </div>
+
+    </main>
+
+    <script src="script.js"></script>
+</body>
+</html>
