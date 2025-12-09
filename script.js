@@ -1,4 +1,4 @@
-// 1. SETUP
+// 1. CONFIGURATION
 const SUPABASE_URL = 'https://exjayvebshmlzdwjbhkv.supabase.co'; 
 const SUPABASE_KEY = 'sb_publishable_M_mIHSDGIHaBR2s9K9FkSg_Hy1FMn85'; 
 const AI_SERVER_URL = 'https://shyyloww-github-io-1.onrender.com';
@@ -6,20 +6,48 @@ const AI_SERVER_URL = 'https://shyyloww-github-io-1.onrender.com';
 const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 let currentUser = null;
-let isLoginMode = true; // Toggle between Login and Signup
+let isLoginMode = true;
 
-// 2. AUTHENTICATION LOGIC
+// 2. WAIT FOR PAGE TO LOAD
+document.addEventListener('DOMContentLoaded', () => {
+    // Check for saved theme
+    const savedTheme = localStorage.getItem('cyberian-theme');
+    if (savedTheme) setTheme(savedTheme);
+
+    // Attach Button Listeners (This fixes the "button does nothing" bug)
+    document.getElementById('auth-btn').addEventListener('click', handleAuth);
+    document.getElementById('toggle-btn').addEventListener('click', toggleAuthMode);
+
+    // Check Login Status
+    checkSession();
+});
+
+// 3. AUTH LOGIC
 async function handleAuth() {
-    const email = document.getElementById('email').value;
+    const usernameInput = document.getElementById('username').value.trim();
     const password = document.getElementById('password').value;
     const msg = document.getElementById('auth-msg');
-    
+
+    if (!usernameInput || !password) {
+        msg.innerText = "Please fill in all fields.";
+        return;
+    }
+
+    // Backend Trick: Append fake domain so Supabase accepts it as an email
+    const fakeEmail = `${usernameInput}@cyberian.io`;
+
     msg.innerText = "Processing...";
+    console.log("Attempting Auth with:", fakeEmail);
 
     if (isLoginMode) {
         // LOGIN
-        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+        const { data, error } = await supabase.auth.signInWithPassword({ 
+            email: fakeEmail, 
+            password: password 
+        });
+
         if (error) {
+            console.error(error);
             msg.innerText = "Error: " + error.message;
         } else {
             window.location.reload();
@@ -27,15 +55,20 @@ async function handleAuth() {
     } else {
         // SIGNUP
         const { data, error } = await supabase.auth.signUp({
-            email,
-            password,
-            options: { data: { username: email.split('@')[0] } } // Default username from email
+            email: fakeEmail,
+            password: password,
+            options: {
+                data: { username: usernameInput } // Store real username
+            }
         });
+
         if (error) {
+            console.error(error);
             msg.innerText = "Error: " + error.message;
         } else {
-            msg.innerText = "Success! Please log in.";
-            toggleAuthMode();
+            msg.innerText = "Success! Account created. Logging you in...";
+            // Auto login after signup
+            setTimeout(() => window.location.reload(), 1500);
         }
     }
 }
@@ -48,59 +81,46 @@ function toggleAuthMode() {
     document.getElementById('auth-msg').innerText = "";
 }
 
+async function checkSession() {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session) {
+        currentUser = session.user;
+        // Show App, Hide Login
+        document.getElementById('auth-container').style.display = 'none';
+        document.getElementById('app-container').style.display = 'flex';
+        
+        // Display Username (Grab from metadata if exists, else strip fake email)
+        const displayUser = currentUser.user_metadata.username || currentUser.email.split('@')[0];
+        document.getElementById('user-display').innerText = displayUser;
+        
+        loadData();
+    }
+}
+
 async function logout() {
     await supabase.auth.signOut();
     window.location.reload();
 }
 
-// 3. APP INITIALIZATION
-window.onload = async () => {
-    // Check Theme Preference
-    const savedTheme = localStorage.getItem('cyberian-theme');
-    if (savedTheme) setTheme(savedTheme);
-
-    // Check Auth
-    const { data: { session } } = await supabase.auth.getSession();
-    
-    if (session) {
-        currentUser = session.user;
-        document.getElementById('auth-container').style.display = 'none';
-        document.getElementById('app-container').style.display = 'flex';
-        document.getElementById('user-email-display').innerText = currentUser.email;
-        
-        loadData(); // Fetch videos and courses
-    }
-};
-
-// 4. NAVIGATION
-function navTo(section) {
-    // Update Sidebar
-    document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
-    event.currentTarget.classList.add('active');
-
-    // Update View
-    document.querySelectorAll('.view').forEach(view => view.classList.remove('active-view'));
-    document.getElementById('view-' + section).classList.add('active-view');
-}
-
-// 5. DATA FETCHING
+// 4. DATA LOADING
 async function loadData() {
-    // Load Courses (Structured Playlists)
+    // Load Courses
     const { data: courses } = await supabase.from('courses').select('*');
     const courseGrid = document.getElementById('course-grid');
     courseGrid.innerHTML = '';
     
-    if (courses) {
+    if (courses && courses.length > 0) {
         courses.forEach(c => {
             const div = document.createElement('div');
             div.className = 'card';
-            div.innerHTML = `<span class="card-badge">${c.level}</span><h3>${c.title}</h3><p>${c.description || "Start this path."}</p>`;
-            div.onclick = () => alert("Logic to open playlist items goes here. (Can use existing DB structure)");
+            div.innerHTML = `<span class="card-badge">${c.level}</span><h3>${c.title}</h3><p>${c.description || "Start Path"}</p>`;
             courseGrid.appendChild(div);
         });
+    } else {
+        courseGrid.innerHTML = '<p>No courses found. Run the SQL script in Supabase!</p>';
     }
 
-    // Load Fields (Categories)
+    // Load Fields
     const { data: categories } = await supabase.from('categories').select('*');
     const fieldGrid = document.getElementById('fields-grid');
     fieldGrid.innerHTML = '';
@@ -109,17 +129,25 @@ async function loadData() {
         categories.forEach(cat => {
             const div = document.createElement('div');
             div.className = 'card';
-            div.innerHTML = `<h3>${cat.title}</h3><p>Explore ${cat.slug}</p>`;
-            div.onclick = () => loadVideosForCategory(cat.id);
+            div.innerHTML = `<h3>${cat.title}</h3><p>Explore Category</p>`;
             fieldGrid.appendChild(div);
         });
     }
 }
 
-// 6. SETTINGS & THEMES
+// 5. NAVIGATION
+function navTo(section) {
+    document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+    // Find button that triggered this (event might be undefined if called manually)
+    if(event) event.currentTarget.classList.add('active');
+
+    document.querySelectorAll('.view').forEach(view => view.classList.remove('active-view'));
+    document.getElementById('view-' + section).classList.add('active-view');
+}
+
+// 6. SETTINGS & AI
 function setTheme(color) {
     document.documentElement.style.setProperty('--primary', color);
-    // Darken it slightly for hover effects
     document.documentElement.style.setProperty('--primary-hover', color);
     localStorage.setItem('cyberian-theme', color);
 }
@@ -129,20 +157,17 @@ async function changePassword() {
     const msg = document.getElementById('settings-msg');
     
     if(newPass.length < 6) {
-        msg.innerText = "Password too short.";
+        msg.innerText = "Password too short (min 6 chars).";
         return;
     }
 
     const { data, error } = await supabase.auth.updateUser({ password: newPass });
-
     if (error) msg.innerText = "Error: " + error.message;
     else msg.innerText = "Password updated successfully.";
 }
 
-// 7. AI CHAT
 function toggleChat() {
-    const win = document.getElementById('ai-window');
-    win.classList.toggle('hidden');
+    document.getElementById('ai-window').classList.toggle('hidden');
 }
 
 async function handleAiEnter(e) {
@@ -155,13 +180,10 @@ async function sendAiMessage() {
     if (!text) return;
 
     const msgs = document.getElementById('ai-messages');
-    
-    // Add User Message
     msgs.innerHTML += `<div class="ai-msg user-msg">${text}</div>`;
     input.value = '';
     msgs.scrollTop = msgs.scrollHeight;
 
-    // Fetch AI Response
     try {
         const res = await fetch(`${AI_SERVER_URL}/ask-ai`, {
             method: 'POST',
@@ -169,10 +191,8 @@ async function sendAiMessage() {
             body: JSON.stringify({ user_id: currentUser.id, question: text })
         });
         const data = await res.json();
-        
         msgs.innerHTML += `<div class="ai-msg">${data.answer}</div>`;
-        msgs.scrollTop = msgs.scrollHeight;
     } catch (err) {
-        msgs.innerHTML += `<div class="ai-msg">Connection Error. Is the Render server awake?</div>`;
+        msgs.innerHTML += `<div class="ai-msg">Connection Error.</div>`;
     }
 }

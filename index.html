@@ -6,28 +6,30 @@
     <title>Cyberian // Learn</title>
     <!-- Supabase JS -->
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-    <!-- Phosphor Icons (Clean modern icons) -->
+    <!-- Phosphor Icons -->
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
-    <link rel="stylesheet" href="style.css?v=2">
+    <!-- CSS with versioning to force update -->
+    <link rel="stylesheet" href="style.css?v=3">
 </head>
 <body>
 
-    <!-- AUTH SCREEN (Login/Signup) -->
+    <!-- AUTH SCREEN -->
     <div id="auth-container">
         <div class="auth-card">
             <h1>Cyberian.</h1>
             <p id="auth-subtitle">Welcome back, Operator.</p>
             
             <div class="input-group">
-                <input type="email" id="email" placeholder="Email Address">
+                <!-- ID is now 'username' -->
+                <input type="text" id="username" placeholder="Username">
             </div>
             <div class="input-group">
                 <input type="password" id="password" placeholder="Password">
             </div>
 
-            <button onclick="handleAuth()" id="auth-btn" class="primary-btn">Log In</button>
+            <button id="auth-btn" class="primary-btn">Log In</button>
             
-            <p class="toggle-text" onclick="toggleAuthMode()">
+            <p class="toggle-text" id="toggle-btn">
                 New here? <span id="toggle-link">Create an account</span>
             </p>
             <div id="auth-msg"></div>
@@ -57,7 +59,7 @@
             </div>
 
             <div class="user-profile">
-                <span id="user-email-display">user@cyberian.io</span>
+                <span id="user-display">user</span>
                 <button onclick="logout()" class="logout-btn"><i class="ph ph-sign-out"></i></button>
             </div>
         </nav>
@@ -65,51 +67,48 @@
         <!-- MAIN CONTENT AREA -->
         <main class="content-area">
             
-            <!-- SECTION: COURSES -->
+            <!-- COURSES -->
             <section id="view-courses" class="view active-view">
                 <header>
                     <h2>Structured Paths</h2>
                     <p>Curated playlists to take you from Zero to Hero.</p>
                 </header>
                 <div id="course-grid" class="grid-layout">
-                    <!-- JS Injects Courses Here -->
                     <div class="loader">Loading paths...</div>
                 </div>
             </section>
 
-            <!-- SECTION: FIELDS -->
+            <!-- FIELDS -->
             <section id="view-fields" class="view">
                 <header>
                     <h2>Knowledge Fields</h2>
-                    <p>Explore specific categories of cybersecurity.</p>
+                    <p>Explore specific categories.</p>
                 </header>
                 <div id="fields-grid" class="grid-layout"></div>
             </section>
 
-             <!-- SECTION: FAVORITES -->
+             <!-- FAVORITES -->
              <section id="view-favorites" class="view">
                 <header>
                     <h2>Your Collection</h2>
-                    <p>Videos you've saved for later.</p>
                 </header>
                 <div id="favorites-grid" class="grid-layout"></div>
             </section>
 
-            <!-- SECTION: SETTINGS -->
+            <!-- SETTINGS -->
             <section id="view-settings" class="view">
                 <header>
                     <h2>System Settings</h2>
-                    <p>Customize your Cyberian experience.</p>
                 </header>
                 
                 <div class="settings-card">
                     <h3>Visuals</h3>
                     <div class="color-picker">
                         <p>Accent Color:</p>
-                        <div class="swatch purple" onclick="setTheme('#cba6f7')" title="Pastel Purple"></div>
-                        <div class="swatch blue" onclick="setTheme('#89b4fa')" title="Pastel Blue"></div>
-                        <div class="swatch green" onclick="setTheme('#a6e3a1')" title="Pastel Green"></div>
-                        <div class="swatch pink" onclick="setTheme('#f5c2e7')" title="Pastel Pink"></div>
+                        <div class="swatch purple" onclick="setTheme('#cba6f7')"></div>
+                        <div class="swatch blue" onclick="setTheme('#89b4fa')"></div>
+                        <div class="swatch green" onclick="setTheme('#a6e3a1')"></div>
+                        <div class="swatch pink" onclick="setTheme('#f5c2e7')"></div>
                     </div>
                 </div>
 
@@ -124,21 +123,6 @@
 
         </main>
 
-        <!-- VIDEO PLAYER OVERLAY -->
-        <div id="video-overlay" class="overlay">
-            <div class="video-modal">
-                <div class="video-header">
-                    <h3 id="video-title">Video Title</h3>
-                    <button onclick="closeVideo()"><i class="ph ph-x"></i></button>
-                </div>
-                <div id="embed-container"></div>
-                <div class="video-actions">
-                    <button onclick="toggleFavorite()" id="fav-action-btn" class="action-btn"><i class="ph ph-heart"></i> Favorite</button>
-                    <button onclick="markComplete()" id="complete-btn" class="action-btn primary"><i class="ph ph-check-circle"></i> Complete</button>
-                </div>
-            </div>
-        </div>
-
         <!-- AI WIDGET -->
         <div class="ai-fab">
             <button onclick="toggleChat()" class="ai-toggle">
@@ -151,7 +135,7 @@
                     <button onclick="toggleChat()"><i class="ph ph-caret-down"></i></button>
                 </div>
                 <div id="ai-messages">
-                    <div class="ai-msg">Hello. I am connected to the Mistral-7B Engine. How can I help you learn today?</div>
+                    <div class="ai-msg">Hello. I am connected to the Mistral-7B Engine.</div>
                 </div>
                 <div class="ai-input-area">
                     <input type="text" id="ai-input" placeholder="Ask about cybersecurity..." onkeypress="handleAiEnter(event)">
@@ -162,6 +146,7 @@
 
     </div>
 
-    <script src="script.js"></script>
+    <!-- Script at the end -->
+    <script src="script.js?v=3"></script>
 </body>
 </html>
