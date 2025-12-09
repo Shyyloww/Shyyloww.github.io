@@ -9,205 +9,8 @@
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     
-    <style>
-        /* --- 1. DESIGN SYSTEM VARIABLES --- */
-        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap');
-
-        :root {
-            --bg-body: #0f1016;
-            --bg-sidebar: #13141c;
-            --bg-card: #1c1e29;
-            --bg-hover: #252736;
-            
-            --text-main: #ffffff;
-            --text-muted: #94a3b8;
-            
-            --primary: #cba6f7;
-            --primary-glow: rgba(203, 166, 247, 0.3);
-            
-            --border: rgba(255, 255, 255, 0.05);
-            --radius: 12px;
-            --radius-sm: 8px;
-            
-            --font-display: 'Space Grotesk', sans-serif;
-            --font-body: 'Inter', sans-serif;
-        }
-
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-
-        body {
-            background-color: var(--bg-body);
-            color: var(--text-main);
-            font-family: var(--font-body);
-            height: 100vh;
-            overflow: hidden;
-            display: flex;
-        }
-
-        /* --- 2. AUTHENTICATION OVERLAY --- */
-        #auth-container {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: radial-gradient(circle at 50% 0%, #2a2d3d 0%, var(--bg-body) 70%);
-            display: flex; justify-content: center; align-items: center; z-index: 999;
-        }
-
-        .auth-card {
-            background: rgba(28, 30, 41, 0.8);
-            backdrop-filter: blur(20px);
-            padding: 3rem;
-            border-radius: 24px;
-            width: 100%; max-width: 420px;
-            border: 1px solid var(--border);
-            text-align: center;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
-        }
-
-        .auth-logo { 
-            font-family: var(--font-display); font-size: 2.5rem; font-weight: 700; 
-            color: white; letter-spacing: -1px; margin-bottom: 0.5rem; 
-        }
-        .auth-logo span { color: var(--primary); }
-
-        .input-wrapper { margin-bottom: 1rem; position: relative; }
-        
-        .input-wrapper input {
-            width: 100%; padding: 14px 16px; 
-            background: var(--bg-body); border: 1px solid var(--border);
-            border-radius: var(--radius-sm); color: white; outline: none;
-            transition: 0.3s; font-size: 0.95rem;
-        }
-        .input-wrapper input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-glow); }
-
-        .btn-primary {
-            width: 100%; padding: 14px; background: var(--primary);
-            color: #000; border: none; border-radius: var(--radius-sm);
-            font-weight: 600; cursor: pointer; transition: 0.3s; font-size: 1rem;
-        }
-        .btn-primary:hover { filter: brightness(1.1); transform: translateY(-1px); }
-
-        .link-text { margin-top: 1.5rem; color: var(--text-muted); font-size: 0.9rem; cursor: pointer; }
-        .link-text:hover { color: var(--primary); }
-
-        /* --- 3. MAIN DASHBOARD LAYOUT --- */
-        #app-container { display: none; width: 100%; height: 100%; }
-
-        /* Sidebar */
-        .sidebar {
-            width: 280px; background: var(--bg-sidebar); border-right: 1px solid var(--border);
-            padding: 2rem 1.5rem; display: flex; flex-direction: column;
-            justify-content: space-between; flex-shrink: 0;
-        }
-
-        .brand-area { display: flex; align-items: center; gap: 10px; margin-bottom: 3rem; padding-left: 0.5rem; }
-        .brand-area i { font-size: 1.8rem; color: var(--primary); }
-        .brand-text { font-family: var(--font-display); font-weight: 700; font-size: 1.4rem; }
-
-        .nav-item {
-            display: flex; align-items: center; gap: 12px; padding: 14px;
-            color: var(--text-muted); text-decoration: none; border-radius: var(--radius-sm);
-            margin-bottom: 0.5rem; transition: 0.2s; cursor: pointer; font-weight: 500;
-        }
-        .nav-item:hover { background: var(--bg-hover); color: white; }
-        .nav-item.active { background: var(--bg-hover); color: var(--primary); }
-        .nav-item i { font-size: 1.2rem; }
-
-        .user-footer { border-top: 1px solid var(--border); padding-top: 1.5rem; display: flex; align-items: center; justify-content: space-between; }
-        .user-info { display: flex; flex-direction: column; }
-        .user-name { font-weight: 600; font-size: 0.9rem; }
-        .user-role { font-size: 0.75rem; color: var(--text-muted); }
-
-        /* Content Area */
-        .main-content { flex: 1; padding: 0; overflow-y: auto; background: var(--bg-body); }
-        .view { display: none; padding: 3rem; max-width: 1100px; margin: 0 auto; animation: fadeIn 0.4s ease; }
-        .view.active-view { display: block; }
-
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-        /* View Headers */
-        .hero { margin-bottom: 3rem; }
-        .hero h1 { font-family: var(--font-display); font-size: 2.5rem; font-weight: 700; margin-bottom: 0.5rem; }
-        .hero p { color: var(--text-muted); font-size: 1.1rem; }
-
-        /* --- 4. HORIZONTAL BAR COMPONENT (Used for Courses, Fields, Concepts) --- */
-        .list-stack { display: flex; flex-direction: column; gap: 16px; }
-
-        .bar-card {
-            display: flex; align-items: center; gap: 24px;
-            background: var(--bg-card); border: 1px solid var(--border);
-            padding: 1.5rem 2rem; border-radius: var(--radius); cursor: pointer;
-            transition: 0.2s ease; position: relative; overflow: hidden;
-        }
-        .bar-card:hover {
-            border-color: var(--primary);
-            transform: translateX(6px);
-            background: linear-gradient(90deg, var(--bg-card) 0%, rgba(203, 166, 247, 0.05) 100%);
-        }
-        
-        .bar-icon {
-            font-size: 2rem; color: var(--primary);
-            background: rgba(255,255,255,0.03); padding: 12px; border-radius: 12px;
-            display: flex; align-items: center; justify-content: center;
-        }
-        
-        .bar-content { flex: 1; }
-        .bar-content h3 { font-family: var(--font-display); font-size: 1.25rem; margin-bottom: 4px; }
-        .bar-content p { color: var(--text-muted); font-size: 0.95rem; }
-        
-        .bar-arrow { font-size: 1.5rem; color: var(--text-muted); opacity: 0.5; transition: 0.2s; }
-        .bar-card:hover .bar-arrow { opacity: 1; color: var(--primary); transform: translateX(5px); }
-
-        .badge { 
-            font-size: 0.75rem; font-weight: 600; padding: 4px 10px; 
-            border-radius: 20px; background: rgba(255,255,255,0.05); 
-            color: var(--primary); margin-bottom: 0.5rem; display: inline-block;
-        }
-
-        /* Search Input */
-        .concept-search { 
-            width: 100%; padding: 16px; background: var(--bg-card); 
-            border: 1px solid var(--border); border-radius: var(--radius); 
-            color: white; margin-bottom: 2rem; font-size: 1rem; outline: none; 
-        }
-        .concept-search:focus { border-color: var(--primary); }
-
-        /* --- 5. SETTINGS UI --- */
-        .settings-group { background: var(--bg-card); padding: 2rem; border-radius: var(--radius); margin-bottom: 2rem; border: 1px solid var(--border); }
-        .color-options { display: flex; gap: 12px; margin-top: 1rem; }
-        .swatch { width: 40px; height: 40px; border-radius: 50%; cursor: pointer; transition: 0.2s; border: 2px solid transparent; }
-        .swatch:hover { transform: scale(1.1); }
-        .purple { background: #cba6f7; } .blue { background: #89b4fa; } .green { background: #a6e3a1; } .pink { background: #f5c2e7; }
-
-        /* --- 6. AI CHAT WIDGET --- */
-        .ai-fab { position: fixed; bottom: 30px; right: 30px; z-index: 100; }
-        .ai-btn { 
-            width: 64px; height: 64px; border-radius: 50%; background: var(--primary); 
-            border: none; color: #000; font-size: 1.8rem; cursor: pointer; 
-            box-shadow: 0 10px 30px var(--primary-glow); transition: 0.3s; 
-            display: flex; align-items: center; justify-content: center;
-        }
-        .ai-btn:hover { transform: scale(1.1); }
-        
-        .ai-window { 
-            position: absolute; bottom: 80px; right: 0; width: 380px; height: 550px; 
-            background: #161821; border-radius: 24px; border: 1px solid var(--border);
-            display: none; flex-direction: column; overflow: hidden; 
-            box-shadow: 0 20px 50px rgba(0,0,0,0.5); 
-        }
-        .ai-window.visible { display: flex; animation: slideUp 0.3s ease; }
-        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-
-        .ai-header { padding: 1.5rem; background: var(--bg-card); border-bottom: 1px solid var(--border); font-weight: 600; display: flex; justify-content: space-between; align-items: center;}
-        .chat-box { flex: 1; padding: 1.5rem; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
-        .msg { padding: 12px 16px; border-radius: 12px; font-size: 0.95rem; max-width: 85%; line-height: 1.5; }
-        .msg.bot { background: var(--bg-card); color: var(--text-muted); align-self: flex-start; border-bottom-left-radius: 2px; }
-        .msg.user { background: var(--primary); color: #000; align-self: flex-end; border-bottom-right-radius: 2px; font-weight: 500; }
-        
-        .input-area { padding: 1rem; border-top: 1px solid var(--border); display: flex; gap: 10px; background: var(--bg-card); }
-        .input-area input { flex: 1; background: var(--bg-body); border: none; padding: 10px; border-radius: 8px; color: white; outline: none; }
-        .send-btn { background: none; border: none; color: var(--primary); cursor: pointer; font-size: 1.2rem; }
-
-        .hidden { display: none !important; }
-    </style>
+    <!-- Link to your CSS (Version 4 forces browser to reload it) -->
+    <link rel="stylesheet" href="style.css?v=4">
 </head>
 <body>
 
@@ -224,9 +27,9 @@
                 <input type="password" id="password" placeholder="Password">
             </div>
 
-            <button onclick="handleAuth()" class="btn-primary" id="auth-btn">Initialize Session</button>
-            <p class="link-text" onclick="toggleAuthMode()" id="toggle-text">Create new operator ID</p>
-            <div id="auth-msg" style="margin-top:1rem; color:#f38ba8; min-height:20px; font-size:0.9rem;"></div>
+            <button id="auth-btn" class="btn-primary">Initialize Session</button>
+            <p class="link-text" id="toggle-text">Create new operator ID</p>
+            <div id="auth-msg"></div>
         </div>
     </div>
 
@@ -242,23 +45,23 @@
                 </div>
                 
                 <nav>
-                    <div onclick="navTo('courses')" class="nav-item active" id="btn-courses">
+                    <div class="nav-item active" id="btn-courses">
                         <i class="ph ph-path"></i> Courses
                     </div>
-                    <div onclick="navTo('fields')" class="nav-item" id="btn-fields">
+                    <div class="nav-item" id="btn-fields">
                         <i class="ph ph-squares-four"></i> Fields
                     </div>
-                    <div onclick="navTo('concepts')" class="nav-item" id="btn-concepts">
+                    <div class="nav-item" id="btn-concepts">
                         <i class="ph ph-book-bookmark"></i> Concepts
                     </div>
-                    <div onclick="navTo('favorites')" class="nav-item" id="btn-favorites">
+                    <div class="nav-item" id="btn-favorites">
                         <i class="ph ph-heart"></i> Favorites
                     </div>
                 </nav>
             </div>
 
             <div>
-                <div onclick="navTo('settings')" class="nav-item" id="btn-settings">
+                <div class="nav-item" id="btn-settings">
                     <i class="ph ph-gear"></i> Settings
                 </div>
                 <div class="user-footer">
@@ -266,7 +69,7 @@
                         <span class="user-name" id="user-display">Operator</span>
                         <span class="user-role">Level 1 Access</span>
                     </div>
-                    <i class="ph ph-sign-out" style="cursor:pointer; color:#f38ba8;" onclick="logout()"></i>
+                    <i class="ph ph-sign-out" id="logout-btn" style="cursor:pointer; color:#f38ba8;"></i>
                 </div>
             </div>
         </aside>
@@ -274,7 +77,7 @@
         <!-- Main Content -->
         <main class="main-content">
             
-            <!-- 1. COURSES VIEW (Horizontal Stack) -->
+            <!-- 1. COURSES VIEW -->
             <section id="view-courses" class="view active-view">
                 <div class="hero">
                     <h1>Structured Paths</h1>
@@ -285,7 +88,7 @@
                 </div>
             </section>
 
-            <!-- 2. FIELDS VIEW (Horizontal Stack) -->
+            <!-- 2. FIELDS VIEW -->
             <section id="view-fields" class="view">
                 <div class="hero">
                     <h1>Knowledge Fields</h1>
@@ -294,19 +97,17 @@
                 <div id="fields-list" class="list-stack"></div>
             </section>
 
-            <!-- 3. CONCEPTS VIEW (Horizontal Stack + Search) -->
+            <!-- 3. CONCEPTS VIEW -->
             <section id="view-concepts" class="view">
                 <div class="hero">
                     <h1>The Encyclopedia</h1>
                     <p>Core terminology and definitions.</p>
                 </div>
-                <input type="text" class="concept-search" placeholder="Search concepts (e.g. 'Phishing')..." onkeyup="filterConcepts(this.value)">
-                
-                <!-- This container uses the Stack layout now, not Grid -->
+                <input type="text" class="concept-search" placeholder="Search concepts (e.g. 'Phishing')...">
                 <div id="concepts-list" class="list-stack"></div>
             </section>
 
-            <!-- 4. FAVORITES VIEW (Horizontal Stack) -->
+            <!-- 4. FAVORITES VIEW -->
             <section id="view-favorites" class="view">
                 <div class="hero">
                     <h1>Your Collection</h1>
@@ -324,12 +125,11 @@
                 
                 <div class="settings-group">
                     <h3>Interface Theme</h3>
-                    <p style="color:var(--text-muted); margin-top:0.5rem;">Select your primary accent color.</p>
                     <div class="color-options">
-                        <div class="swatch purple" onclick="setTheme('#cba6f7')"></div>
-                        <div class="swatch blue" onclick="setTheme('#89b4fa')"></div>
-                        <div class="swatch green" onclick="setTheme('#a6e3a1')"></div>
-                        <div class="swatch pink" onclick="setTheme('#f5c2e7')"></div>
+                        <div class="swatch purple" data-color="#cba6f7"></div>
+                        <div class="swatch blue" data-color="#89b4fa"></div>
+                        <div class="swatch green" data-color="#a6e3a1"></div>
+                        <div class="swatch pink" data-color="#f5c2e7"></div>
                     </div>
                 </div>
 
@@ -338,7 +138,7 @@
                     <div class="input-wrapper" style="margin-top:1rem; max-width:300px;">
                         <input type="password" id="new-password" placeholder="New Password">
                     </div>
-                    <button onclick="changePassword()" class="btn-primary" style="width:auto; padding:10px 20px;">Update Password</button>
+                    <button id="update-pass-btn" class="btn-primary" style="width:auto; padding:10px 20px;">Update Password</button>
                     <p id="settings-msg" style="margin-top:10px; color:var(--primary);"></p>
                 </div>
             </section>
@@ -347,232 +147,25 @@
 
         <!-- AI CHAT WIDGET -->
         <div class="ai-fab">
-            <button onclick="toggleChat()" class="ai-btn"><i class="ph-fill ph-sparkle"></i></button>
+            <button id="ai-toggle-btn" class="ai-btn"><i class="ph-fill ph-sparkle"></i></button>
             <div id="ai-window" class="ai-window">
                 <div class="ai-header">
-                    <span>AI Tutor (Zephyr)</span>
-                    <i class="ph ph-x" style="cursor:pointer" onclick="toggleChat()"></i>
+                    <span>AI Tutor (Mistral)</span>
+                    <i class="ph ph-x" id="ai-close-btn" style="cursor:pointer"></i>
                 </div>
                 <div id="ai-messages" class="chat-box">
                     <div class="msg bot">System Online. How can I assist your learning today?</div>
                 </div>
                 <div class="input-area">
-                    <input type="text" id="ai-input" placeholder="Ask a question..." onkeypress="if(event.key==='Enter') sendAiMessage()">
-                    <button class="send-btn" onclick="sendAiMessage()"><i class="ph-fill ph-paper-plane-right"></i></button>
+                    <input type="text" id="ai-input" placeholder="Ask a question...">
+                    <button class="send-btn" id="ai-send-btn"><i class="ph-fill ph-paper-plane-right"></i></button>
                 </div>
             </div>
         </div>
 
     </div>
 
-    <!-- LOGIC SCRIPT -->
-    <script>
-        // --- CONFIGURATION ---
-        const SUPABASE_URL = 'https://exjayvebshmlzdwjbhkv.supabase.co'; 
-        const SUPABASE_KEY = 'sb_publishable_M_mIHSDGIHaBR2s9K9FkSg_Hy1FMn85'; 
-        const AI_SERVER_URL = 'https://shyyloww-github-io-1.onrender.com';
-
-        const sbClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-        
-        let isLoginMode = true;
-        let currentUser = null;
-        let allConcepts = []; // Store concepts locally for fast search
-
-        // --- AUTHENTICATION ---
-        async function handleAuth() {
-            try {
-                const userIn = document.getElementById('username').value.trim();
-                const passIn = document.getElementById('password').value;
-                const msg = document.getElementById('auth-msg');
-
-                if(!userIn || !passIn) { msg.innerText = "Credentials required."; return; }
-                if(passIn.length < 6) { msg.innerText = "Password too short."; return; }
-                
-                msg.innerText = "Authenticating...";
-                // Create fake email from username
-                const fakeEmail = userIn + "@cyberian.io";
-
-                if(isLoginMode) {
-                    // Sign In
-                    const { error } = await sbClient.auth.signInWithPassword({ email: fakeEmail, password: passIn });
-                    if(error) throw error;
-                    location.reload();
-                } else {
-                    // Sign Up
-                    const { error } = await sbClient.auth.signUp({
-                        email: fakeEmail, password: passIn,
-                        options: { data: { username: userIn } }
-                    });
-                    if(error) throw error;
-                    msg.innerText = "ID Created. Logging in...";
-                    setTimeout(() => location.reload(), 1500);
-                }
-            } catch (err) {
-                document.getElementById('auth-msg').innerText = err.message;
-            }
-        }
-
-        function toggleAuthMode() {
-            isLoginMode = !isLoginMode;
-            document.getElementById('auth-btn').innerText = isLoginMode ? "Initialize Session" : "Create ID";
-            document.getElementById('toggle-text').innerText = isLoginMode ? "Create new operator ID" : "Return to login";
-            document.getElementById('auth-msg').innerText = "";
-        }
-
-        async function logout() { await sbClient.auth.signOut(); location.reload(); }
-
-        // --- INITIALIZATION ---
-        window.onload = async () => {
-            // Load Theme
-            const savedTheme = localStorage.getItem('cyberian-theme');
-            if(savedTheme) setTheme(savedTheme);
-
-            // Check Session
-            const { data: { session } } = await sbClient.auth.getSession();
-            if(session) {
-                currentUser = session.user;
-                document.getElementById('auth-container').classList.add('hidden');
-                document.getElementById('app-container').style.display = 'flex';
-                
-                const name = currentUser.user_metadata?.username || currentUser.email.split('@')[0];
-                document.getElementById('user-display').innerText = name;
-                
-                loadData();
-            } else {
-                document.getElementById('auth-container').style.display = 'flex';
-            }
-        };
-
-        // --- NAVIGATION ---
-        function navTo(sec) {
-            // Hide all views, show selected
-            document.querySelectorAll('.view').forEach(el => el.classList.remove('active-view'));
-            document.getElementById('view-'+sec).classList.add('active-view');
-            
-            // Update sidebar active state
-            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-            const btn = document.getElementById('btn-'+sec);
-            if(btn) btn.classList.add('active');
-        }
-
-        // --- DATA LOADING ---
-        async function loadData() {
-            // 1. Courses (Render as Horizontal Bars)
-            const { data: courses } = await sbClient.from('courses').select('*');
-            const cList = document.getElementById('course-list');
-            if(courses?.length) {
-                cList.innerHTML = courses.map(c => `
-                    <div class="bar-card">
-                        <div class="bar-icon">
-                            <i class="ph-fill ph-graduation-cap"></i>
-                        </div>
-                        <div class="bar-content">
-                            <span class="badge">${c.level}</span>
-                            <h3>${c.title}</h3>
-                            <p>${c.description || "Start this learning path."}</p>
-                        </div>
-                        <div class="bar-arrow">
-                            <i class="ph-bold ph-caret-right"></i>
-                        </div>
-                    </div>
-                `).join('');
-            } else {
-                cList.innerHTML = `<p style="color:var(--text-muted)">No courses found. Check database.</p>`;
-            }
-
-            // 2. Fields (Render as Horizontal Bars)
-            const { data: cats } = await sbClient.from('categories').select('*');
-            const fList = document.getElementById('fields-list');
-            if(cats?.length) {
-                fList.innerHTML = cats.map(c => `
-                    <div class="bar-card">
-                        <div class="bar-icon">
-                            <i class="ph-fill ph-folder-notch"></i>
-                        </div>
-                        <div class="bar-content">
-                            <h3>${c.title}</h3>
-                            <p>${c.description || "Explore this domain."}</p>
-                        </div>
-                        <div class="bar-arrow">
-                            <i class="ph-bold ph-caret-right"></i>
-                        </div>
-                    </div>
-                `).join('');
-            }
-
-            // 3. Concepts (Render as Horizontal Bars)
-            const { data: concepts } = await sbClient.from('concepts').select('*');
-            allConcepts = concepts || [];
-            renderConcepts(allConcepts);
-        }
-
-        function renderConcepts(list) {
-            const listContainer = document.getElementById('concepts-list');
-            if(list.length) {
-                listContainer.innerHTML = list.map(c => `
-                    <div class="bar-card">
-                        <div class="bar-icon">
-                            <i class="ph-fill ph-book-bookmark"></i>
-                        </div>
-                        <div class="bar-content">
-                            <h3>${c.title}</h3>
-                            <p>${c.definition}</p>
-                        </div>
-                    </div>
-                `).join('');
-            } else {
-                listContainer.innerHTML = `<p style="color:var(--text-muted)">No concepts found.</p>`;
-            }
-        }
-
-        function filterConcepts(query) {
-            const filtered = allConcepts.filter(c => c.title.toLowerCase().includes(query.toLowerCase()));
-            renderConcepts(filtered);
-        }
-
-        // --- THEME ---
-        function setTheme(c) {
-            document.documentElement.style.setProperty('--primary', c);
-            document.documentElement.style.setProperty('--primary-glow', c + '4d'); // 30% opacity
-            localStorage.setItem('cyberian-theme', c);
-        }
-
-        async function changePassword() {
-            const pass = document.getElementById('new-password').value;
-            const msg = document.getElementById('settings-msg');
-            if(pass.length < 6) return msg.innerText = "Too short.";
-            
-            const { error } = await sbClient.auth.updateUser({ password: pass });
-            msg.innerText = error ? error.message : "Password updated.";
-        }
-
-        // --- AI CHAT ---
-        function toggleChat() {
-            document.getElementById('ai-window').classList.toggle('visible');
-        }
-
-        async function sendAiMessage() {
-            const inp = document.getElementById('ai-input');
-            const txt = inp.value; if(!txt) return;
-            
-            const box = document.getElementById('ai-messages');
-            box.innerHTML += `<div class="msg user">${txt}</div>`;
-            inp.value = "";
-            box.scrollTop = box.scrollHeight;
-
-            try {
-                const res = await fetch(`${AI_SERVER_URL}/ask-ai`, {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ user_id: currentUser.id, question: txt })
-                });
-                const d = await res.json();
-                box.innerHTML += `<div class="msg bot">${d.answer}</div>`;
-            } catch(e) {
-                box.innerHTML += `<div class="msg bot">Connection Error. Is the Render server awake?</div>`;
-            }
-            box.scrollTop = box.scrollHeight;
-        }
-    </script>
+    <!-- Link to your Javascript (Version 4 forces browser to reload it) -->
+    <script src="script.js?v=4" defer></script>
 </body>
 </html>
