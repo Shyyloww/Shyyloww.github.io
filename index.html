@@ -4,23 +4,35 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cyberian // Learn</title>
+    
+    <!-- Libraries -->
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    
     <style>
+        /* --- DESIGN SYSTEM --- */
         @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap');
 
         :root {
+            /* Palette */
             --bg-body: #0f1016;
             --bg-sidebar: #13141c;
             --bg-card: #1c1e29;
             --bg-hover: #252736;
+            
             --text-main: #ffffff;
             --text-muted: #94a3b8;
+            
+            /* Accents */
             --primary: #cba6f7;
             --primary-glow: rgba(203, 166, 247, 0.3);
+            
+            /* UI Elements */
             --border: rgba(255, 255, 255, 0.05);
-            --radius: 16px;
+            --radius: 12px;
             --radius-sm: 8px;
+            
+            /* Typography */
             --font-display: 'Space Grotesk', sans-serif;
             --font-body: 'Inter', sans-serif;
         }
@@ -36,7 +48,7 @@
             display: flex;
         }
 
-        /* --- AUTH SCREEN --- */
+        /* --- AUTHENTICATION SCREEN --- */
         #auth-container {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: radial-gradient(circle at 50% 0%, #2a2d3d 0%, var(--bg-body) 70%);
@@ -54,9 +66,13 @@
             box-shadow: 0 20px 50px rgba(0,0,0,0.5);
         }
 
-        .auth-logo { font-family: var(--font-display); font-size: 2.5rem; font-weight: 700; color: white; letter-spacing: -1px; margin-bottom: 0.5rem; }
+        .auth-logo { 
+            font-family: var(--font-display); font-size: 2.5rem; font-weight: 700; 
+            color: white; letter-spacing: -1px; margin-bottom: 0.5rem; 
+        }
         .auth-logo span { color: var(--primary); }
-        .input-wrapper { margin-bottom: 1rem; position: relative; }
+
+        .input-wrapper { margin-bottom: 1rem; }
         
         .input-wrapper input {
             width: 100%; padding: 14px 16px; 
@@ -72,17 +88,18 @@
             font-weight: 600; cursor: pointer; transition: 0.3s; font-size: 1rem;
         }
         .btn-primary:hover { filter: brightness(1.1); transform: translateY(-1px); }
+
         .link-text { margin-top: 1.5rem; color: var(--text-muted); font-size: 0.9rem; cursor: pointer; }
         .link-text:hover { color: var(--primary); }
 
-        /* --- MAIN LAYOUT --- */
+        /* --- APP LAYOUT --- */
         #app-container { display: none; width: 100%; height: 100%; }
 
-        /* SIDEBAR */
+        /* Sidebar Navigation */
         .sidebar {
             width: 280px; background: var(--bg-sidebar); border-right: 1px solid var(--border);
             padding: 2rem 1.5rem; display: flex; flex-direction: column;
-            justify-content: space-between;
+            justify-content: space-between; flex-shrink: 0;
         }
 
         .brand-area { display: flex; align-items: center; gap: 10px; margin-bottom: 3rem; padding-left: 0.5rem; }
@@ -103,56 +120,87 @@
         .user-name { font-weight: 600; font-size: 0.9rem; }
         .user-role { font-size: 0.75rem; color: var(--text-muted); }
 
-        /* CONTENT */
+        /* Main Content Area */
         .main-content { flex: 1; padding: 0; overflow-y: auto; background: var(--bg-body); }
-        .view { display: none; padding: 3rem; max-width: 1400px; margin: 0 auto; animation: fadeIn 0.4s ease; }
+        .view { display: none; padding: 3rem; max-width: 1100px; margin: 0 auto; animation: fadeIn 0.4s ease; }
         .view.active-view { display: block; }
 
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* HERO HEADER */
+        /* Headers */
         .hero { margin-bottom: 3rem; }
         .hero h1 { font-family: var(--font-display); font-size: 2.5rem; font-weight: 700; margin-bottom: 0.5rem; }
         .hero p { color: var(--text-muted); font-size: 1.1rem; }
 
-        /* GRIDS */
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 24px; }
-        
-        .card {
+        /* --- HORIZONTAL LIST LAYOUT (For Courses/Fields) --- */
+        .list-stack { display: flex; flex-direction: column; gap: 16px; }
+
+        .bar-card {
+            display: flex; align-items: center; gap: 24px;
             background: var(--bg-card); border: 1px solid var(--border);
-            padding: 1.5rem; border-radius: var(--radius); cursor: pointer;
-            transition: 0.3s; position: relative; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; height: 100%;
+            padding: 1.5rem 2rem; border-radius: var(--radius); cursor: pointer;
+            transition: 0.2s ease; position: relative; overflow: hidden;
         }
-        .card:hover { border-color: var(--primary); transform: translateY(-4px); box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
-        
-        .card-badge { 
-            display: inline-block; font-size: 0.75rem; font-weight: 600; 
-            padding: 4px 10px; border-radius: 20px; background: rgba(255,255,255,0.05); 
-            width: fit-content; margin-bottom: 1rem; color: var(--primary);
+        .bar-card:hover {
+            border-color: var(--primary);
+            transform: translateX(6px);
+            background: linear-gradient(90deg, var(--bg-card) 0%, rgba(203, 166, 247, 0.05) 100%);
         }
-        .card h3 { font-family: var(--font-display); font-size: 1.25rem; margin-bottom: 0.5rem; }
-        .card p { font-size: 0.95rem; color: var(--text-muted); line-height: 1.5; }
-        .card-icon { font-size: 2rem; margin-bottom: 1rem; color: var(--text-muted); }
         
-        /* CONCEPTS SPECIFIC */
-        .concept-card { border-left: 3px solid var(--primary); }
-        .concept-search { width: 100%; padding: 16px; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); color: white; margin-bottom: 2rem; font-size: 1rem; outline: none; }
+        .bar-icon {
+            font-size: 2rem; color: var(--primary);
+            background: rgba(255,255,255,0.03); padding: 12px; border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+        }
+        
+        .bar-content { flex: 1; }
+        .bar-content h3 { font-family: var(--font-display); font-size: 1.25rem; margin-bottom: 4px; }
+        .bar-content p { color: var(--text-muted); font-size: 0.95rem; }
+        
+        .bar-arrow { font-size: 1.5rem; color: var(--text-muted); opacity: 0.5; transition: 0.2s; }
+        .bar-card:hover .bar-arrow { opacity: 1; color: var(--primary); transform: translateX(5px); }
+
+        .badge { 
+            font-size: 0.75rem; font-weight: 600; padding: 4px 10px; 
+            border-radius: 20px; background: rgba(255,255,255,0.05); 
+            color: var(--primary); margin-bottom: 0.5rem; display: inline-block;
+        }
+
+        /* --- GRID LAYOUT (For Concepts) --- */
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 24px; }
+        
+        .concept-card { 
+            background: var(--bg-card); border: 1px solid var(--border); border-left: 3px solid var(--primary);
+            padding: 1.5rem; border-radius: var(--radius); transition: 0.2s; cursor: default;
+        }
+        .concept-card:hover { transform: translateY(-3px); box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+        
+        .concept-search { 
+            width: 100%; padding: 16px; background: var(--bg-card); 
+            border: 1px solid var(--border); border-radius: var(--radius); 
+            color: white; margin-bottom: 2rem; font-size: 1rem; outline: none; 
+        }
         .concept-search:focus { border-color: var(--primary); }
 
-        /* SETTINGS */
+        /* --- SETTINGS --- */
         .settings-group { background: var(--bg-card); padding: 2rem; border-radius: var(--radius); margin-bottom: 2rem; border: 1px solid var(--border); }
         .color-options { display: flex; gap: 12px; margin-top: 1rem; }
         .swatch { width: 40px; height: 40px; border-radius: 50%; cursor: pointer; transition: 0.2s; border: 2px solid transparent; }
         .swatch:hover { transform: scale(1.1); }
         .purple { background: #cba6f7; } .blue { background: #89b4fa; } .green { background: #a6e3a1; } .pink { background: #f5c2e7; }
 
-        /* AI CHAT */
+        /* --- AI CHAT FAB --- */
         .ai-fab { position: fixed; bottom: 30px; right: 30px; z-index: 100; }
-        .ai-btn { width: 64px; height: 64px; border-radius: 50%; background: var(--primary); border: none; color: #000; font-size: 1.8rem; cursor: pointer; box-shadow: 0 10px 30px var(--primary-glow); transition: 0.3s; display: flex; align-items: center; justify-content: center; }
+        .ai-btn { 
+            width: 64px; height: 64px; border-radius: 50%; background: var(--primary); 
+            border: none; color: #000; font-size: 1.8rem; cursor: pointer; 
+            box-shadow: 0 10px 30px var(--primary-glow); transition: 0.3s; 
+            display: flex; align-items: center; justify-content: center;
+        }
         .ai-btn:hover { transform: scale(1.1); }
         
         .ai-window { 
-            position: absolute; bottom: 80px; right: 0; width: 380px; height: 500px; 
+            position: absolute; bottom: 80px; right: 0; width: 380px; height: 550px; 
             background: #161821; border-radius: 24px; border: 1px solid var(--border);
             display: none; flex-direction: column; overflow: hidden; 
             box-shadow: 0 20px 50px rgba(0,0,0,0.5); 
@@ -160,7 +208,7 @@
         .ai-window.visible { display: flex; animation: slideUp 0.3s ease; }
         @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
-        .ai-header { padding: 1.5rem; background: var(--bg-card); border-bottom: 1px solid var(--border); font-weight: 600; display: flex; justify-content: space-between; }
+        .ai-header { padding: 1.5rem; background: var(--bg-card); border-bottom: 1px solid var(--border); font-weight: 600; display: flex; justify-content: space-between; align-items: center;}
         .chat-box { flex: 1; padding: 1.5rem; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
         .msg { padding: 12px 16px; border-radius: 12px; font-size: 0.95rem; max-width: 85%; line-height: 1.5; }
         .msg.bot { background: var(--bg-card); color: var(--text-muted); align-self: flex-start; border-bottom-left-radius: 2px; }
@@ -170,21 +218,20 @@
         .input-area input { flex: 1; background: var(--bg-body); border: none; padding: 10px; border-radius: 8px; color: white; outline: none; }
         .send-btn { background: none; border: none; color: var(--primary); cursor: pointer; font-size: 1.2rem; }
 
-        /* UTILS */
+        /* Utilities */
         .hidden { display: none !important; }
-        .text-gradient { background: linear-gradient(to right, white, var(--text-muted)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
     </style>
 </head>
 <body>
 
-    <!-- LOGIN SCREEN -->
+    <!-- 1. LOGIN SCREEN -->
     <div id="auth-container">
         <div class="auth-card">
             <div class="auth-logo">Cyberian<span>.</span></div>
             <p style="color:var(--text-muted); margin-bottom:2rem;">Secure Access Terminal</p>
             
             <div class="input-wrapper">
-                <input type="text" id="username" placeholder="Username">
+                <input type="text" id="username" placeholder="Operator Username">
             </div>
             <div class="input-wrapper">
                 <input type="password" id="password" placeholder="Password">
@@ -196,10 +243,10 @@
         </div>
     </div>
 
-    <!-- MAIN APP -->
+    <!-- 2. MAIN APP INTERFACE -->
     <div id="app-container">
         
-        <!-- SIDEBAR -->
+        <!-- Sidebar Navigation -->
         <aside class="sidebar">
             <div>
                 <div class="brand-area">
@@ -237,30 +284,32 @@
             </div>
         </aside>
 
-        <!-- CONTENT -->
+        <!-- Main Content Views -->
         <main class="main-content">
             
-            <!-- COURSES VIEW -->
+            <!-- VIEW: COURSES (Horizontal Stack) -->
             <section id="view-courses" class="view active-view">
                 <div class="hero">
                     <h1>Structured Paths</h1>
                     <p>Curated curriculums designed to take you from novice to expert.</p>
                 </div>
-                <div id="course-grid" class="grid">
-                    <!-- Skeletons will go here -->
+                <!-- This container uses .list-stack for vertical list layout -->
+                <div id="course-list" class="list-stack">
+                    <div style="color:var(--text-muted)">Loading paths...</div>
                 </div>
             </section>
 
-            <!-- FIELDS VIEW -->
+            <!-- VIEW: FIELDS (Horizontal Stack) -->
             <section id="view-fields" class="view">
                 <div class="hero">
                     <h1>Knowledge Fields</h1>
                     <p>Explore specific domains of cybersecurity technology.</p>
                 </div>
-                <div id="fields-grid" class="grid"></div>
+                <!-- This container uses .list-stack for vertical list layout -->
+                <div id="fields-list" class="list-stack"></div>
             </section>
 
-            <!-- NEW CONCEPTS VIEW -->
+            <!-- VIEW: CONCEPTS (Grid + Search) -->
             <section id="view-concepts" class="view">
                 <div class="hero">
                     <h1>The Encyclopedia</h1>
@@ -270,16 +319,16 @@
                 <div id="concepts-grid" class="grid"></div>
             </section>
 
-            <!-- FAVORITES VIEW -->
+            <!-- VIEW: FAVORITES (Horizontal Stack) -->
             <section id="view-favorites" class="view">
                 <div class="hero">
                     <h1>Your Collection</h1>
                     <p>Saved resources for quick access.</p>
                 </div>
-                <div id="favorites-grid" class="grid"></div>
+                <div id="favorites-grid" class="list-stack"></div>
             </section>
 
-            <!-- SETTINGS VIEW -->
+            <!-- VIEW: SETTINGS -->
             <section id="view-settings" class="view">
                 <div class="hero">
                     <h1>System Settings</h1>
@@ -309,12 +358,12 @@
 
         </main>
 
-        <!-- AI CHAT -->
+        <!-- 3. AI CHAT INTERFACE -->
         <div class="ai-fab">
             <button onclick="toggleChat()" class="ai-btn"><i class="ph-fill ph-sparkle"></i></button>
             <div id="ai-window" class="ai-window">
                 <div class="ai-header">
-                    <span>AI Tutor (Zephyr-7B)</span>
+                    <span>AI Tutor (Zephyr)</span>
                     <i class="ph ph-x" style="cursor:pointer" onclick="toggleChat()"></i>
                 </div>
                 <div id="ai-messages" class="chat-box">
@@ -329,8 +378,9 @@
 
     </div>
 
-    <!-- LOGIC -->
+    <!-- 4. JAVASCRIPT LOGIC -->
     <script>
+        // CONFIGURATION
         const SUPABASE_URL = 'https://exjayvebshmlzdwjbhkv.supabase.co'; 
         const SUPABASE_KEY = 'sb_publishable_M_mIHSDGIHaBR2s9K9FkSg_Hy1FMn85'; 
         const AI_SERVER_URL = 'https://shyyloww-github-io-1.onrender.com';
@@ -339,9 +389,9 @@
         
         let isLoginMode = true;
         let currentUser = null;
-        let allConcepts = []; // Store for searching
+        let allConcepts = []; // Store concepts locally for fast search
 
-        // --- AUTH ---
+        // --- AUTHENTICATION ---
         async function handleAuth() {
             try {
                 const userIn = document.getElementById('username').value.trim();
@@ -352,13 +402,16 @@
                 if(passIn.length < 6) { msg.innerText = "Password too short."; return; }
                 
                 msg.innerText = "Authenticating...";
+                // Create fake email from username
                 const fakeEmail = userIn + "@cyberian.io";
 
                 if(isLoginMode) {
+                    // Sign In
                     const { error } = await sbClient.auth.signInWithPassword({ email: fakeEmail, password: passIn });
                     if(error) throw error;
                     location.reload();
                 } else {
+                    // Sign Up
                     const { error } = await sbClient.auth.signUp({
                         email: fakeEmail, password: passIn,
                         options: { data: { username: userIn } }
@@ -381,11 +434,13 @@
 
         async function logout() { await sbClient.auth.signOut(); location.reload(); }
 
-        // --- INIT ---
+        // --- INITIALIZATION ---
         window.onload = async () => {
+            // Load Theme
             const savedTheme = localStorage.getItem('cyberian-theme');
             if(savedTheme) setTheme(savedTheme);
 
+            // Check Session
             const { data: { session } } = await sbClient.auth.getSession();
             if(session) {
                 currentUser = session.user;
@@ -403,51 +458,62 @@
 
         // --- NAVIGATION ---
         function navTo(sec) {
+            // Hide all views, show selected
             document.querySelectorAll('.view').forEach(el => el.classList.remove('active-view'));
             document.getElementById('view-'+sec).classList.add('active-view');
             
+            // Update sidebar active state
             document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-            // Try to find the button ID specifically
             const btn = document.getElementById('btn-'+sec);
             if(btn) btn.classList.add('active');
         }
 
         // --- DATA LOADING ---
         async function loadData() {
-            // Courses
+            // 1. Courses (Render as Horizontal Bars)
             const { data: courses } = await sbClient.from('courses').select('*');
-            const cGrid = document.getElementById('course-grid');
+            const cList = document.getElementById('course-list');
             if(courses?.length) {
-                cGrid.innerHTML = courses.map(c => `
-                    <div class="card">
-                        <div>
-                            <span class="card-badge">${c.level}</span>
+                cList.innerHTML = courses.map(c => `
+                    <div class="bar-card">
+                        <div class="bar-icon">
+                            <i class="ph-fill ph-graduation-cap"></i>
+                        </div>
+                        <div class="bar-content">
+                            <span class="badge">${c.level}</span>
                             <h3>${c.title}</h3>
                             <p>${c.description || "Start this learning path."}</p>
                         </div>
-                        <div style="margin-top:1rem; text-align:right; font-size:1.5rem; color:var(--primary);">
-                            <i class="ph-bold ph-arrow-right"></i>
+                        <div class="bar-arrow">
+                            <i class="ph-bold ph-caret-right"></i>
                         </div>
                     </div>
                 `).join('');
             } else {
-                cGrid.innerHTML = `<p style="color:var(--text-muted)">No courses database connection.</p>`;
+                cList.innerHTML = `<p style="color:var(--text-muted)">No courses found. Check database.</p>`;
             }
 
-            // Fields
+            // 2. Fields (Render as Horizontal Bars)
             const { data: cats } = await sbClient.from('categories').select('*');
-            const fGrid = document.getElementById('fields-grid');
+            const fList = document.getElementById('fields-list');
             if(cats?.length) {
-                fGrid.innerHTML = cats.map(c => `
-                    <div class="card">
-                        <i class="ph ph-folder-notch card-icon"></i>
-                        <h3>${c.title}</h3>
-                        <p>${c.description || "Explore this domain."}</p>
+                fList.innerHTML = cats.map(c => `
+                    <div class="bar-card">
+                        <div class="bar-icon">
+                            <i class="ph-fill ph-folder-notch"></i>
+                        </div>
+                        <div class="bar-content">
+                            <h3>${c.title}</h3>
+                            <p>${c.description || "Explore this domain."}</p>
+                        </div>
+                        <div class="bar-arrow">
+                            <i class="ph-bold ph-caret-right"></i>
+                        </div>
                     </div>
                 `).join('');
             }
 
-            // Concepts (NEW)
+            // 3. Concepts (Render as Grid)
             const { data: concepts } = await sbClient.from('concepts').select('*');
             allConcepts = concepts || [];
             renderConcepts(allConcepts);
@@ -457,13 +523,13 @@
             const grid = document.getElementById('concepts-grid');
             if(list.length) {
                 grid.innerHTML = list.map(c => `
-                    <div class="card concept-card">
+                    <div class="concept-card">
                         <h3>${c.title}</h3>
                         <p>${c.definition}</p>
                     </div>
                 `).join('');
             } else {
-                grid.innerHTML = `<p style="color:var(--text-muted)">No concepts found. Run SQL script.</p>`;
+                grid.innerHTML = `<p style="color:var(--text-muted)">No concepts found.</p>`;
             }
         }
 
@@ -488,7 +554,7 @@
             msg.innerText = error ? error.message : "Password updated.";
         }
 
-        // --- AI ---
+        // --- AI CHAT ---
         function toggleChat() {
             document.getElementById('ai-window').classList.toggle('visible');
         }
@@ -511,7 +577,7 @@
                 const d = await res.json();
                 box.innerHTML += `<div class="msg bot">${d.answer}</div>`;
             } catch(e) {
-                box.innerHTML += `<div class="msg bot">Connection Error. Wake up Render?</div>`;
+                box.innerHTML += `<div class="msg bot">Connection Error. Is the Render server awake?</div>`;
             }
             box.scrollTop = box.scrollHeight;
         }
