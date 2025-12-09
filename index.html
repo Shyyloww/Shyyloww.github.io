@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZERO_DAY // LEARNING</title>
+    <!-- Supabase JS Library -->
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- LOGIN SCREEN -->
+    <div id="login-container">
+        <div class="terminal-window">
+            <h1>>> AUTHENTICATE_USER</h1>
+            <p>Enter credentials to access the mainframe.</p>
+            <button onclick="loginWithGoogle()" class="btn-glitch">LOGIN WITH GOOGLE</button>
+        </div>
+    </div>
+
+    <!-- MAIN DASHBOARD (Hidden by default) -->
+    <div id="dashboard-container" style="display:none;">
+        
+        <!-- SIDEBAR -->
+        <nav class="sidebar">
+            <div class="logo">ZERO_DAY</div>
+            <button onclick="showSection('courses')">>> COURSES</button>
+            <button onclick="showSection('fields')">>> FIELDS</button>
+            <button onclick="showSection('favorites')">>> FAVORITES</button>
+            <button onclick="logout()" class="logout-btn">LOGOUT</button>
+        </nav>
+
+        <!-- CONTENT AREA -->
+        <main class="content">
+            
+            <!-- SECTION: COURSES (Playlists) -->
+            <div id="section-courses" class="section">
+                <h2>// STRUCTURED_PATHS</h2>
+                <div id="course-list" class="grid-container">
+                    <!-- Javascript will inject courses here -->
+                </div>
+            </div>
+
+            <!-- SECTION: FIELDS (Categories) -->
+            <div id="section-fields" class="section" style="display:none;">
+                <h2>// KNOWLEDGE_DOMAINS</h2>
+                <div id="category-list" class="grid-container"></div>
+            </div>
+
+            <!-- SECTION: VIDEO PLAYER (Overlay) -->
+            <div id="video-player-overlay" style="display:none;">
+                <button onclick="closeVideo()" class="close-btn">X</button>
+                <div id="video-frame-container"></div>
+                <div class="video-controls">
+                    <button onclick="markAsComplete()" id="complete-btn">MARK AS COMPLETE</button>
+                    <button onclick="toggleFavorite()" id="fav-btn">ADD TO FAVORITES</button>
+                </div>
+            </div>
+
+        </main>
+
+        <!-- AI CHAT WIDGET -->
+        <div class="ai-widget">
+            <div class="ai-header" onclick="toggleChat()">
+                <span class="status-dot"></span> T.U.T.O.R AI
+            </div>
+            <div id="ai-body" class="ai-body" style="display:none;">
+                <div id="chat-history"></div>
+                <input type="text" id="ai-input" placeholder="Query the system..." onkeypress="handleEnter(event)">
+            </div>
+        </div>
+
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

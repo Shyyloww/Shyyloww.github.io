@@ -3,5 +3,4 @@ uvicorn
 supabase
 python-multipart
 huggingface_hub
-ctransformers --no-binary ctransformers 
-# ^ or whatever library you use to run your specific model file (e.g., torch, transformers, llama-cpp-python)
+ctransformers
