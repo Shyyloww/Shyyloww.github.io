@@ -7,60 +7,72 @@ from huggingface_hub import InferenceClient
 
 app = FastAPI()
 
-# --- CORS SETTINGS (Allows your site to talk to this server) ---
+# --- 1. SECURITY: CORS MIDDLEWARE ---
+# This allows your GitHub Pages site to talk to this Render server.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["*"],  # Allows all origins (safe for public learning sites)
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# 1. CONNECT SUPABASE
+# --- 2. DATABASE CONNECTION (Supabase) ---
 SUPABASE_URL = os.environ.get("SUPABASE_URL")
 SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
 
 if SUPABASE_URL and SUPABASE_KEY:
     supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 else:
+    print("Warning: Supabase credentials missing. Logging disabled.")
     supabase = None
 
-# 2. CONNECT TO HUGGING FACE
-# We are switching to Zephyr-7b-beta because it allows "text_generation" on the free tier
+# --- 3. AI ENGINE CONNECTION (Hugging Face) ---
+# We use Zephyr-7B via the Chat Completion API.
+# This API automatically handles the prompt formatting.
 HF_TOKEN = os.environ.get("HF_TOKEN")
 client = InferenceClient("HuggingFaceH4/zephyr-7b-beta", token=HF_TOKEN)
 
+# --- 4. DATA MODELS ---
 class ChatRequest(BaseModel):
     user_id: str
     question: str
 
+# --- 5. ROUTES ---
+
 @app.get("/")
 def home():
-    return {"status": "Cyberian AI Online"}
+    return {"status": "Cyberian AI System Online", "model": "Zephyr-7B"}
 
 @app.post("/ask-ai")
 async def ask_ai(request: ChatRequest):
-    # Log to Supabase (Optional)
+    # Step A: Log the question to Supabase (if connected)
     if supabase:
         try:
             supabase.table("ai_logs").insert({
                 "user_id": request.user_id,
                 "question": request.question
             }).execute()
-        except:
-            pass 
+        except Exception as e:
+            print(f"Logging Error: {e}") 
 
-    # Generate Answer
-    # Zephyr uses a specific format: <|system|>...<|user|>...<|assistant|>
-    prompt = f"<|system|>\nYou are a helpful cybersecurity tutor. Keep answers short and technical.<|endoftext|>\n<|user|>\n{request.question}<|endoftext|>\n<|assistant|>\n"
-    
+    # Step B: specific instructions for the AI behavior
+    system_prompt = "You are a cybersecurity tutor named Cyberian. Keep answers technical, concise, and focused on security concepts. Do not hallucinate tools."
+
+    # Step C: Send to Hugging Face
     try:
-        response_text = ""
-        # We use text_generation because it is stable on the free tier
-        for token in client.text_generation(prompt, max_new_tokens=256, stream=True):
-            response_text += token
+        response = client.chat_completion(
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": request.question}
+            ],
+            max_tokens=512,
+            stream=False
+        )
         
-        return {"answer": response_text}
+        # Extract the actual text answer
+        answer_text = response.choices[0].message.content
+        return {"answer": answer_text}
 
     except Exception as e:
-        return {"answer": f"Error: {str(e)}"}
+        return {"answer": f"System Error: {str(e)}"}

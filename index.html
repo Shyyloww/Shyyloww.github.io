@@ -5,16 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cyberian // Learn</title>
     
-    <!-- Libraries -->
+    <!-- External Libraries -->
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     
     <style>
-        /* --- DESIGN SYSTEM --- */
+        /* --- 1. DESIGN SYSTEM VARIABLES --- */
         @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap');
 
         :root {
-            /* Palette */
             --bg-body: #0f1016;
             --bg-sidebar: #13141c;
             --bg-card: #1c1e29;
@@ -23,16 +22,13 @@
             --text-main: #ffffff;
             --text-muted: #94a3b8;
             
-            /* Accents */
             --primary: #cba6f7;
             --primary-glow: rgba(203, 166, 247, 0.3);
             
-            /* UI Elements */
             --border: rgba(255, 255, 255, 0.05);
             --radius: 12px;
             --radius-sm: 8px;
             
-            /* Typography */
             --font-display: 'Space Grotesk', sans-serif;
             --font-body: 'Inter', sans-serif;
         }
@@ -48,7 +44,7 @@
             display: flex;
         }
 
-        /* --- AUTHENTICATION SCREEN --- */
+        /* --- 2. AUTHENTICATION OVERLAY --- */
         #auth-container {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: radial-gradient(circle at 50% 0%, #2a2d3d 0%, var(--bg-body) 70%);
@@ -72,7 +68,7 @@
         }
         .auth-logo span { color: var(--primary); }
 
-        .input-wrapper { margin-bottom: 1rem; }
+        .input-wrapper { margin-bottom: 1rem; position: relative; }
         
         .input-wrapper input {
             width: 100%; padding: 14px 16px; 
@@ -92,10 +88,10 @@
         .link-text { margin-top: 1.5rem; color: var(--text-muted); font-size: 0.9rem; cursor: pointer; }
         .link-text:hover { color: var(--primary); }
 
-        /* --- APP LAYOUT --- */
+        /* --- 3. MAIN DASHBOARD LAYOUT --- */
         #app-container { display: none; width: 100%; height: 100%; }
 
-        /* Sidebar Navigation */
+        /* Sidebar */
         .sidebar {
             width: 280px; background: var(--bg-sidebar); border-right: 1px solid var(--border);
             padding: 2rem 1.5rem; display: flex; flex-direction: column;
@@ -120,19 +116,19 @@
         .user-name { font-weight: 600; font-size: 0.9rem; }
         .user-role { font-size: 0.75rem; color: var(--text-muted); }
 
-        /* Main Content Area */
+        /* Content Area */
         .main-content { flex: 1; padding: 0; overflow-y: auto; background: var(--bg-body); }
         .view { display: none; padding: 3rem; max-width: 1100px; margin: 0 auto; animation: fadeIn 0.4s ease; }
         .view.active-view { display: block; }
 
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* Headers */
+        /* View Headers */
         .hero { margin-bottom: 3rem; }
         .hero h1 { font-family: var(--font-display); font-size: 2.5rem; font-weight: 700; margin-bottom: 0.5rem; }
         .hero p { color: var(--text-muted); font-size: 1.1rem; }
 
-        /* --- HORIZONTAL LIST LAYOUT (For Courses/Fields) --- */
+        /* --- 4. HORIZONTAL BAR COMPONENT (Used for Courses, Fields, Concepts) --- */
         .list-stack { display: flex; flex-direction: column; gap: 16px; }
 
         .bar-card {
@@ -166,15 +162,7 @@
             color: var(--primary); margin-bottom: 0.5rem; display: inline-block;
         }
 
-        /* --- GRID LAYOUT (For Concepts) --- */
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 24px; }
-        
-        .concept-card { 
-            background: var(--bg-card); border: 1px solid var(--border); border-left: 3px solid var(--primary);
-            padding: 1.5rem; border-radius: var(--radius); transition: 0.2s; cursor: default;
-        }
-        .concept-card:hover { transform: translateY(-3px); box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
-        
+        /* Search Input */
         .concept-search { 
             width: 100%; padding: 16px; background: var(--bg-card); 
             border: 1px solid var(--border); border-radius: var(--radius); 
@@ -182,14 +170,14 @@
         }
         .concept-search:focus { border-color: var(--primary); }
 
-        /* --- SETTINGS --- */
+        /* --- 5. SETTINGS UI --- */
         .settings-group { background: var(--bg-card); padding: 2rem; border-radius: var(--radius); margin-bottom: 2rem; border: 1px solid var(--border); }
         .color-options { display: flex; gap: 12px; margin-top: 1rem; }
         .swatch { width: 40px; height: 40px; border-radius: 50%; cursor: pointer; transition: 0.2s; border: 2px solid transparent; }
         .swatch:hover { transform: scale(1.1); }
         .purple { background: #cba6f7; } .blue { background: #89b4fa; } .green { background: #a6e3a1; } .pink { background: #f5c2e7; }
 
-        /* --- AI CHAT FAB --- */
+        /* --- 6. AI CHAT WIDGET --- */
         .ai-fab { position: fixed; bottom: 30px; right: 30px; z-index: 100; }
         .ai-btn { 
             width: 64px; height: 64px; border-radius: 50%; background: var(--primary); 
@@ -218,13 +206,12 @@
         .input-area input { flex: 1; background: var(--bg-body); border: none; padding: 10px; border-radius: 8px; color: white; outline: none; }
         .send-btn { background: none; border: none; color: var(--primary); cursor: pointer; font-size: 1.2rem; }
 
-        /* Utilities */
         .hidden { display: none !important; }
     </style>
 </head>
 <body>
 
-    <!-- 1. LOGIN SCREEN -->
+    <!-- LOGIN SECTION -->
     <div id="auth-container">
         <div class="auth-card">
             <div class="auth-logo">Cyberian<span>.</span></div>
@@ -243,10 +230,10 @@
         </div>
     </div>
 
-    <!-- 2. MAIN APP INTERFACE -->
+    <!-- MAIN APP SECTION -->
     <div id="app-container">
         
-        <!-- Sidebar Navigation -->
+        <!-- Sidebar -->
         <aside class="sidebar">
             <div>
                 <div class="brand-area">
@@ -284,42 +271,42 @@
             </div>
         </aside>
 
-        <!-- Main Content Views -->
+        <!-- Main Content -->
         <main class="main-content">
             
-            <!-- VIEW: COURSES (Horizontal Stack) -->
+            <!-- 1. COURSES VIEW (Horizontal Stack) -->
             <section id="view-courses" class="view active-view">
                 <div class="hero">
                     <h1>Structured Paths</h1>
                     <p>Curated curriculums designed to take you from novice to expert.</p>
                 </div>
-                <!-- This container uses .list-stack for vertical list layout -->
                 <div id="course-list" class="list-stack">
                     <div style="color:var(--text-muted)">Loading paths...</div>
                 </div>
             </section>
 
-            <!-- VIEW: FIELDS (Horizontal Stack) -->
+            <!-- 2. FIELDS VIEW (Horizontal Stack) -->
             <section id="view-fields" class="view">
                 <div class="hero">
                     <h1>Knowledge Fields</h1>
                     <p>Explore specific domains of cybersecurity technology.</p>
                 </div>
-                <!-- This container uses .list-stack for vertical list layout -->
                 <div id="fields-list" class="list-stack"></div>
             </section>
 
-            <!-- VIEW: CONCEPTS (Grid + Search) -->
+            <!-- 3. CONCEPTS VIEW (Horizontal Stack + Search) -->
             <section id="view-concepts" class="view">
                 <div class="hero">
                     <h1>The Encyclopedia</h1>
                     <p>Core terminology and definitions.</p>
                 </div>
                 <input type="text" class="concept-search" placeholder="Search concepts (e.g. 'Phishing')..." onkeyup="filterConcepts(this.value)">
-                <div id="concepts-grid" class="grid"></div>
+                
+                <!-- This container uses the Stack layout now, not Grid -->
+                <div id="concepts-list" class="list-stack"></div>
             </section>
 
-            <!-- VIEW: FAVORITES (Horizontal Stack) -->
+            <!-- 4. FAVORITES VIEW (Horizontal Stack) -->
             <section id="view-favorites" class="view">
                 <div class="hero">
                     <h1>Your Collection</h1>
@@ -328,7 +315,7 @@
                 <div id="favorites-grid" class="list-stack"></div>
             </section>
 
-            <!-- VIEW: SETTINGS -->
+            <!-- 5. SETTINGS VIEW -->
             <section id="view-settings" class="view">
                 <div class="hero">
                     <h1>System Settings</h1>
@@ -358,7 +345,7 @@
 
         </main>
 
-        <!-- 3. AI CHAT INTERFACE -->
+        <!-- AI CHAT WIDGET -->
         <div class="ai-fab">
             <button onclick="toggleChat()" class="ai-btn"><i class="ph-fill ph-sparkle"></i></button>
             <div id="ai-window" class="ai-window">
@@ -378,9 +365,9 @@
 
     </div>
 
-    <!-- 4. JAVASCRIPT LOGIC -->
+    <!-- LOGIC SCRIPT -->
     <script>
-        // CONFIGURATION
+        // --- CONFIGURATION ---
         const SUPABASE_URL = 'https://exjayvebshmlzdwjbhkv.supabase.co'; 
         const SUPABASE_KEY = 'sb_publishable_M_mIHSDGIHaBR2s9K9FkSg_Hy1FMn85'; 
         const AI_SERVER_URL = 'https://shyyloww-github-io-1.onrender.com';
@@ -513,23 +500,28 @@
                 `).join('');
             }
 
-            // 3. Concepts (Render as Grid)
+            // 3. Concepts (Render as Horizontal Bars)
             const { data: concepts } = await sbClient.from('concepts').select('*');
             allConcepts = concepts || [];
             renderConcepts(allConcepts);
         }
 
         function renderConcepts(list) {
-            const grid = document.getElementById('concepts-grid');
+            const listContainer = document.getElementById('concepts-list');
             if(list.length) {
-                grid.innerHTML = list.map(c => `
-                    <div class="concept-card">
-                        <h3>${c.title}</h3>
-                        <p>${c.definition}</p>
+                listContainer.innerHTML = list.map(c => `
+                    <div class="bar-card">
+                        <div class="bar-icon">
+                            <i class="ph-fill ph-book-bookmark"></i>
+                        </div>
+                        <div class="bar-content">
+                            <h3>${c.title}</h3>
+                            <p>${c.definition}</p>
+                        </div>
                     </div>
                 `).join('');
             } else {
-                grid.innerHTML = `<p style="color:var(--text-muted)">No concepts found.</p>`;
+                listContainer.innerHTML = `<p style="color:var(--text-muted)">No concepts found.</p>`;
             }
         }
 
