@@ -3,71 +3,160 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ZERO_DAY // LEARNING</title>
-    <!-- Supabase JS Library -->
+    <title>Cyberian // Learn</title>
+    <!-- Supabase JS -->
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <!-- Phosphor Icons (Clean modern icons) -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <!-- LOGIN SCREEN -->
-    <div id="login-container">
-        <div class="terminal-window">
-            <h1>>> AUTHENTICATE_USER</h1>
-            <p>Enter credentials to access the mainframe.</p>
-            <button onclick="loginWithGoogle()" class="btn-glitch">LOGIN WITH GOOGLE</button>
+    <!-- AUTH SCREEN (Login/Signup) -->
+    <div id="auth-container">
+        <div class="auth-card">
+            <h1>Cyberian.</h1>
+            <p id="auth-subtitle">Welcome back, Operator.</p>
+            
+            <div class="input-group">
+                <input type="email" id="email" placeholder="Email Address">
+            </div>
+            <div class="input-group">
+                <input type="password" id="password" placeholder="Password">
+            </div>
+
+            <button onclick="handleAuth()" id="auth-btn" class="primary-btn">Log In</button>
+            
+            <p class="toggle-text" onclick="toggleAuthMode()">
+                New here? <span id="toggle-link">Create an account</span>
+            </p>
+            <div id="auth-msg"></div>
         </div>
     </div>
 
-    <!-- MAIN DASHBOARD (Hidden by default) -->
-    <div id="dashboard-container" style="display:none;">
+    <!-- MAIN APP DASHBOARD -->
+    <div id="app-container" style="display:none;">
         
         <!-- SIDEBAR -->
         <nav class="sidebar">
-            <div class="logo">ZERO_DAY</div>
-            <button onclick="showSection('courses')">>> COURSES</button>
-            <button onclick="showSection('fields')">>> FIELDS</button>
-            <button onclick="showSection('favorites')">>> FAVORITES</button>
-            <button onclick="logout()" class="logout-btn">LOGOUT</button>
+            <div class="brand">Cyberian.</div>
+            
+            <div class="menu">
+                <button onclick="navTo('courses')" class="nav-btn active">
+                    <i class="ph ph-books"></i> Courses
+                </button>
+                <button onclick="navTo('fields')" class="nav-btn">
+                    <i class="ph ph-squares-four"></i> Fields
+                </button>
+                <button onclick="navTo('favorites')" class="nav-btn">
+                    <i class="ph ph-heart"></i> Favorites
+                </button>
+                <button onclick="navTo('settings')" class="nav-btn">
+                    <i class="ph ph-gear"></i> Settings
+                </button>
+            </div>
+
+            <div class="user-profile">
+                <span id="user-email-display">user@cyberian.io</span>
+                <button onclick="logout()" class="logout-btn"><i class="ph ph-sign-out"></i></button>
+            </div>
         </nav>
 
-        <!-- CONTENT AREA -->
-        <main class="content">
+        <!-- MAIN CONTENT AREA -->
+        <main class="content-area">
             
-            <!-- SECTION: COURSES (Playlists) -->
-            <div id="section-courses" class="section">
-                <h2>// STRUCTURED_PATHS</h2>
-                <div id="course-list" class="grid-container">
-                    <!-- Javascript will inject courses here -->
+            <!-- SECTION: COURSES -->
+            <section id="view-courses" class="view active-view">
+                <header>
+                    <h2>Structured Paths</h2>
+                    <p>Curated playlists to take you from Zero to Hero.</p>
+                </header>
+                <div id="course-grid" class="grid-layout">
+                    <!-- JS Injects Courses Here -->
+                    <div class="loader">Loading paths...</div>
                 </div>
-            </div>
+            </section>
 
-            <!-- SECTION: FIELDS (Categories) -->
-            <div id="section-fields" class="section" style="display:none;">
-                <h2>// KNOWLEDGE_DOMAINS</h2>
-                <div id="category-list" class="grid-container"></div>
-            </div>
+            <!-- SECTION: FIELDS -->
+            <section id="view-fields" class="view">
+                <header>
+                    <h2>Knowledge Fields</h2>
+                    <p>Explore specific categories of cybersecurity.</p>
+                </header>
+                <div id="fields-grid" class="grid-layout"></div>
+            </section>
 
-            <!-- SECTION: VIDEO PLAYER (Overlay) -->
-            <div id="video-player-overlay" style="display:none;">
-                <button onclick="closeVideo()" class="close-btn">X</button>
-                <div id="video-frame-container"></div>
-                <div class="video-controls">
-                    <button onclick="markAsComplete()" id="complete-btn">MARK AS COMPLETE</button>
-                    <button onclick="toggleFavorite()" id="fav-btn">ADD TO FAVORITES</button>
+             <!-- SECTION: FAVORITES -->
+             <section id="view-favorites" class="view">
+                <header>
+                    <h2>Your Collection</h2>
+                    <p>Videos you've saved for later.</p>
+                </header>
+                <div id="favorites-grid" class="grid-layout"></div>
+            </section>
+
+            <!-- SECTION: SETTINGS -->
+            <section id="view-settings" class="view">
+                <header>
+                    <h2>System Settings</h2>
+                    <p>Customize your Cyberian experience.</p>
+                </header>
+                
+                <div class="settings-card">
+                    <h3>Visuals</h3>
+                    <div class="color-picker">
+                        <p>Accent Color:</p>
+                        <div class="swatch purple" onclick="setTheme('#cba6f7')" title="Pastel Purple"></div>
+                        <div class="swatch blue" onclick="setTheme('#89b4fa')" title="Pastel Blue"></div>
+                        <div class="swatch green" onclick="setTheme('#a6e3a1')" title="Pastel Green"></div>
+                        <div class="swatch pink" onclick="setTheme('#f5c2e7')" title="Pastel Pink"></div>
+                    </div>
                 </div>
-            </div>
+
+                <div class="settings-card">
+                    <h3>Security</h3>
+                    <p>Change Password</p>
+                    <input type="password" id="new-password" placeholder="New Password">
+                    <button onclick="changePassword()" class="secondary-btn">Update Password</button>
+                    <p id="settings-msg"></p>
+                </div>
+            </section>
 
         </main>
 
-        <!-- AI CHAT WIDGET -->
-        <div class="ai-widget">
-            <div class="ai-header" onclick="toggleChat()">
-                <span class="status-dot"></span> T.U.T.O.R AI
+        <!-- VIDEO PLAYER OVERLAY -->
+        <div id="video-overlay" class="overlay">
+            <div class="video-modal">
+                <div class="video-header">
+                    <h3 id="video-title">Video Title</h3>
+                    <button onclick="closeVideo()"><i class="ph ph-x"></i></button>
+                </div>
+                <div id="embed-container"></div>
+                <div class="video-actions">
+                    <button onclick="toggleFavorite()" id="fav-action-btn" class="action-btn"><i class="ph ph-heart"></i> Favorite</button>
+                    <button onclick="markComplete()" id="complete-btn" class="action-btn primary"><i class="ph ph-check-circle"></i> Complete</button>
+                </div>
             </div>
-            <div id="ai-body" class="ai-body" style="display:none;">
-                <div id="chat-history"></div>
-                <input type="text" id="ai-input" placeholder="Query the system..." onkeypress="handleEnter(event)">
+        </div>
+
+        <!-- AI WIDGET -->
+        <div class="ai-fab">
+            <button onclick="toggleChat()" class="ai-toggle">
+                <i class="ph ph-sparkle"></i>
+            </button>
+            
+            <div id="ai-window" class="ai-window hidden">
+                <div class="ai-header">
+                    <span>Cyberian AI Tutor</span>
+                    <button onclick="toggleChat()"><i class="ph ph-caret-down"></i></button>
+                </div>
+                <div id="ai-messages">
+                    <div class="ai-msg">Hello. I am connected to the Mistral-7B Engine. How can I help you learn today?</div>
+                </div>
+                <div class="ai-input-area">
+                    <input type="text" id="ai-input" placeholder="Ask about cybersecurity..." onkeypress="handleAiEnter(event)">
+                    <button onclick="sendAiMessage()"><i class="ph ph-paper-plane-right"></i></button>
+                </div>
             </div>
         </div>
 
