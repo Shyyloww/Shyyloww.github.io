@@ -1,7 +1,7 @@
 // 1. CONFIGURATION
 const SUPABASE_URL = 'https://exjayvebshmlzdwjbhkv.supabase.co'; // From Data API settings
 const SUPABASE_KEY = 'sb_publishable_M_mIHSDGIHaBR2s9K9FkSg_Hy1FMn85'; // The "anon" key
-const AI_SERVER_URL = 'YOUR_RENDER_URL_HERE'; // e.g., https://my-cyber-ai.onrender.com
+const AI_SERVER_URL = 'https://shyyloww-github-io-1.onrender.com';
 
 const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 let currentUser = null;
