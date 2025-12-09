@@ -50,7 +50,7 @@
         .primary-btn:hover { filter: brightness(1.1); }
         .toggle-text { margin-top: 1rem; font-size: 0.9rem; cursor: pointer; }
         .toggle-text span { color: var(--primary); font-weight: 600; }
-        #auth-msg { margin-top: 1rem; color: #f38ba8; min-height: 20px;}
+        #auth-msg { margin-top: 1rem; color: #f38ba8; min-height: 20px; font-weight: bold;}
 
         /* MAIN APP */
         #app-container { display: none; height: 100vh; }
@@ -102,7 +102,6 @@
                 <input type="password" id="password" placeholder="Password">
             </div>
 
-            <!-- ONCLICK Added directly here to ensure it fires -->
             <button onclick="handleAuth()" id="auth-btn" class="primary-btn">Log In</button>
             
             <p class="toggle-text" onclick="toggleAuthMode()">
@@ -180,38 +179,59 @@
         const SUPABASE_KEY = 'sb_publishable_M_mIHSDGIHaBR2s9K9FkSg_Hy1FMn85'; 
         const AI_SERVER_URL = 'https://shyyloww-github-io-1.onrender.com';
 
-        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        // Renamed variable to 'sbClient' to avoid conflict with global 'supabase'
+        const sbClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        
         let isLoginMode = true;
         let currentUser = null;
 
         // --- AUTH ---
         async function handleAuth() {
-            const userIn = document.getElementById('username').value.trim();
-            const passIn = document.getElementById('password').value;
-            const msg = document.getElementById('auth-msg');
+            try {
+                const userIn = document.getElementById('username').value.trim();
+                const passIn = document.getElementById('password').value;
+                const msg = document.getElementById('auth-msg');
 
-            if(!userIn || !passIn) { msg.innerText = "Please enter details."; return; }
-            
-            msg.innerText = "Processing...";
-            const fakeEmail = userIn + "@cyberian.io"; // Username trick
-
-            if(isLoginMode) {
-                // LOGIN
-                const { data, error } = await supabase.auth.signInWithPassword({ email: fakeEmail, password: passIn });
-                if(error) { msg.innerText = "Error: " + error.message; }
-                else { location.reload(); }
-            } else {
-                // SIGNUP
-                const { data, error } = await supabase.auth.signUp({
-                    email: fakeEmail,
-                    password: passIn,
-                    options: { data: { username: userIn } }
-                });
-                if(error) { msg.innerText = "Error: " + error.message; }
-                else { 
-                    msg.innerText = "Success! Logging in...";
-                    setTimeout(() => location.reload(), 1000); 
+                // 1. Client-side checks
+                if(!userIn || !passIn) { 
+                    msg.innerText = "Please enter both username and password."; 
+                    return; 
                 }
+                if(passIn.length < 6) {
+                    msg.innerText = "Password must be at least 6 characters.";
+                    return;
+                }
+                
+                msg.innerText = "Processing...";
+                const fakeEmail = userIn + "@cyberian.io";
+
+                if(isLoginMode) {
+                    // LOGIN
+                    const { data, error } = await sbClient.auth.signInWithPassword({ email: fakeEmail, password: passIn });
+                    if(error) { 
+                        console.error(error);
+                        msg.innerText = "Error: " + error.message; 
+                    } else { 
+                        location.reload(); 
+                    }
+                } else {
+                    // SIGNUP
+                    const { data, error } = await sbClient.auth.signUp({
+                        email: fakeEmail,
+                        password: passIn,
+                        options: { data: { username: userIn } }
+                    });
+                    if(error) { 
+                        console.error(error);
+                        msg.innerText = "Error: " + error.message; 
+                    } else { 
+                        msg.innerText = "Success! Account created. Logging you in...";
+                        setTimeout(() => location.reload(), 1500); 
+                    }
+                }
+            } catch (err) {
+                document.getElementById('auth-msg').innerText = "System Crash. Check Console (F12).";
+                console.error(err);
             }
         }
 
@@ -223,7 +243,7 @@
         }
 
         async function logout() {
-            await supabase.auth.signOut();
+            await sbClient.auth.signOut();
             location.reload();
         }
 
@@ -232,12 +252,16 @@
             const savedTheme = localStorage.getItem('cyberian-theme');
             if(savedTheme) setTheme(savedTheme);
 
-            const { data: { session } } = await supabase.auth.getSession();
+            const { data: { session } } = await sbClient.auth.getSession();
             if(session) {
                 currentUser = session.user;
                 document.getElementById('auth-container').style.display = 'none';
                 document.getElementById('app-container').style.display = 'flex';
-                document.getElementById('user-display').innerText = currentUser.user_metadata.username || "User";
+                // Get username safely
+                const metaUser = currentUser.user_metadata?.username;
+                const emailUser = currentUser.email?.split('@')[0];
+                document.getElementById('user-display').innerText = metaUser || emailUser || "Operator";
+                
                 loadData();
             }
         };
@@ -247,7 +271,7 @@
             document.querySelectorAll('.view').forEach(el => el.classList.remove('active-view'));
             document.getElementById('view-'+sec).classList.add('active-view');
             document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
-            event.currentTarget.classList.add('active');
+            if(event) event.currentTarget.classList.add('active');
         }
 
         function setTheme(c) {
@@ -258,9 +282,9 @@
 
         async function loadData() {
             // Load Courses
-            const { data: courses } = await supabase.from('courses').select('*');
+            const { data: courses } = await sbClient.from('courses').select('*');
             const grid = document.getElementById('course-grid');
-            if(courses) {
+            if(courses && courses.length > 0) {
                 grid.innerHTML = "";
                 courses.forEach(c => {
                     grid.innerHTML += `<div class="card"><span style="font-size:0.8rem; opacity:0.7">${c.level}</span><h3>${c.title}</h3></div>`;
@@ -270,7 +294,7 @@
             }
             
             // Load Fields
-            const { data: cats } = await supabase.from('categories').select('*');
+            const { data: cats } = await sbClient.from('categories').select('*');
             const fGrid = document.getElementById('fields-grid');
             if(cats) {
                 fGrid.innerHTML = "";
