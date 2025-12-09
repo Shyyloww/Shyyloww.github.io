@@ -26,9 +26,10 @@ else:
     supabase = None
 
 # 2. CONNECT TO HUGGING FACE
-# We stick with Mistral v0.3 because it is reliable, but we must use text_generation
+# Switching to Llama-3-8B-Instruct. 
+# This is natively a CHAT model, so it works perfectly with chat_completion.
 HF_TOKEN = os.environ.get("HF_TOKEN")
-client = InferenceClient("mistralai/Mistral-7B-Instruct-v0.3", token=HF_TOKEN)
+client = InferenceClient("meta-llama/Meta-Llama-3-8B-Instruct", token=HF_TOKEN)
 
 class ChatRequest(BaseModel):
     user_id: str
@@ -36,7 +37,7 @@ class ChatRequest(BaseModel):
 
 @app.get("/")
 def home():
-    return {"status": "Cyberian AI Online", "model": "Mistral-7B-v0.3 (TextGen)"}
+    return {"status": "Cyberian AI Online", "model": "Llama-3-8B"}
 
 @app.post("/ask-ai")
 async def ask_ai(request: ChatRequest):
@@ -50,19 +51,16 @@ async def ask_ai(request: ChatRequest):
         except:
             pass 
 
-    # Generate Answer using TEXT GENERATION
-    # We manually format the prompt with [INST] tags which Mistral expects.
-    # This bypasses the "Is this a chat model?" error.
-    prompt_text = f"<s>[INST] You are a cybersecurity tutor. Keep answers short and technical. User: {request.question} [/INST]"
+    # Generate Answer using CHAT COMPLETION
+    # Llama 3 expects a system prompt and a user prompt.
+    messages = [
+        {"role": "system", "content": "You are a cybersecurity tutor named Cyberian. Keep answers technical, concise, and focused on security concepts."},
+        {"role": "user", "content": request.question}
+    ]
     
     try:
-        response_text = client.text_generation(
-            prompt_text, 
-            max_new_tokens=500, 
-            stream=False,
-            return_full_text=False # Only return the answer, not the prompt
-        )
-        return {"answer": response_text}
+        response = client.chat_completion(messages, max_tokens=500, stream=False)
+        return {"answer": response.choices[0].message.content}
 
     except Exception as e:
         return {"answer": f"Backend Error: {str(e)}"}
