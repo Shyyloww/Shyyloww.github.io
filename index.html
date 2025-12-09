@@ -4,186 +4,342 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cyberian // Learn</title>
-    <!-- Supabase Library -->
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-    <!-- Icons -->
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
-
     <style>
-        /* --- CSS STYLES --- */
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap');
 
         :root {
-            --bg-dark: #1e1e2e;
-            --bg-card: #313244;
-            --bg-sidebar: #181825;
-            --text-main: #cdd6f4;
-            --text-muted: #a6adc8;
-            --primary: #cba6f7; 
-            --primary-hover: #b4befe;
-            --radius: 12px;
+            --bg-body: #0f1016;
+            --bg-sidebar: #13141c;
+            --bg-card: #1c1e29;
+            --bg-hover: #252736;
+            --text-main: #ffffff;
+            --text-muted: #94a3b8;
+            --primary: #cba6f7;
+            --primary-glow: rgba(203, 166, 247, 0.3);
+            --border: rgba(255, 255, 255, 0.05);
+            --radius: 16px;
+            --radius-sm: 8px;
+            --font-display: 'Space Grotesk', sans-serif;
+            --font-body: 'Inter', sans-serif;
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
-        body { background-color: var(--bg-dark); color: var(--text-main); height: 100vh; overflow: hidden; }
+        body {
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            font-family: var(--font-body);
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+        }
 
-        /* AUTH SCREEN */
+        /* --- AUTH SCREEN --- */
         #auth-container {
-            height: 100vh; display: flex; justify-content: center; align-items: center;
-            background: radial-gradient(circle at top right, #2c2d3c, #1e1e2e);
-            position: fixed; top: 0; left: 0; width: 100%; z-index: 999;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle at 50% 0%, #2a2d3d 0%, var(--bg-body) 70%);
+            display: flex; justify-content: center; align-items: center; z-index: 999;
         }
 
-        .auth-card { background: var(--bg-card); padding: 3rem; border-radius: 24px; width: 400px; text-align: center; }
-        .auth-card h1 { color: var(--primary); margin-bottom: 0.5rem; }
-        .input-group input {
-            width: 100%; padding: 12px; margin-bottom: 1rem;
-            background: var(--bg-sidebar); border: 1px solid transparent;
-            border-radius: var(--radius); color: white; outline: none;
+        .auth-card {
+            background: rgba(28, 30, 41, 0.8);
+            backdrop-filter: blur(20px);
+            padding: 3rem;
+            border-radius: 24px;
+            width: 100%; max-width: 420px;
+            border: 1px solid var(--border);
+            text-align: center;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
         }
-        .input-group input:focus { border-color: var(--primary); }
-        .primary-btn {
-            width: 100%; padding: 12px; background: var(--primary); color: var(--bg-dark);
-            border: none; border-radius: var(--radius); font-weight: 600; cursor: pointer;
-        }
-        .primary-btn:hover { filter: brightness(1.1); }
-        .toggle-text { margin-top: 1rem; font-size: 0.9rem; cursor: pointer; }
-        .toggle-text span { color: var(--primary); font-weight: 600; }
-        #auth-msg { margin-top: 1rem; color: #f38ba8; min-height: 20px; font-weight: bold;}
 
-        /* MAIN APP */
-        #app-container { display: none; height: 100vh; }
-        .sidebar { width: 260px; background: var(--bg-sidebar); padding: 2rem; display: flex; flex-direction: column; justify-content: space-between; }
-        .brand { font-size: 1.5rem; font-weight: 700; color: var(--primary); margin-bottom: 3rem; }
-        .nav-btn {
-            display: flex; align-items: center; gap: 12px; width: 100%; padding: 12px;
-            background: transparent; border: none; color: var(--text-muted); font-size: 1rem;
-            cursor: pointer; border-radius: var(--radius); margin-bottom: 0.5rem; text-align: left;
+        .auth-logo { font-family: var(--font-display); font-size: 2.5rem; font-weight: 700; color: white; letter-spacing: -1px; margin-bottom: 0.5rem; }
+        .auth-logo span { color: var(--primary); }
+        .input-wrapper { margin-bottom: 1rem; position: relative; }
+        
+        .input-wrapper input {
+            width: 100%; padding: 14px 16px; 
+            background: var(--bg-body); border: 1px solid var(--border);
+            border-radius: var(--radius-sm); color: white; outline: none;
+            transition: 0.3s; font-size: 0.95rem;
         }
-        .nav-btn:hover, .nav-btn.active { background: var(--bg-card); color: var(--primary); }
-        .content-area { flex: 1; padding: 3rem; overflow-y: auto; }
-        .view { display: none; }
-        .view.active-view { display: block; animation: fadeIn 0.4s ease; }
+        .input-wrapper input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-glow); }
+
+        .btn-primary {
+            width: 100%; padding: 14px; background: var(--primary);
+            color: #000; border: none; border-radius: var(--radius-sm);
+            font-weight: 600; cursor: pointer; transition: 0.3s; font-size: 1rem;
+        }
+        .btn-primary:hover { filter: brightness(1.1); transform: translateY(-1px); }
+        .link-text { margin-top: 1.5rem; color: var(--text-muted); font-size: 0.9rem; cursor: pointer; }
+        .link-text:hover { color: var(--primary); }
+
+        /* --- MAIN LAYOUT --- */
+        #app-container { display: none; width: 100%; height: 100%; }
+
+        /* SIDEBAR */
+        .sidebar {
+            width: 280px; background: var(--bg-sidebar); border-right: 1px solid var(--border);
+            padding: 2rem 1.5rem; display: flex; flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .brand-area { display: flex; align-items: center; gap: 10px; margin-bottom: 3rem; padding-left: 0.5rem; }
+        .brand-area i { font-size: 1.8rem; color: var(--primary); }
+        .brand-text { font-family: var(--font-display); font-weight: 700; font-size: 1.4rem; }
+
+        .nav-item {
+            display: flex; align-items: center; gap: 12px; padding: 14px;
+            color: var(--text-muted); text-decoration: none; border-radius: var(--radius-sm);
+            margin-bottom: 0.5rem; transition: 0.2s; cursor: pointer; font-weight: 500;
+        }
+        .nav-item:hover { background: var(--bg-hover); color: white; }
+        .nav-item.active { background: var(--bg-hover); color: var(--primary); }
+        .nav-item i { font-size: 1.2rem; }
+
+        .user-footer { border-top: 1px solid var(--border); padding-top: 1.5rem; display: flex; align-items: center; justify-content: space-between; }
+        .user-info { display: flex; flex-direction: column; }
+        .user-name { font-weight: 600; font-size: 0.9rem; }
+        .user-role { font-size: 0.75rem; color: var(--text-muted); }
+
+        /* CONTENT */
+        .main-content { flex: 1; padding: 0; overflow-y: auto; background: var(--bg-body); }
+        .view { display: none; padding: 3rem; max-width: 1400px; margin: 0 auto; animation: fadeIn 0.4s ease; }
+        .view.active-view { display: block; }
+
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* HERO HEADER */
+        .hero { margin-bottom: 3rem; }
+        .hero h1 { font-family: var(--font-display); font-size: 2.5rem; font-weight: 700; margin-bottom: 0.5rem; }
+        .hero p { color: var(--text-muted); font-size: 1.1rem; }
+
+        /* GRIDS */
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 24px; }
         
-        .grid-layout { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 24px; }
-        .card { background: var(--bg-card); padding: 1.5rem; border-radius: var(--radius); cursor: pointer; border: 1px solid transparent; transition: 0.2s;}
-        .card:hover { border-color: var(--primary); transform: translateY(-4px); }
+        .card {
+            background: var(--bg-card); border: 1px solid var(--border);
+            padding: 1.5rem; border-radius: var(--radius); cursor: pointer;
+            transition: 0.3s; position: relative; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; height: 100%;
+        }
+        .card:hover { border-color: var(--primary); transform: translateY(-4px); box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
         
+        .card-badge { 
+            display: inline-block; font-size: 0.75rem; font-weight: 600; 
+            padding: 4px 10px; border-radius: 20px; background: rgba(255,255,255,0.05); 
+            width: fit-content; margin-bottom: 1rem; color: var(--primary);
+        }
+        .card h3 { font-family: var(--font-display); font-size: 1.25rem; margin-bottom: 0.5rem; }
+        .card p { font-size: 0.95rem; color: var(--text-muted); line-height: 1.5; }
+        .card-icon { font-size: 2rem; margin-bottom: 1rem; color: var(--text-muted); }
+        
+        /* CONCEPTS SPECIFIC */
+        .concept-card { border-left: 3px solid var(--primary); }
+        .concept-search { width: 100%; padding: 16px; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); color: white; margin-bottom: 2rem; font-size: 1rem; outline: none; }
+        .concept-search:focus { border-color: var(--primary); }
+
         /* SETTINGS */
-        .swatch { width: 40px; height: 40px; border-radius: 50%; cursor: pointer; display: inline-block; margin-right: 10px; }
+        .settings-group { background: var(--bg-card); padding: 2rem; border-radius: var(--radius); margin-bottom: 2rem; border: 1px solid var(--border); }
+        .color-options { display: flex; gap: 12px; margin-top: 1rem; }
+        .swatch { width: 40px; height: 40px; border-radius: 50%; cursor: pointer; transition: 0.2s; border: 2px solid transparent; }
+        .swatch:hover { transform: scale(1.1); }
         .purple { background: #cba6f7; } .blue { background: #89b4fa; } .green { background: #a6e3a1; } .pink { background: #f5c2e7; }
-        
+
         /* AI CHAT */
         .ai-fab { position: fixed; bottom: 30px; right: 30px; z-index: 100; }
-        .ai-toggle { width: 60px; height: 60px; border-radius: 50%; background: var(--primary); border: none; font-size: 1.5rem; cursor: pointer; color: var(--bg-dark); }
-        .ai-window { position: absolute; bottom: 80px; right: 0; width: 350px; height: 400px; background: var(--bg-card); border-radius: 16px; display: none; flex-direction: column; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
-        .ai-window.visible { display: flex; }
-        #ai-messages { flex: 1; padding: 1rem; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
-        .ai-msg { padding: 10px; border-radius: 12px; font-size: 0.9rem; max-width: 80%; background: rgba(255,255,255,0.05); }
-        .user-msg { background: var(--primary); color: var(--bg-dark); align-self: flex-end; }
-        .ai-input-area { padding: 1rem; display: flex; border-top: 1px solid rgba(255,255,255,0.1); }
-        .ai-input-area input { flex: 1; background: transparent; border: none; color: white; outline: none; }
+        .ai-btn { width: 64px; height: 64px; border-radius: 50%; background: var(--primary); border: none; color: #000; font-size: 1.8rem; cursor: pointer; box-shadow: 0 10px 30px var(--primary-glow); transition: 0.3s; display: flex; align-items: center; justify-content: center; }
+        .ai-btn:hover { transform: scale(1.1); }
+        
+        .ai-window { 
+            position: absolute; bottom: 80px; right: 0; width: 380px; height: 500px; 
+            background: #161821; border-radius: 24px; border: 1px solid var(--border);
+            display: none; flex-direction: column; overflow: hidden; 
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5); 
+        }
+        .ai-window.visible { display: flex; animation: slideUp 0.3s ease; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        .ai-header { padding: 1.5rem; background: var(--bg-card); border-bottom: 1px solid var(--border); font-weight: 600; display: flex; justify-content: space-between; }
+        .chat-box { flex: 1; padding: 1.5rem; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
+        .msg { padding: 12px 16px; border-radius: 12px; font-size: 0.95rem; max-width: 85%; line-height: 1.5; }
+        .msg.bot { background: var(--bg-card); color: var(--text-muted); align-self: flex-start; border-bottom-left-radius: 2px; }
+        .msg.user { background: var(--primary); color: #000; align-self: flex-end; border-bottom-right-radius: 2px; font-weight: 500; }
+        
+        .input-area { padding: 1rem; border-top: 1px solid var(--border); display: flex; gap: 10px; background: var(--bg-card); }
+        .input-area input { flex: 1; background: var(--bg-body); border: none; padding: 10px; border-radius: 8px; color: white; outline: none; }
+        .send-btn { background: none; border: none; color: var(--primary); cursor: pointer; font-size: 1.2rem; }
+
+        /* UTILS */
+        .hidden { display: none !important; }
+        .text-gradient { background: linear-gradient(to right, white, var(--text-muted)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
     </style>
 </head>
 <body>
 
-    <!-- AUTH SCREEN -->
+    <!-- LOGIN SCREEN -->
     <div id="auth-container">
         <div class="auth-card">
-            <h1>Cyberian.</h1>
-            <p id="auth-subtitle">Welcome back, Operator.</p>
+            <div class="auth-logo">Cyberian<span>.</span></div>
+            <p style="color:var(--text-muted); margin-bottom:2rem;">Secure Access Terminal</p>
             
-            <div class="input-group">
+            <div class="input-wrapper">
                 <input type="text" id="username" placeholder="Username">
             </div>
-            <div class="input-group">
+            <div class="input-wrapper">
                 <input type="password" id="password" placeholder="Password">
             </div>
 
-            <button onclick="handleAuth()" id="auth-btn" class="primary-btn">Log In</button>
-            
-            <p class="toggle-text" onclick="toggleAuthMode()">
-                New here? <span id="toggle-link">Create an account</span>
-            </p>
-            <div id="auth-msg"></div>
+            <button onclick="handleAuth()" class="btn-primary" id="auth-btn">Initialize Session</button>
+            <p class="link-text" onclick="toggleAuthMode()" id="toggle-text">Create new operator ID</p>
+            <div id="auth-msg" style="margin-top:1rem; color:#f38ba8; min-height:20px; font-size:0.9rem;"></div>
         </div>
     </div>
 
-    <!-- MAIN APP DASHBOARD -->
+    <!-- MAIN APP -->
     <div id="app-container">
         
         <!-- SIDEBAR -->
-        <nav class="sidebar">
-            <div class="brand">Cyberian.</div>
-            <div class="menu">
-                <button onclick="navTo('courses')" class="nav-btn active"><i class="ph ph-books"></i> Courses</button>
-                <button onclick="navTo('fields')" class="nav-btn"><i class="ph ph-squares-four"></i> Fields</button>
-                <button onclick="navTo('favorites')" class="nav-btn"><i class="ph ph-heart"></i> Favorites</button>
-                <button onclick="navTo('settings')" class="nav-btn"><i class="ph ph-gear"></i> Settings</button>
+        <aside class="sidebar">
+            <div>
+                <div class="brand-area">
+                    <i class="ph-fill ph-shield-check"></i>
+                    <span class="brand-text">Cyberian.</span>
+                </div>
+                
+                <nav>
+                    <div onclick="navTo('courses')" class="nav-item active" id="btn-courses">
+                        <i class="ph ph-path"></i> Courses
+                    </div>
+                    <div onclick="navTo('fields')" class="nav-item" id="btn-fields">
+                        <i class="ph ph-squares-four"></i> Fields
+                    </div>
+                    <div onclick="navTo('concepts')" class="nav-item" id="btn-concepts">
+                        <i class="ph ph-book-bookmark"></i> Concepts
+                    </div>
+                    <div onclick="navTo('favorites')" class="nav-item" id="btn-favorites">
+                        <i class="ph ph-heart"></i> Favorites
+                    </div>
+                </nav>
             </div>
-            <div class="user-profile">
-                <span id="user-display">User</span>
-                <button onclick="logout()" style="background:none; border:none; color:#f38ba8; cursor:pointer;"><i class="ph ph-sign-out"></i></button>
+
+            <div>
+                <div onclick="navTo('settings')" class="nav-item" id="btn-settings">
+                    <i class="ph ph-gear"></i> Settings
+                </div>
+                <div class="user-footer">
+                    <div class="user-info">
+                        <span class="user-name" id="user-display">Operator</span>
+                        <span class="user-role">Level 1 Access</span>
+                    </div>
+                    <i class="ph ph-sign-out" style="cursor:pointer; color:#f38ba8;" onclick="logout()"></i>
+                </div>
             </div>
-        </nav>
+        </aside>
 
         <!-- CONTENT -->
-        <main class="content-area">
+        <main class="main-content">
+            
+            <!-- COURSES VIEW -->
             <section id="view-courses" class="view active-view">
-                <h2>Structured Paths</h2>
-                <div id="course-grid" class="grid-layout"></div>
+                <div class="hero">
+                    <h1>Structured Paths</h1>
+                    <p>Curated curriculums designed to take you from novice to expert.</p>
+                </div>
+                <div id="course-grid" class="grid">
+                    <!-- Skeletons will go here -->
+                </div>
             </section>
 
+            <!-- FIELDS VIEW -->
             <section id="view-fields" class="view">
-                <h2>Knowledge Fields</h2>
-                <div id="fields-grid" class="grid-layout"></div>
+                <div class="hero">
+                    <h1>Knowledge Fields</h1>
+                    <p>Explore specific domains of cybersecurity technology.</p>
+                </div>
+                <div id="fields-grid" class="grid"></div>
             </section>
 
+            <!-- NEW CONCEPTS VIEW -->
+            <section id="view-concepts" class="view">
+                <div class="hero">
+                    <h1>The Encyclopedia</h1>
+                    <p>Core terminology and definitions.</p>
+                </div>
+                <input type="text" class="concept-search" placeholder="Search concepts (e.g. 'Phishing')..." onkeyup="filterConcepts(this.value)">
+                <div id="concepts-grid" class="grid"></div>
+            </section>
+
+            <!-- FAVORITES VIEW -->
             <section id="view-favorites" class="view">
-                <h2>Favorites</h2>
-                <div id="favorites-grid" class="grid-layout"></div>
+                <div class="hero">
+                    <h1>Your Collection</h1>
+                    <p>Saved resources for quick access.</p>
+                </div>
+                <div id="favorites-grid" class="grid"></div>
             </section>
 
+            <!-- SETTINGS VIEW -->
             <section id="view-settings" class="view">
-                <h2>Settings</h2>
-                <div class="card">
-                    <h3>Theme</h3>
-                    <div style="margin-top:10px;">
+                <div class="hero">
+                    <h1>System Settings</h1>
+                    <p>Customize your workspace.</p>
+                </div>
+                
+                <div class="settings-group">
+                    <h3>Interface Theme</h3>
+                    <p style="color:var(--text-muted); margin-top:0.5rem;">Select your primary accent color.</p>
+                    <div class="color-options">
                         <div class="swatch purple" onclick="setTheme('#cba6f7')"></div>
                         <div class="swatch blue" onclick="setTheme('#89b4fa')"></div>
                         <div class="swatch green" onclick="setTheme('#a6e3a1')"></div>
                         <div class="swatch pink" onclick="setTheme('#f5c2e7')"></div>
                     </div>
                 </div>
+
+                <div class="settings-group">
+                    <h3>Account Security</h3>
+                    <div class="input-wrapper" style="margin-top:1rem; max-width:300px;">
+                        <input type="password" id="new-password" placeholder="New Password">
+                    </div>
+                    <button onclick="changePassword()" class="btn-primary" style="width:auto; padding:10px 20px;">Update Password</button>
+                    <p id="settings-msg" style="margin-top:10px; color:var(--primary);"></p>
+                </div>
             </section>
+
         </main>
 
-        <!-- AI -->
+        <!-- AI CHAT -->
         <div class="ai-fab">
-            <button onclick="toggleChat()" class="ai-toggle"><i class="ph ph-sparkle"></i></button>
+            <button onclick="toggleChat()" class="ai-btn"><i class="ph-fill ph-sparkle"></i></button>
             <div id="ai-window" class="ai-window">
-                <div id="ai-messages"><div class="ai-msg">System Online.</div></div>
-                <div class="ai-input-area">
-                    <input type="text" id="ai-input" placeholder="Ask AI..." onkeypress="if(event.key==='Enter') sendAiMessage()">
+                <div class="ai-header">
+                    <span>AI Tutor (Zephyr-7B)</span>
+                    <i class="ph ph-x" style="cursor:pointer" onclick="toggleChat()"></i>
+                </div>
+                <div id="ai-messages" class="chat-box">
+                    <div class="msg bot">System Online. How can I assist your learning today?</div>
+                </div>
+                <div class="input-area">
+                    <input type="text" id="ai-input" placeholder="Ask a question..." onkeypress="if(event.key==='Enter') sendAiMessage()">
+                    <button class="send-btn" onclick="sendAiMessage()"><i class="ph-fill ph-paper-plane-right"></i></button>
                 </div>
             </div>
         </div>
+
     </div>
 
-    <!-- JAVASCRIPT LOGIC -->
+    <!-- LOGIC -->
     <script>
-        // --- CONFIGURATION ---
         const SUPABASE_URL = 'https://exjayvebshmlzdwjbhkv.supabase.co'; 
         const SUPABASE_KEY = 'sb_publishable_M_mIHSDGIHaBR2s9K9FkSg_Hy1FMn85'; 
         const AI_SERVER_URL = 'https://shyyloww-github-io-1.onrender.com';
 
-        // Renamed variable to 'sbClient' to avoid conflict with global 'supabase'
         const sbClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
         
         let isLoginMode = true;
         let currentUser = null;
+        let allConcepts = []; // Store for searching
 
         // --- AUTH ---
         async function handleAuth() {
@@ -192,60 +348,38 @@
                 const passIn = document.getElementById('password').value;
                 const msg = document.getElementById('auth-msg');
 
-                // 1. Client-side checks
-                if(!userIn || !passIn) { 
-                    msg.innerText = "Please enter both username and password."; 
-                    return; 
-                }
-                if(passIn.length < 6) {
-                    msg.innerText = "Password must be at least 6 characters.";
-                    return;
-                }
+                if(!userIn || !passIn) { msg.innerText = "Credentials required."; return; }
+                if(passIn.length < 6) { msg.innerText = "Password too short."; return; }
                 
-                msg.innerText = "Processing...";
+                msg.innerText = "Authenticating...";
                 const fakeEmail = userIn + "@cyberian.io";
 
                 if(isLoginMode) {
-                    // LOGIN
-                    const { data, error } = await sbClient.auth.signInWithPassword({ email: fakeEmail, password: passIn });
-                    if(error) { 
-                        console.error(error);
-                        msg.innerText = "Error: " + error.message; 
-                    } else { 
-                        location.reload(); 
-                    }
+                    const { error } = await sbClient.auth.signInWithPassword({ email: fakeEmail, password: passIn });
+                    if(error) throw error;
+                    location.reload();
                 } else {
-                    // SIGNUP
-                    const { data, error } = await sbClient.auth.signUp({
-                        email: fakeEmail,
-                        password: passIn,
+                    const { error } = await sbClient.auth.signUp({
+                        email: fakeEmail, password: passIn,
                         options: { data: { username: userIn } }
                     });
-                    if(error) { 
-                        console.error(error);
-                        msg.innerText = "Error: " + error.message; 
-                    } else { 
-                        msg.innerText = "Success! Account created. Logging you in...";
-                        setTimeout(() => location.reload(), 1500); 
-                    }
+                    if(error) throw error;
+                    msg.innerText = "ID Created. Logging in...";
+                    setTimeout(() => location.reload(), 1500);
                 }
             } catch (err) {
-                document.getElementById('auth-msg').innerText = "System Crash. Check Console (F12).";
-                console.error(err);
+                document.getElementById('auth-msg').innerText = err.message;
             }
         }
 
         function toggleAuthMode() {
             isLoginMode = !isLoginMode;
-            document.getElementById('auth-btn').innerText = isLoginMode ? "Log In" : "Sign Up";
-            document.getElementById('toggle-link').innerText = isLoginMode ? "Create an account" : "Log in";
+            document.getElementById('auth-btn').innerText = isLoginMode ? "Initialize Session" : "Create ID";
+            document.getElementById('toggle-text').innerText = isLoginMode ? "Create new operator ID" : "Return to login";
             document.getElementById('auth-msg').innerText = "";
         }
 
-        async function logout() {
-            await sbClient.auth.signOut();
-            location.reload();
-        }
+        async function logout() { await sbClient.auth.signOut(); location.reload(); }
 
         // --- INIT ---
         window.onload = async () => {
@@ -255,53 +389,103 @@
             const { data: { session } } = await sbClient.auth.getSession();
             if(session) {
                 currentUser = session.user;
-                document.getElementById('auth-container').style.display = 'none';
+                document.getElementById('auth-container').classList.add('hidden');
                 document.getElementById('app-container').style.display = 'flex';
-                // Get username safely
-                const metaUser = currentUser.user_metadata?.username;
-                const emailUser = currentUser.email?.split('@')[0];
-                document.getElementById('user-display').innerText = metaUser || emailUser || "Operator";
+                
+                const name = currentUser.user_metadata?.username || currentUser.email.split('@')[0];
+                document.getElementById('user-display').innerText = name;
                 
                 loadData();
+            } else {
+                document.getElementById('auth-container').style.display = 'flex';
             }
         };
 
-        // --- APP LOGIC ---
+        // --- NAVIGATION ---
         function navTo(sec) {
             document.querySelectorAll('.view').forEach(el => el.classList.remove('active-view'));
             document.getElementById('view-'+sec).classList.add('active-view');
-            document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
-            if(event) event.currentTarget.classList.add('active');
+            
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            // Try to find the button ID specifically
+            const btn = document.getElementById('btn-'+sec);
+            if(btn) btn.classList.add('active');
         }
 
+        // --- DATA LOADING ---
+        async function loadData() {
+            // Courses
+            const { data: courses } = await sbClient.from('courses').select('*');
+            const cGrid = document.getElementById('course-grid');
+            if(courses?.length) {
+                cGrid.innerHTML = courses.map(c => `
+                    <div class="card">
+                        <div>
+                            <span class="card-badge">${c.level}</span>
+                            <h3>${c.title}</h3>
+                            <p>${c.description || "Start this learning path."}</p>
+                        </div>
+                        <div style="margin-top:1rem; text-align:right; font-size:1.5rem; color:var(--primary);">
+                            <i class="ph-bold ph-arrow-right"></i>
+                        </div>
+                    </div>
+                `).join('');
+            } else {
+                cGrid.innerHTML = `<p style="color:var(--text-muted)">No courses database connection.</p>`;
+            }
+
+            // Fields
+            const { data: cats } = await sbClient.from('categories').select('*');
+            const fGrid = document.getElementById('fields-grid');
+            if(cats?.length) {
+                fGrid.innerHTML = cats.map(c => `
+                    <div class="card">
+                        <i class="ph ph-folder-notch card-icon"></i>
+                        <h3>${c.title}</h3>
+                        <p>${c.description || "Explore this domain."}</p>
+                    </div>
+                `).join('');
+            }
+
+            // Concepts (NEW)
+            const { data: concepts } = await sbClient.from('concepts').select('*');
+            allConcepts = concepts || [];
+            renderConcepts(allConcepts);
+        }
+
+        function renderConcepts(list) {
+            const grid = document.getElementById('concepts-grid');
+            if(list.length) {
+                grid.innerHTML = list.map(c => `
+                    <div class="card concept-card">
+                        <h3>${c.title}</h3>
+                        <p>${c.definition}</p>
+                    </div>
+                `).join('');
+            } else {
+                grid.innerHTML = `<p style="color:var(--text-muted)">No concepts found. Run SQL script.</p>`;
+            }
+        }
+
+        function filterConcepts(query) {
+            const filtered = allConcepts.filter(c => c.title.toLowerCase().includes(query.toLowerCase()));
+            renderConcepts(filtered);
+        }
+
+        // --- THEME ---
         function setTheme(c) {
             document.documentElement.style.setProperty('--primary', c);
-            document.documentElement.style.setProperty('--primary-hover', c);
+            document.documentElement.style.setProperty('--primary-glow', c + '4d'); // 30% opacity
             localStorage.setItem('cyberian-theme', c);
         }
 
-        async function loadData() {
-            // Load Courses
-            const { data: courses } = await sbClient.from('courses').select('*');
-            const grid = document.getElementById('course-grid');
-            if(courses && courses.length > 0) {
-                grid.innerHTML = "";
-                courses.forEach(c => {
-                    grid.innerHTML += `<div class="card"><span style="font-size:0.8rem; opacity:0.7">${c.level}</span><h3>${c.title}</h3></div>`;
-                });
-            } else {
-                grid.innerHTML = "<p>No courses found in database.</p>";
-            }
+        async function changePassword() {
+            const pass = document.getElementById('new-password').value;
+            const msg = document.getElementById('settings-msg');
+            if(pass.length < 6) return msg.innerText = "Too short.";
             
-            // Load Fields
-            const { data: cats } = await sbClient.from('categories').select('*');
-            const fGrid = document.getElementById('fields-grid');
-            if(cats) {
-                fGrid.innerHTML = "";
-                cats.forEach(c => {
-                    fGrid.innerHTML += `<div class="card"><h3>${c.title}</h3></div>`;
-                });
-            }
+            const { error } = await sbClient.auth.updateUser({ password: pass });
+            msg.innerText = error ? error.message : "Password updated.";
         }
 
         // --- AI ---
@@ -311,13 +495,13 @@
 
         async function sendAiMessage() {
             const inp = document.getElementById('ai-input');
-            const txt = inp.value; 
-            if(!txt) return;
+            const txt = inp.value; if(!txt) return;
             
             const box = document.getElementById('ai-messages');
-            box.innerHTML += `<div class="ai-msg user-msg">${txt}</div>`;
+            box.innerHTML += `<div class="msg user">${txt}</div>`;
             inp.value = "";
-            
+            box.scrollTop = box.scrollHeight;
+
             try {
                 const res = await fetch(`${AI_SERVER_URL}/ask-ai`, {
                     method: 'POST',
@@ -325,10 +509,11 @@
                     body: JSON.stringify({ user_id: currentUser.id, question: txt })
                 });
                 const d = await res.json();
-                box.innerHTML += `<div class="ai-msg">${d.answer}</div>`;
+                box.innerHTML += `<div class="msg bot">${d.answer}</div>`;
             } catch(e) {
-                box.innerHTML += `<div class="ai-msg">Server Offline.</div>`;
+                box.innerHTML += `<div class="msg bot">Connection Error. Wake up Render?</div>`;
             }
+            box.scrollTop = box.scrollHeight;
         }
     </script>
 </body>
