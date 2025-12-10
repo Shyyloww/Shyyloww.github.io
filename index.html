@@ -9,8 +9,8 @@
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     
-    <!-- Link to your CSS (Version 6 forces browser to reload it) -->
-    <link rel="stylesheet" href="style.css?v=6">
+    <!-- Link to your CSS (Version 7 forces browser to reload it) -->
+    <link rel="stylesheet" href="style.css?v=7">
 </head>
 <body>
 
@@ -88,40 +88,58 @@
                 </div>
             </section>
 
-            <!-- 2. FIELDS VIEW (UPDATED WITH PATH BUILDER) -->
+            <!-- 2. FIELDS VIEW (SMART PATH BUILDER) -->
             <section id="view-fields" class="view">
                 <div class="hero">
                     <h1>Knowledge Fields</h1>
-                    <p>Explore specific domains or customize your learning path.</p>
+                    <p>Customize your intelligence feed. We'll optimize the order based on your goals.</p>
                 </div>
 
-                <!-- PATH BUILDER INTERFACE -->
+                <!-- SMART PATH CONFIGURATOR -->
                 <div class="path-builder-container">
                     <div class="path-controls">
                         <div class="path-header">
-                            <h3><i class="ph-fill ph-strategy"></i> Path Configurator</h3>
+                            <h3><i class="ph-fill ph-brain"></i> Smart Path AI</h3>
                             <div class="undo-redo-group">
                                 <button id="btn-undo" class="icon-btn" title="Undo" disabled><i class="ph-bold ph-arrow-u-up-left"></i></button>
                                 <button id="btn-redo" class="icon-btn" title="Redo" disabled><i class="ph-bold ph-arrow-u-up-right"></i></button>
-                                <button id="btn-save-path" class="btn-sm primary">Save Path</button>
+                                <button id="btn-save-path" class="btn-sm primary">Save Choices</button>
                             </div>
                         </div>
                         
-                        <div class="path-options">
-                            <div class="option-group">
-                                <label>Quick Presets:</label>
-                                <div class="chip-group">
-                                    <button class="chip active" data-preset="all">Full Stack</button>
-                                    <button class="chip" data-preset="basics">Basics Only</button>
-                                    <button class="chip" data-preset="red">Red Team</button>
-                                    <button class="chip" data-preset="blue">Blue Team</button>
+                        <div class="path-grid">
+                            <!-- Column 1: Primary Goal (Sort Order) -->
+                            <div class="path-col">
+                                <label><i class="ph-bold ph-target"></i> Primary Objective (Determines Order)</label>
+                                <div class="radio-group" id="focus-options">
+                                    <label class="custom-radio">
+                                        <input type="radio" name="focus" value="general" checked>
+                                        <span>Generalist / Full Stack</span>
+                                    </label>
+                                    <label class="custom-radio">
+                                        <input type="radio" name="focus" value="red">
+                                        <span>Offensive Ops (Red Team)</span>
+                                    </label>
+                                    <label class="custom-radio">
+                                        <input type="radio" name="focus" value="blue">
+                                        <span>Defensive Ops (Blue Team)</span>
+                                    </label>
+                                    <label class="custom-radio">
+                                        <input type="radio" name="focus" value="engineering">
+                                        <span>Engineering & Cloud</span>
+                                    </label>
                                 </div>
                             </div>
-                            
-                            <div class="option-group">
-                                <label>Filter Categories:</label>
-                                <div id="category-toggles" class="toggle-grid">
-                                    <!-- Toggles injected via JS -->
+
+                            <!-- Column 2: Exclusions (Deep Filtering) -->
+                            <div class="path-col">
+                                <label><i class="ph-bold ph-prohibit"></i> Exclude Topics (Deep Filter)</label>
+                                <div class="toggle-grid" id="exclusion-toggles">
+                                    <!-- Populated by JS -->
+                                    <label class="cat-toggle"><input type="checkbox" data-exclude="coding"><span>Coding & Scripts</span></label>
+                                    <label class="cat-toggle"><input type="checkbox" data-exclude="math"><span>Math & Cryptography</span></label>
+                                    <label class="cat-toggle"><input type="checkbox" data-exclude="compliance"><span>Laws & Compliance</span></label>
+                                    <label class="cat-toggle"><input type="checkbox" data-exclude="hardware"><span>Hardware & IoT</span></label>
                                 </div>
                             </div>
                         </div>
@@ -213,7 +231,7 @@
 
     </div>
 
-    <!-- Link to your Javascript (Version 6 forces browser to reload it) -->
-    <script src="script.js?v=6" defer></script>
+    <!-- Link to your Javascript (Version 7 forces browser to reload it) -->
+    <script src="script.js?v=7" defer></script>
 </body>
 </html>
