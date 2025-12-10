@@ -220,6 +220,157 @@ body {
 }
 
 
+/* --- PATH BUILDER --- */
+.path-builder-container {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+}
+
+.path-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 1rem;
+}
+
+.path-header h3 {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1.1rem;
+    color: var(--text-main);
+}
+
+.undo-redo-group {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.icon-btn {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: 0.2s;
+}
+
+.icon-btn:hover:not(:disabled) {
+    background: var(--bg-hover);
+    color: white;
+}
+
+.icon-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.btn-sm.primary {
+    background: var(--primary);
+    color: #000;
+    border: none;
+    padding: 6px 12px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    border-radius: 6px;
+    cursor: pointer;
+    margin-left: 10px;
+}
+
+.option-group {
+    margin-bottom: 1.2rem;
+}
+
+.option-group label {
+    display: block;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+}
+
+/* Chips (Presets) */
+.chip-group {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.chip {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.chip:hover {
+    border-color: var(--primary);
+    color: white;
+}
+
+.chip.active {
+    background: var(--primary);
+    color: #000;
+    border-color: var(--primary);
+    font-weight: 500;
+}
+
+/* Category Toggles */
+.toggle-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 10px;
+}
+
+.cat-toggle {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 6px;
+    transition: 0.2s;
+    user-select: none;
+}
+
+.cat-toggle:hover {
+    background: rgba(255,255,255,0.03);
+}
+
+.cat-toggle input {
+    accent-color: var(--primary);
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+}
+
+.cat-toggle span {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+}
+
+.cat-toggle input:checked + span {
+    color: white;
+}
+
 /* --- CATEGORY DROPDOWN --- */
 .lessons-dropdown {
     background: var(--bg-sidebar); 
@@ -286,7 +437,6 @@ body {
     transform: translateX(3px);
 }
 
-/* Dropdown loading state */
 .lessons-dropdown p {
     padding: 1rem 1.5rem;
 }
@@ -310,8 +460,7 @@ body {
     transform: none !important;
 }
 
-/* --- NEW VIDEO PLAYER STYLES --- */
-
+/* --- VIDEO PLAYER STYLES --- */
 .back-btn {
     background: none;
     border: none;

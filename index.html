@@ -9,8 +9,8 @@
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     
-    <!-- Link to your CSS (Version 5 forces browser to reload it) -->
-    <link rel="stylesheet" href="style.css?v=5">
+    <!-- Link to your CSS (Version 6 forces browser to reload it) -->
+    <link rel="stylesheet" href="style.css?v=6">
 </head>
 <body>
 
@@ -88,13 +88,48 @@
                 </div>
             </section>
 
-            <!-- 2. FIELDS VIEW -->
+            <!-- 2. FIELDS VIEW (UPDATED WITH PATH BUILDER) -->
             <section id="view-fields" class="view">
                 <div class="hero">
                     <h1>Knowledge Fields</h1>
-                    <p>Explore specific domains of cybersecurity technology.</p>
+                    <p>Explore specific domains or customize your learning path.</p>
                 </div>
-                <div id="fields-list" class="list-stack"></div>
+
+                <!-- PATH BUILDER INTERFACE -->
+                <div class="path-builder-container">
+                    <div class="path-controls">
+                        <div class="path-header">
+                            <h3><i class="ph-fill ph-strategy"></i> Path Configurator</h3>
+                            <div class="undo-redo-group">
+                                <button id="btn-undo" class="icon-btn" title="Undo" disabled><i class="ph-bold ph-arrow-u-up-left"></i></button>
+                                <button id="btn-redo" class="icon-btn" title="Redo" disabled><i class="ph-bold ph-arrow-u-up-right"></i></button>
+                                <button id="btn-save-path" class="btn-sm primary">Save Path</button>
+                            </div>
+                        </div>
+                        
+                        <div class="path-options">
+                            <div class="option-group">
+                                <label>Quick Presets:</label>
+                                <div class="chip-group">
+                                    <button class="chip active" data-preset="all">Full Stack</button>
+                                    <button class="chip" data-preset="basics">Basics Only</button>
+                                    <button class="chip" data-preset="red">Red Team</button>
+                                    <button class="chip" data-preset="blue">Blue Team</button>
+                                </div>
+                            </div>
+                            
+                            <div class="option-group">
+                                <label>Filter Categories:</label>
+                                <div id="category-toggles" class="toggle-grid">
+                                    <!-- Toggles injected via JS -->
+                                </div>
+                            </div>
+                        </div>
+                        <div id="path-status" style="font-size:0.85rem; color:var(--primary); margin-top:10px; height:20px;"></div>
+                    </div>
+                </div>
+
+                <div id="fields-list" class="list-stack" style="margin-top: 2rem;"></div>
             </section>
 
             <!-- 3. CONCEPTS VIEW -->
@@ -143,7 +178,7 @@
                 </div>
             </section>
 
-            <!-- 6. LESSON PLAYER VIEW (NEW) -->
+            <!-- 6. LESSON PLAYER VIEW -->
             <section id="view-lesson" class="view">
                 <div class="hero">
                     <button class="back-btn" onclick="navTo('fields')"><i class="ph-bold ph-arrow-left"></i> Back to Fields</button>
@@ -153,10 +188,6 @@
                 
                 <div class="video-container">
                     <iframe id="video-player" src="" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
-                </div>
-                
-                <div class="lesson-controls">
-                    <!-- Future features: Mark Complete button, Notes, etc. -->
                 </div>
             </section>
 
@@ -182,7 +213,7 @@
 
     </div>
 
-    <!-- Link to your Javascript (Version 5 forces browser to reload it) -->
-    <script src="script.js?v=5" defer></script>
+    <!-- Link to your Javascript (Version 6 forces browser to reload it) -->
+    <script src="script.js?v=6" defer></script>
 </body>
 </html>

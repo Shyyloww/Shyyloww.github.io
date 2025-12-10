@@ -8,6 +8,17 @@ const sbClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 let isLoginMode = true;
 let currentUser = null;
 let allConcepts = []; 
+let allCategories = []; 
+
+// --- PATH STATE MANAGEMENT ---
+let pathState = {
+    mode: 'all',          // 'all', 'basics', 'red', 'blue', 'custom'
+    hiddenSlugs: [],      // Array of category slugs to hide
+    difficulty: 'all'     // 'all', 'beginner' (filters videos)
+};
+
+let stateHistory = [];
+let stateFuture = [];
 
 // --- 1. SETUP EVENT LISTENERS ---
 document.addEventListener('DOMContentLoaded', () => {
@@ -37,10 +48,18 @@ document.addEventListener('DOMContentLoaded', () => {
         if(e.key === 'Enter') sendAiMessage();
     });
 
+    // Path Builder Buttons
+    document.getElementById('btn-save-path').addEventListener('click', savePathPreferences);
+    document.getElementById('btn-undo').addEventListener('click', undoPathState);
+    document.getElementById('btn-redo').addEventListener('click', redoPathState);
+
+    document.querySelectorAll('.chip').forEach(chip => {
+        chip.addEventListener('click', (e) => applyPreset(e.target.dataset.preset));
+    });
+
     // Concept Search
     document.querySelector('.concept-search').addEventListener('keyup', (e) => filterConcepts(e.target.value));
 
-    // Initialize
     initApp();
 });
 
@@ -98,25 +117,148 @@ async function initApp() {
         const name = currentUser.user_metadata?.username || currentUser.email.split('@')[0];
         document.getElementById('user-display').innerText = name;
         
+        // Load preferences before loading data
+        await loadUserPreferences();
         loadData();
     } else {
         document.getElementById('auth-container').style.display = 'flex';
     }
 }
 
+// --- NEW: PATH PREFERENCES LOGIC ---
+async function loadUserPreferences() {
+    try {
+        const { data, error } = await sbClient
+            .from('profiles')
+            .select('learning_preferences')
+            .eq('id', currentUser.id)
+            .single();
+        
+        if (data && data.learning_preferences) {
+            pathState = data.learning_preferences;
+        }
+        updatePathUI();
+    } catch (e) {
+        console.log("No existing preferences found.");
+    }
+}
+
+async function savePathPreferences() {
+    const btn = document.getElementById('btn-save-path');
+    const originalText = btn.innerText;
+    btn.innerText = "Saving...";
+    
+    try {
+        const { error } = await sbClient
+            .from('profiles')
+            .update({ learning_preferences: pathState })
+            .eq('id', currentUser.id);
+
+        if(error) throw error;
+        document.getElementById('path-status').innerText = "Path saved successfully.";
+        setTimeout(() => document.getElementById('path-status').innerText = "", 3000);
+    } catch(e) {
+        console.error(e);
+        document.getElementById('path-status').innerText = "Error saving path.";
+    }
+    btn.innerText = originalText;
+}
+
+// --- UNDO / REDO / LOGIC ---
+function pushHistory() {
+    stateHistory.push(JSON.parse(JSON.stringify(pathState)));
+    stateFuture = []; 
+    updateUndoRedoButtons();
+}
+
+function undoPathState() {
+    if (stateHistory.length === 0) return;
+    stateFuture.push(JSON.parse(JSON.stringify(pathState))); 
+    pathState = stateHistory.pop(); 
+    updatePathUI();
+    renderFields();
+    updateUndoRedoButtons();
+}
+
+function redoPathState() {
+    if (stateFuture.length === 0) return;
+    stateHistory.push(JSON.parse(JSON.stringify(pathState))); 
+    pathState = stateFuture.pop(); 
+    updatePathUI();
+    renderFields();
+    updateUndoRedoButtons();
+}
+
+function updateUndoRedoButtons() {
+    document.getElementById('btn-undo').disabled = stateHistory.length === 0;
+    document.getElementById('btn-redo').disabled = stateFuture.length === 0;
+}
+
+function applyPreset(preset) {
+    pushHistory();
+    pathState.mode = preset;
+    
+    if (preset === 'all') {
+        pathState.hiddenSlugs = [];
+        pathState.difficulty = 'all';
+    } 
+    else if (preset === 'basics') {
+        pathState.hiddenSlugs = [];
+        pathState.difficulty = 'beginner'; 
+    }
+    else if (preset === 'red') {
+        pathState.hiddenSlugs = ['blue-team', 'specialized-frontier-tech', 'infra-cloud-security']; 
+        pathState.difficulty = 'all';
+    }
+    else if (preset === 'blue') {
+        pathState.hiddenSlugs = ['red-team', 'app-security'];
+        pathState.difficulty = 'all';
+    }
+
+    updatePathUI();
+    renderFields();
+}
+
+function toggleCategoryVisibility(slug) {
+    pushHistory();
+    pathState.mode = 'custom'; 
+    if (pathState.hiddenSlugs.includes(slug)) {
+        pathState.hiddenSlugs = pathState.hiddenSlugs.filter(s => s !== slug);
+    } else {
+        pathState.hiddenSlugs.push(slug);
+    }
+    updatePathUI();
+    renderFields();
+}
+
+function updatePathUI() {
+    // 1. Update Chips
+    document.querySelectorAll('.chip').forEach(chip => {
+        chip.classList.toggle('active', chip.dataset.preset === pathState.mode);
+    });
+
+    // 2. Update Toggles
+    const container = document.getElementById('category-toggles');
+    if (allCategories.length > 0) {
+        container.innerHTML = allCategories.map(c => `
+            <label class="cat-toggle">
+                <input type="checkbox" 
+                    ${!pathState.hiddenSlugs.includes(c.slug) ? 'checked' : ''} 
+                    onchange="toggleCategoryVisibility('${c.slug}')">
+                <span>${c.title}</span>
+            </label>
+        `).join('');
+    }
+}
+
 // --- 4. NAVIGATION & DATA ---
 function navTo(sec) {
-    // Hide video if leaving lesson view to stop audio playing
     if (document.getElementById('view-lesson').classList.contains('active-view') && sec !== 'lesson') {
         document.getElementById('video-player').src = ""; 
     }
-
     document.querySelectorAll('.view').forEach(el => el.classList.remove('active-view'));
     document.getElementById('view-'+sec).classList.add('active-view');
-    
     document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-    
-    // Only highlight sidebar if it's one of the main sections
     const btn = document.getElementById('btn-'+sec);
     if(btn) btn.classList.add('active');
 }
@@ -141,15 +283,26 @@ async function loadData() {
 
     // 2. Fields
     const { data: cats, error: catsError } = await sbClient.from('categories').select('*');
-    if (catsError) {
-        console.error("Error fetching categories:", catsError.message);
-        document.getElementById('fields-list').innerHTML = `<p style="color:var(--text-muted)">Failed to load fields.</p>`;
-        return;
-    }
+    if (catsError) { console.error(catsError); return; }
+    allCategories = cats || [];
+    
+    // Refresh UI with loaded categories
+    updatePathUI();
+    renderFields();
 
+    // 3. Concepts
+    const { data: concepts } = await sbClient.from('concepts').select('*');
+    allConcepts = concepts || [];
+    renderConcepts(allConcepts);
+}
+
+// Render Fields based on Filter
+function renderFields() {
     const fList = document.getElementById('fields-list');
-    if(cats?.length) {
-        fList.innerHTML = cats.map(c => `
+    const visibleCats = allCategories.filter(c => !pathState.hiddenSlugs.includes(c.slug));
+
+    if(visibleCats.length > 0) {
+        fList.innerHTML = visibleCats.map(c => `
             <div class="bar-card category-card" data-category-id="${c.id}" data-category-title="${c.title}">
                 <div class="bar-icon"><i class="ph-fill ph-folder-notch"></i></div>
                 <div class="bar-content">
@@ -163,17 +316,11 @@ async function loadData() {
             </div>
         `).join('');
 
-        // Attach event listeners to each category card
         document.querySelectorAll('.category-card').forEach(card => {
             card.addEventListener('click', toggleCategoryLessons);
         });
 
-    } else { fList.innerHTML = `<p style="color:var(--text-muted)">No fields found.</p>`; }
-
-    // 3. Concepts
-    const { data: concepts } = await sbClient.from('concepts').select('*');
-    allConcepts = concepts || [];
-    renderConcepts(allConcepts);
+    } else { fList.innerHTML = `<p style="padding: 2rem; color:var(--text-muted); text-align:center;">No fields match your current path settings.</p>`; }
 }
 
 function renderConcepts(list) {
@@ -198,11 +345,11 @@ function filterConcepts(query) {
     renderConcepts(filtered);
 }
 
-// --- UPDATED FUNCTION: TOGGLE CATEGORY LESSONS ---
+// Fetch and Filter Videos
 async function toggleCategoryLessons(event) {
     const card = event.currentTarget;
     const categoryId = card.dataset.categoryId;
-    const categoryTitle = card.dataset.categoryTitle; // Get title for display
+    const categoryTitle = card.dataset.categoryTitle;
     const dropdownId = `lessons-${categoryId}`;
     const dropdown = document.getElementById(dropdownId);
     const arrowIcon = card.querySelector('.bar-arrow i');
@@ -235,16 +382,26 @@ async function toggleCategoryLessons(event) {
         dropdown.innerHTML = '<p style="padding:1rem; color:var(--text-muted);">Loading lessons...</p>';
 
         try {
+            // Fetch videos for category
             const { data: lessons, error } = await sbClient
                 .from('videos')
-                .select('title, url')
-                .eq('category_id', categoryId);
+                .select('title, url, tags, id')
+                .eq('category_id', categoryId)
+                .order('id', { ascending: true });
 
             if (error) throw error;
 
-            if (lessons && lessons.length > 0) {
-                // UPDATE: Instead of a normal href link, we use a button/span with onclick
-                dropdown.innerHTML = lessons.map(lesson => `
+            // --- FILTERING LOGIC ---
+            let filteredLessons = lessons;
+
+            if (pathState.difficulty === 'beginner') {
+                filteredLessons = lessons.filter(v => 
+                    v.tags && v.tags.some(t => ['basics', 'intro', 'fundamentals', 'beginner', 'ethics', 'security'].includes(t.toLowerCase()))
+                );
+            }
+
+            if (filteredLessons && filteredLessons.length > 0) {
+                dropdown.innerHTML = filteredLessons.map(lesson => `
                     <div class="lesson-item" onclick="openLesson('${lesson.title.replace(/'/g, "\\'")}', '${lesson.url}', '${categoryTitle.replace(/'/g, "\\'")}')" style="cursor:pointer">
                         <i class="ph ph-play-circle"></i>
                         <span>${lesson.title}</span>
@@ -252,20 +409,17 @@ async function toggleCategoryLessons(event) {
                     </div>
                 `).join('');
             } else {
-                dropdown.innerHTML = `<p style="padding:1rem; color:var(--text-muted);">No lessons found for this category.</p>`;
+                dropdown.innerHTML = `<p style="padding:1rem; color:var(--text-muted);">No lessons match your current filter.</p>`;
             }
         } catch (error) {
             console.error('Error fetching category lessons:', error);
-            dropdown.innerHTML = `<p style="padding:1rem; color:var(--text-muted);">Failed to load lessons. Please try again.</p>`;
+            dropdown.innerHTML = `<p style="padding:1rem; color:var(--text-muted);">Failed to load lessons.</p>`;
         }
         dropdown.style.maxHeight = dropdown.scrollHeight + 'px';
     }
 }
 
-// --- NEW FUNCTION: OPEN LESSON IN PLAYER ---
 function openLesson(title, url, categoryName) {
-    // 1. Extract YouTube ID
-    // Supports formats: youtu.be/ID, youtube.com/watch?v=ID, youtube.com/embed/ID
     let videoId = "";
     try {
         const urlObj = new URL(url);
@@ -274,22 +428,13 @@ function openLesson(title, url, categoryName) {
         } else if (urlObj.hostname.includes('youtube.com')) {
             videoId = urlObj.searchParams.get('v');
         }
-    } catch (e) {
-        console.error("Invalid URL format", e);
-        return;
-    }
+    } catch (e) { console.error("Invalid URL format", e); return; }
 
-    if (!videoId) {
-        alert("Could not load video. Invalid URL format.");
-        return;
-    }
+    if (!videoId) { alert("Could not load video. Invalid URL format."); return; }
 
-    // 2. Update DOM Elements
     document.getElementById('lesson-title').innerText = title;
     document.getElementById('lesson-category').innerText = categoryName;
     document.getElementById('video-player').src = `https://www.youtube.com/embed/${videoId}?autoplay=1`;
-
-    // 3. Switch View
     navTo('lesson');
 }
 
@@ -304,7 +449,6 @@ async function changePassword() {
     const pass = document.getElementById('new-password').value;
     const msg = document.getElementById('settings-msg');
     if(pass.length < 6) return msg.innerText = "Too short.";
-    
     const { error } = await sbClient.auth.updateUser({ password: pass });
     msg.innerText = error ? error.message : "Password updated.";
 }
@@ -313,26 +457,20 @@ async function changePassword() {
 function toggleChat() {
     const win = document.getElementById('ai-window');
     win.classList.toggle('visible');
-    if (win.classList.contains('visible')) {
-        setTimeout(() => { document.getElementById('ai-input').focus(); }, 300);
-    }
+    if (win.classList.contains('visible')) { setTimeout(() => { document.getElementById('ai-input').focus(); }, 300); }
 }
 
 async function sendAiMessage() {
     const inp = document.getElementById('ai-input');
     const txt = inp.value; 
     if(!txt) return;
-    
     const box = document.getElementById('ai-messages');
-    
     box.innerHTML += `<div class="msg user">${txt}</div>`;
     inp.value = "";
     box.scrollTop = box.scrollHeight;
-
     const loadingId = "loading-" + Date.now();
     box.innerHTML += `<div id="${loadingId}" class="msg bot loading">Cyberian is thinking...</div>`;
     box.scrollTop = box.scrollHeight;
-
     try {
         const res = await fetch(`${AI_SERVER_URL}/ask-ai`, {
             method: 'POST',
