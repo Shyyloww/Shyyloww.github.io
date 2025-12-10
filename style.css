@@ -1003,3 +1003,58 @@ body {
     animation: spinPulse 1s infinite ease-in-out;
     pointer-events: none;
 }
+
+/* --- COURSE PLAYLIST (SYLLABUS) --- */
+.playlist-box {
+    margin-top: 2rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    animation: fadeIn 0.3s ease-out;
+}
+
+.playlist-header {
+    padding: 1rem 1.5rem;
+    background: rgba(255,255,255,0.03);
+    border-bottom: 1px solid var(--border);
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--text-main);
+}
+
+.playlist-header i {
+    color: var(--primary);
+    font-size: 1.2rem;
+}
+
+.playlist-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 1.5rem;
+    cursor: pointer;
+    transition: 0.2s;
+    border-bottom: 1px solid var(--border);
+}
+
+.playlist-item:hover {
+    background: var(--bg-hover);
+    color: white;
+}
+
+.playlist-item:last-child {
+    border-bottom: none;
+}
+
+/* Style for the active video in the list */
+.playlist-item i.ph-fill {
+    color: var(--primary);
+}
+
+/* Ensure the course cards look clickable */
+.course-card {
+    cursor: pointer;
+}

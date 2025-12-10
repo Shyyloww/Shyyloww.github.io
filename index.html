@@ -9,8 +9,8 @@
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     
-    <!-- Link to your CSS (Ensure style.css is updated with previous CSS) -->
-    <link rel="stylesheet" href="style.css?v=13">
+    <!-- Link to your CSS -->
+    <link rel="stylesheet" href="style.css?v=14">
 </head>
 <body>
 
@@ -88,25 +88,21 @@
                 </div>
             </section>
 
-            <!-- 2. FIELDS VIEW (SMART FILTERING & SORTING) -->
+            <!-- 2. FIELDS VIEW -->
             <section id="view-fields" class="view">
                 <div class="hero">
                     <h1>Knowledge Fields</h1>
                     <p>Customize your intelligence feed. AI organizes your learning path.</p>
                 </div>
 
-                <!-- PATH BUILDER -->
                 <div class="path-builder-container">
                     <div class="path-header">
                         <h3><i class="ph-fill ph-funnel"></i> Path Filters</h3>
                         <div class="undo-redo-group">
-                            <!-- AUTOMATIC SMART SORT BUTTON -->
                             <button id="btn-smart-sort" class="icon-btn special" title="AI: Auto-Sort for Beginner Progression">
                                 <i class="ph-fill ph-sparkle"></i>
                             </button>
-                            
                             <div class="divider" style="width:1px; height:20px; background:var(--border); margin:0 5px;"></div>
-                            
                             <button id="btn-undo" class="icon-btn" title="Undo" disabled><i class="ph-bold ph-arrow-u-up-left"></i></button>
                             <button id="btn-redo" class="icon-btn" title="Redo" disabled><i class="ph-bold ph-arrow-u-up-right"></i></button>
                             <button id="btn-save-path" class="btn-sm primary">Save Config</button>
@@ -117,10 +113,7 @@
                         <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:10px; font-weight:600; text-transform:uppercase;">
                             Exclude Topics (Categories with no remaining videos will hide):
                         </p>
-                        <!-- FILTER GRID -->
-                        <div class="toggle-grid" id="exclusion-toggles">
-                            <!-- Populated by Javascript -->
-                        </div>
+                        <div class="toggle-grid" id="exclusion-toggles"></div>
                     </div>
                     
                     <div id="path-status" style="font-size:0.85rem; color:var(--primary); margin-top:15px; height:20px;"></div>
@@ -177,16 +170,27 @@
                 </div>
             </section>
 
-            <!-- 6. LESSON PLAYER VIEW -->
+            <!-- 6. LESSON PLAYER VIEW (UPDATED) -->
             <section id="view-lesson" class="view">
                 <div class="hero">
-                    <button class="back-btn" onclick="navTo('fields')"><i class="ph-bold ph-arrow-left"></i> Back to Fields</button>
+                    <button class="back-btn" onclick="navTo('fields')"><i class="ph-bold ph-arrow-left"></i> Back</button>
                     <h1 id="lesson-title" style="margin-top:1rem;">Lesson Title</h1>
                     <p id="lesson-category" style="color:var(--primary); font-size: 0.9rem; margin-top:0.5rem;">Category Name</p>
                 </div>
                 
+                <!-- Video Player -->
                 <div class="video-container">
                     <iframe id="video-player" src="" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+                </div>
+
+                <!-- NEW: Course Syllabus List (Visible only when playing a course) -->
+                <div id="course-playlist-container" class="playlist-box hidden">
+                    <div class="playlist-header">
+                        <i class="ph-fill ph-list-numbers"></i> Course Syllabus
+                    </div>
+                    <div id="course-playlist-items" class="list-stack">
+                        <!-- Items populated via JS -->
+                    </div>
                 </div>
             </section>
 
@@ -212,7 +216,7 @@
 
     </div>
 
-    <!-- Link to your Javascript (Version 13 forces browser to reload it) -->
-    <script src="script.js?v=13" defer></script>
+    <!-- Link to your Javascript -->
+    <script src="script.js?v=14" defer></script>
 </body>
 </html>
