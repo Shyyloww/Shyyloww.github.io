@@ -10,46 +10,25 @@ let currentUser = null;
 let allConcepts = []; 
 let allCategories = []; 
 
-// --- SMART PATH LOGIC DEFINITIONS ---
-
-// 1. Tag Groups: Maps a UI "Exclusion" to specific video tags
+// --- SMART PATH: EXCLUSION DEFINITIONS ---
+// Keys are UI labels, Values are DB tags to filter out
 const exclusionGroups = {
-    'coding': ['python', 'bash', 'powershell', 'scripting', 'sql', 'html', 'javascript', 'programming', 'c'],
-    'math': ['binary', 'hexadecimal', 'crypto', 'hashing', 'algorithms', 'math'],
-    'compliance': ['risk', 'management', 'gdpr', 'hipaa', 'pci', 'compliance', 'ethics'],
-    'hardware': ['cpu', 'ram', 'gpu', 'iot', 'hardware', 'industrial']
-};
-
-// 2. Priority Weights: Determines Order based on Focus
-// Higher number = Higher on the page. Default weight is 10.
-const categoryPriorities = {
-    'general': {}, // Default sorting
-    'red': {
-        'red-team': 100,
-        'app-security': 90,
-        'networking': 80,
-        'operating-systems-admin': 70,
-        'coding-scripting': 60
-    },
-    'blue': {
-        'blue-team': 100,
-        'infra-cloud-security': 90,
-        'networking': 80,
-        'operating-systems-admin': 70,
-        'crypto-access-control': 60
-    },
-    'engineering': {
-        'infra-cloud-security': 100,
-        'coding-scripting': 90,
-        'networking': 80,
-        'specialized-frontier-tech': 70
-    }
+    'Code & Scripting': ['programming', 'scripting', 'bash', 'powershell', 'python', 'sql', 'html', 'javascript', 'c'],
+    'Windows Internals': ['windows', 'registry', 'active directory', 'ntlm', 'kerberos'],
+    'Linux Systems': ['linux', 'kernel', 'shell', 'filesystem', 'ubuntu', 'kali'],
+    'Networking Core': ['network', 'osi', 'tcp', 'ip', 'subnet', 'dns', 'dhcp', 'protocols'],
+    'Web Security': ['web', 'xss', 'sqli', 'csrf', 'owasp', 'http', 'cookies'],
+    'Cloud & VMs': ['cloud', 'virtualization', 'vms', 'containers', 'aws', 'azure'],
+    'Cryptography': ['crypto', 'hashing', 'pki', 'encryption', 'salting'],
+    'Hardware & IoT': ['hardware', 'iot', 'industrial', 'cpu', 'ram', 'gpu', 'binary'],
+    'Compliance & Law': ['ethics', 'risk', 'compliance', 'gdpr', 'hipaa', 'legal'],
+    'Red Team Ops': ['redteam', 'exploitation', 'malware', 'metasploit', 'c2', 'social engineering'],
+    'Blue Team Ops': ['blueteam', 'forensics', 'siem', 'threat hunting', 'soc', 'yara']
 };
 
 // --- STATE MANAGEMENT ---
 let pathState = {
-    focus: 'general',       // 'general', 'red', 'blue', 'engineering'
-    exclusions: []          // Array of exclusion keys (e.g. ['coding', 'math'])
+    exclusions: [] // Array of exclusion keys (e.g. ['Code & Scripting'])
 };
 
 let stateHistory = [];
@@ -84,21 +63,29 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('btn-undo').addEventListener('click', undoPathState);
     document.getElementById('btn-redo').addEventListener('click', redoPathState);
 
-    // Focus Radio Buttons
-    document.querySelectorAll('input[name="focus"]').forEach(radio => {
-        radio.addEventListener('change', (e) => setFocus(e.target.value));
-    });
-
-    // Exclusion Checkboxes
-    document.querySelectorAll('#exclusion-toggles input').forEach(chk => {
-        chk.addEventListener('change', (e) => toggleExclusion(e.target.dataset.exclude));
-    });
-
     // Search
     document.querySelector('.concept-search').addEventListener('keyup', (e) => filterConcepts(e.target.value));
 
+    // Initialize Exclusion Grid
+    initExclusionGrid();
+
     initApp();
 });
+
+function initExclusionGrid() {
+    const container = document.getElementById('exclusion-toggles');
+    container.innerHTML = Object.keys(exclusionGroups).map(key => `
+        <label class="cat-toggle">
+            <input type="checkbox" data-exclude="${key}">
+            <span>${key}</span>
+        </label>
+    `).join('');
+
+    // Attach listeners after creation
+    container.querySelectorAll('input').forEach(chk => {
+        chk.addEventListener('change', (e) => toggleExclusion(e.target.dataset.exclude));
+    });
+}
 
 // --- 2. AUTHENTICATION ---
 async function handleAuth() {
@@ -153,7 +140,7 @@ async function initApp() {
     }
 }
 
-// --- NEW: SMART PATH LOGIC ---
+// --- SMART PATH LOGIC ---
 
 function pushHistory() {
     stateHistory.push(JSON.parse(JSON.stringify(pathState)));
@@ -166,7 +153,7 @@ function undoPathState() {
     stateFuture.push(JSON.parse(JSON.stringify(pathState)));
     pathState = stateHistory.pop();
     updateUIFromState();
-    renderFields(); // This triggers the resort/refilter
+    renderFields(); 
     updateUndoRedoButtons();
 }
 
@@ -184,13 +171,6 @@ function updateUndoRedoButtons() {
     document.getElementById('btn-redo').disabled = stateFuture.length === 0;
 }
 
-function setFocus(newFocus) {
-    if (pathState.focus === newFocus) return;
-    pushHistory();
-    pathState.focus = newFocus;
-    renderFields(); // Re-sort categories
-}
-
 function toggleExclusion(tagGroup) {
     pushHistory();
     if (pathState.exclusions.includes(tagGroup)) {
@@ -198,16 +178,13 @@ function toggleExclusion(tagGroup) {
     } else {
         pathState.exclusions.push(tagGroup);
     }
-    renderFields(); // Re-render to hide categories that might become empty
-    // Note: Video filtering happens inside toggleCategoryLessons, but categories might disappear now.
+    updateUIFromState();
+    // No need to re-render fields immediately unless you want to hide empty categories dynamically.
+    // The filtering happens when opening a category dropdown.
+    renderFields(); 
 }
 
 function updateUIFromState() {
-    // Set Radio
-    const radio = document.querySelector(`input[name="focus"][value="${pathState.focus}"]`);
-    if(radio) radio.checked = true;
-
-    // Set Checkboxes
     document.querySelectorAll('#exclusion-toggles input').forEach(chk => {
         chk.checked = pathState.exclusions.includes(chk.dataset.exclude);
     });
@@ -230,10 +207,10 @@ async function savePathPreferences() {
     btn.innerText = "Saving...";
     try {
         await sbClient.from('profiles').update({ learning_preferences: pathState }).eq('id', currentUser.id);
-        document.getElementById('path-status').innerText = "Path optimized & saved.";
+        document.getElementById('path-status').innerText = "Path saved.";
         setTimeout(() => document.getElementById('path-status').innerText = "", 3000);
     } catch(e) { document.getElementById('path-status').innerText = "Save failed."; }
-    btn.innerText = "Save Choices";
+    btn.innerText = "Save Filters";
 }
 
 // --- DATA LOADING & RENDERING ---
@@ -256,10 +233,10 @@ async function loadData() {
         `).join('');
     } else { cList.innerHTML = `<p style="color:var(--text-muted)">No courses found.</p>`; }
 
-    // 2. Categories (Fetch once)
+    // 2. Categories
     const { data: cats } = await sbClient.from('categories').select('*');
     allCategories = cats || [];
-    renderFields(); // Smart render
+    renderFields(); 
 
     // 3. Concepts
     const { data: concepts } = await sbClient.from('concepts').select('*');
@@ -267,26 +244,11 @@ async function loadData() {
     renderConcepts(allConcepts);
 }
 
-// --- THE SMART RENDER LOGIC ---
 function renderFields() {
     const fList = document.getElementById('fields-list');
     
-    // 1. Sort Categories based on Focus
-    const priorities = categoryPriorities[pathState.focus] || {};
-    
-    // Clone array to sort safely
-    let sortedCats = [...allCategories].sort((a, b) => {
-        const weightA = priorities[a.slug] || 10; // Default weight
-        const weightB = priorities[b.slug] || 10;
-        return weightB - weightA; // Descending order (highest priority first)
-    });
-
-    // 2. Render
-    // Note: We don't filter categories here yet. We let them render.
-    // If they are clicked and contain 0 allowed videos (due to exclusions), we could hide them then,
-    // OR ideally, we pre-check. For performance, let's keep them visible but empty, or users will be confused.
-    // However, if you want to hide empty ones, we'd need to fetch counts first. 
-    // For now, let's render the sorted list.
+    // Sort Categories (Default by ID for stability)
+    let sortedCats = [...allCategories].sort((a, b) => a.id - b.id);
 
     if(sortedCats.length > 0) {
         fList.innerHTML = sortedCats.map(c => `
@@ -344,19 +306,19 @@ async function toggleCategoryLessons(event) {
     dropdown.classList.add('active');
     card.classList.add('active');
     arrowIcon.classList.replace('ph-caret-right', 'ph-caret-down');
-    dropdown.innerHTML = '<p style="padding:1rem; color:var(--text-muted);">Analyzing path...</p>';
+    dropdown.innerHTML = '<p style="padding:1rem; color:var(--text-muted);">Analyzing filters...</p>';
 
     try {
         const { data: lessons, error } = await sbClient
             .from('videos')
             .select('title, url, tags, id')
             .eq('category_id', categoryId)
-            .order('id', { ascending: true }); // Default to ID order (logical progression)
+            .order('id', { ascending: true });
 
         if (error) throw error;
 
         // --- DEEP FILTERING LOGIC ---
-        // 1. Build a list of all forbidden tags based on user exclusions
+        // 1. Build a list of all forbidden tags
         let forbiddenTags = [];
         pathState.exclusions.forEach(groupKey => {
             if (exclusionGroups[groupKey]) {
@@ -381,7 +343,7 @@ async function toggleCategoryLessons(event) {
                 </div>
             `).join('');
         } else {
-            dropdown.innerHTML = `<p style="padding:1rem; color:var(--text-muted);">All lessons in this category are hidden by your "Exclude" settings.</p>`;
+            dropdown.innerHTML = `<p style="padding:1rem; color:var(--text-muted);">All lessons hidden by your filters.</p>`;
         }
     } catch (err) {
         console.error(err);
@@ -456,13 +418,22 @@ async function sendAiMessage() {
     box.innerHTML += `<div class="msg user">${txt}</div>`;
     inp.value = "";
     box.scrollTop = box.scrollHeight;
+    const loadingId = "loading-" + Date.now();
+    box.innerHTML += `<div id="${loadingId}" class="msg bot loading">Cyberian is thinking...</div>`;
+    box.scrollTop = box.scrollHeight;
     try {
         const res = await fetch(`${AI_SERVER_URL}/ask-ai`, {
             method: 'POST', headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({ user_id: currentUser.id, question: txt })
         });
         const d = await res.json();
+        const loader = document.getElementById(loadingId);
+        if(loader) loader.remove();
         box.innerHTML += `<div class="msg bot">${d.answer}</div>`;
-    } catch(e) { box.innerHTML += `<div class="msg bot">Error.</div>`; }
+    } catch(e) {
+        const loader = document.getElementById(loadingId);
+        if(loader) loader.remove();
+        box.innerHTML += `<div class="msg bot">Error.</div>`;
+    }
     box.scrollTop = box.scrollHeight;
 }
