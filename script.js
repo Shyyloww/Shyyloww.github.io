@@ -1,7 +1,7 @@
 // --- CONFIGURATION ---
 const SUPABASE_URL = 'https://exjayvebshmlzdwjbhkv.supabase.co'; 
 const SUPABASE_KEY = 'sb_publishable_M_mIHSDGIHaBR2s9K9FkSg_Hy1FMn85'; 
-const AI_SERVER_URL = 'https://shyyloww-github-io-1.onrender.com'; // Still needed for AI chat
+const AI_SERVER_URL = 'https://shyyloww-github-io-1.onrender.com';
 
 const sbClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
@@ -106,10 +106,17 @@ async function initApp() {
 
 // --- 4. NAVIGATION & DATA ---
 function navTo(sec) {
+    // Hide video if leaving lesson view to stop audio playing
+    if (document.getElementById('view-lesson').classList.contains('active-view') && sec !== 'lesson') {
+        document.getElementById('video-player').src = ""; 
+    }
+
     document.querySelectorAll('.view').forEach(el => el.classList.remove('active-view'));
     document.getElementById('view-'+sec).classList.add('active-view');
     
     document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+    
+    // Only highlight sidebar if it's one of the main sections
     const btn = document.getElementById('btn-'+sec);
     if(btn) btn.classList.add('active');
 }
@@ -133,7 +140,6 @@ async function loadData() {
     } else { cList.innerHTML = `<p style="color:var(--text-muted)">No courses found.</p>`; }
 
     // 2. Fields
-    // Fetch categories with their IDs
     const { data: cats, error: catsError } = await sbClient.from('categories').select('*');
     if (catsError) {
         console.error("Error fetching categories:", catsError.message);
@@ -192,46 +198,42 @@ function filterConcepts(query) {
     renderConcepts(filtered);
 }
 
-// --- UPDATED FUNCTION: TOGGLE CATEGORY LESSONS (FETCH FROM SUPABASE) ---
+// --- UPDATED FUNCTION: TOGGLE CATEGORY LESSONS ---
 async function toggleCategoryLessons(event) {
     const card = event.currentTarget;
-    const categoryId = card.dataset.categoryId; // Use category ID
+    const categoryId = card.dataset.categoryId;
+    const categoryTitle = card.dataset.categoryTitle; // Get title for display
     const dropdownId = `lessons-${categoryId}`;
     const dropdown = document.getElementById(dropdownId);
     const arrowIcon = card.querySelector('.bar-arrow i');
 
     if (dropdown.classList.contains('active')) {
-        // If already active, hide it
         dropdown.classList.remove('active');
         dropdown.style.maxHeight = '0';
-        card.classList.remove('active'); // Remove active class from card
+        card.classList.remove('active');
         arrowIcon.classList.remove('ph-caret-down');
         arrowIcon.classList.add('ph-caret-right');
-        setTimeout(() => dropdown.innerHTML = '<p style="padding:1rem; color:var(--text-muted);">Click to load lessons...</p>', 300); // Clear after animation
+        setTimeout(() => dropdown.innerHTML = '<p style="padding:1rem; color:var(--text-muted);">Click to load lessons...</p>', 300);
     } else {
-        // Hide all other open dropdowns first
         document.querySelectorAll('.lessons-dropdown.active').forEach(openDropdown => {
             openDropdown.classList.remove('active');
             openDropdown.style.maxHeight = '0';
-            const openCard = openDropdown.previousElementSibling; // Get the associated card
+            const openCard = openDropdown.previousElementSibling;
             if (openCard) {
-                openCard.classList.remove('active'); // Remove active class from previous card
+                openCard.classList.remove('active');
                 const openArrowIcon = openCard.querySelector('.bar-arrow i');
                 openArrowIcon.classList.remove('ph-caret-down');
                 openArrowIcon.classList.add('ph-caret-right');
             }
-            // Clear content of previously opened dropdowns
             setTimeout(() => openDropdown.innerHTML = '<p style="padding:1rem; color:var(--text-muted);">Click to load lessons...</p>', 300);
         });
 
-        // Show this dropdown
         dropdown.classList.add('active');
-        card.classList.add('active'); // Add active class to current card
+        card.classList.add('active');
         arrowIcon.classList.remove('ph-caret-right');
         arrowIcon.classList.add('ph-caret-down');
-        dropdown.innerHTML = '<p style="padding:1rem; color:var(--text-muted);">Loading lessons...</p>'; // Show loading
+        dropdown.innerHTML = '<p style="padding:1rem; color:var(--text-muted);">Loading lessons...</p>';
 
-        // Fetch lessons from Supabase
         try {
             const { data: lessons, error } = await sbClient
                 .from('videos')
@@ -241,25 +243,55 @@ async function toggleCategoryLessons(event) {
             if (error) throw error;
 
             if (lessons && lessons.length > 0) {
+                // UPDATE: Instead of a normal href link, we use a button/span with onclick
                 dropdown.innerHTML = lessons.map(lesson => `
-                    <a href="${lesson.url}" target="_blank" class="lesson-item">
-                        <i class="ph ph-video"></i>
+                    <div class="lesson-item" onclick="openLesson('${lesson.title.replace(/'/g, "\\'")}', '${lesson.url}', '${categoryTitle.replace(/'/g, "\\'")}')" style="cursor:pointer">
+                        <i class="ph ph-play-circle"></i>
                         <span>${lesson.title}</span>
-                        <i class="ph-bold ph-arrow-square-out"></i>
-                    </a>
+                        <i class="ph-bold ph-caret-right"></i>
+                    </div>
                 `).join('');
             } else {
                 dropdown.innerHTML = `<p style="padding:1rem; color:var(--text-muted);">No lessons found for this category.</p>`;
             }
         } catch (error) {
-            console.error('Error fetching category lessons from Supabase:', error);
+            console.error('Error fetching category lessons:', error);
             dropdown.innerHTML = `<p style="padding:1rem; color:var(--text-muted);">Failed to load lessons. Please try again.</p>`;
         }
-        // Set max-height after content is loaded to allow transition
         dropdown.style.maxHeight = dropdown.scrollHeight + 'px';
     }
 }
 
+// --- NEW FUNCTION: OPEN LESSON IN PLAYER ---
+function openLesson(title, url, categoryName) {
+    // 1. Extract YouTube ID
+    // Supports formats: youtu.be/ID, youtube.com/watch?v=ID, youtube.com/embed/ID
+    let videoId = "";
+    try {
+        const urlObj = new URL(url);
+        if (urlObj.hostname.includes('youtu.be')) {
+            videoId = urlObj.pathname.slice(1);
+        } else if (urlObj.hostname.includes('youtube.com')) {
+            videoId = urlObj.searchParams.get('v');
+        }
+    } catch (e) {
+        console.error("Invalid URL format", e);
+        return;
+    }
+
+    if (!videoId) {
+        alert("Could not load video. Invalid URL format.");
+        return;
+    }
+
+    // 2. Update DOM Elements
+    document.getElementById('lesson-title').innerText = title;
+    document.getElementById('lesson-category').innerText = categoryName;
+    document.getElementById('video-player').src = `https://www.youtube.com/embed/${videoId}?autoplay=1`;
+
+    // 3. Switch View
+    navTo('lesson');
+}
 
 // --- 5. UTILITIES ---
 function setTheme(c) {
@@ -277,16 +309,12 @@ async function changePassword() {
     msg.innerText = error ? error.message : "Password updated.";
 }
 
-// --- 6. AI CHAT (UPDATED) ---
+// --- 6. AI CHAT ---
 function toggleChat() {
     const win = document.getElementById('ai-window');
     win.classList.toggle('visible');
-    
-    // Auto-focus the input box when opening
     if (win.classList.contains('visible')) {
-        setTimeout(() => {
-            document.getElementById('ai-input').focus();
-        }, 300); // 300ms delay to allow the slide-up animation to finish
+        setTimeout(() => { document.getElementById('ai-input').focus(); }, 300);
     }
 }
 
@@ -297,12 +325,10 @@ async function sendAiMessage() {
     
     const box = document.getElementById('ai-messages');
     
-    // 1. Add User Message
     box.innerHTML += `<div class="msg user">${txt}</div>`;
     inp.value = "";
     box.scrollTop = box.scrollHeight;
 
-    // 2. Add Loading Indicator
     const loadingId = "loading-" + Date.now();
     box.innerHTML += `<div id="${loadingId}" class="msg bot loading">Cyberian is thinking...</div>`;
     box.scrollTop = box.scrollHeight;
@@ -314,15 +340,10 @@ async function sendAiMessage() {
             body: JSON.stringify({ user_id: currentUser.id, question: txt })
         });
         const d = await res.json();
-        
-        // 3. Remove Loading Indicator
         const loader = document.getElementById(loadingId);
         if(loader) loader.remove();
-
-        // 4. Add Real Response
         box.innerHTML += `<div class="msg bot">${d.answer}</div>`;
     } catch(e) {
-        // Remove loader and show error
         const loader = document.getElementById(loadingId);
         if(loader) loader.remove();
         box.innerHTML += `<div class="msg bot">Connection Error.</div>`;

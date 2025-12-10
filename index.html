@@ -9,8 +9,8 @@
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     
-    <!-- Link to your CSS (Version 4 forces browser to reload it) -->
-    <link rel="stylesheet" href="style.css?v=4">
+    <!-- Link to your CSS (Version 5 forces browser to reload it) -->
+    <link rel="stylesheet" href="style.css?v=5">
 </head>
 <body>
 
@@ -143,6 +143,23 @@
                 </div>
             </section>
 
+            <!-- 6. LESSON PLAYER VIEW (NEW) -->
+            <section id="view-lesson" class="view">
+                <div class="hero">
+                    <button class="back-btn" onclick="navTo('fields')"><i class="ph-bold ph-arrow-left"></i> Back to Fields</button>
+                    <h1 id="lesson-title" style="margin-top:1rem;">Lesson Title</h1>
+                    <p id="lesson-category" style="color:var(--primary); font-size: 0.9rem; margin-top:0.5rem;">Category Name</p>
+                </div>
+                
+                <div class="video-container">
+                    <iframe id="video-player" src="" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+                </div>
+                
+                <div class="lesson-controls">
+                    <!-- Future features: Mark Complete button, Notes, etc. -->
+                </div>
+            </section>
+
         </main>
 
         <!-- AI CHAT WIDGET -->
@@ -165,7 +182,7 @@
 
     </div>
 
-    <!-- Link to your Javascript (Version 4 forces browser to reload it) -->
-    <script src="script.js?v=4" defer></script>
+    <!-- Link to your Javascript (Version 5 forces browser to reload it) -->
+    <script src="script.js?v=5" defer></script>
 </body>
 </html>
