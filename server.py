@@ -15,7 +15,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# CONNECT TO HUGGING FACE
 HF_TOKEN = os.environ.get("HF_TOKEN")
 client = InferenceClient("meta-llama/Meta-Llama-3-8B-Instruct", token=HF_TOKEN)
 
@@ -24,8 +23,7 @@ class ChatRequest(BaseModel):
     question: str
 
 class SortRequest(BaseModel):
-    goal: str
-    categories: list  # List of dicts: [{'id': 1, 'title': '...'}, ...]
+    categories: list  # List of visible categories
 
 @app.get("/")
 def home():
@@ -45,22 +43,27 @@ async def ask_ai(request: ChatRequest):
 
 @app.post("/smart-sort")
 async def smart_sort(request: SortRequest):
-    # Construct a prompt for the AI to act as a curriculum architect
+    # Simplify input for the AI
     cats_simplified = [{"id": c['id'], "title": c['title']} for c in request.categories]
     
     prompt = f"""
-    You are a curriculum architect. 
-    User Goal: "{request.goal}"
-    Available Modules: {json.dumps(cats_simplified)}
+    You are a curriculum architect.
+    Task: Reorder the following list of learning modules into the perfect "Zero to Hero" learning path for a complete beginner.
     
-    Task: Reorder the modules to create the perfect learning path for this goal. Start with prerequisites, then move to core skills, then advanced topics.
+    Rules:
+    1. Start with foundational concepts (Hardware, OS, Networking).
+    2. Move to core skills (Coding, Scripting).
+    3. Then defensive/offensive security.
+    4. End with advanced/specialized topics.
     
-    CRITICAL OUTPUT RULE: Return ONLY a raw JSON array of integers representing the IDs in the correct order. Do not explain.
-    Example format: [3, 1, 5, 2]
+    Modules to Sort: {json.dumps(cats_simplified)}
+    
+    OUTPUT FORMAT: Return ONLY a raw JSON array of the Category IDs in the correct order. No text.
+    Example: [10, 2, 5, 8]
     """
 
     messages = [
-        {"role": "system", "content": "You are a JSON-only API. You only output raw lists of integers."},
+        {"role": "system", "content": "You are a JSON-only API. You output only raw arrays of integers."},
         {"role": "user", "content": prompt}
     ]
 
@@ -68,7 +71,7 @@ async def smart_sort(request: SortRequest):
         response = client.chat_completion(messages, max_tokens=200, stream=False)
         content = response.choices[0].message.content.strip()
         
-        # specific cleanup for Llama sometimes adding text
+        # Clean up potential markdown wrapper
         if "[" in content and "]" in content:
             start = content.find("[")
             end = content.find("]", start) + 1
