@@ -1,7 +1,7 @@
 // --- CONFIGURATION ---
 const SUPABASE_URL = 'https://exjayvebshmlzdwjbhkv.supabase.co'; 
 const SUPABASE_KEY = 'sb_publishable_M_mIHSDGIHaBR2s9K9FkSg_Hy1FMn85'; 
-const AI_SERVER_URL = 'https://shyyloww-github-io-1.onrender.com';
+const AI_SERVER_URL = 'https://shyyloww-github-io-1.onrender.com'; // Still needed for AI chat
 
 const sbClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
@@ -63,7 +63,7 @@ async function handleAuth() {
             location.reload();
         } else {
             const { error } = await sbClient.auth.signUp({
-                email: fakeEmail, password: p,
+                email: email, password: p,
                 options: { data: { username: u } }
             });
             if(error) throw error;
@@ -133,11 +133,18 @@ async function loadData() {
     } else { cList.innerHTML = `<p style="color:var(--text-muted)">No courses found.</p>`; }
 
     // 2. Fields
-    const { data: cats } = await sbClient.from('categories').select('*');
+    // Fetch categories with their IDs
+    const { data: cats, error: catsError } = await sbClient.from('categories').select('*');
+    if (catsError) {
+        console.error("Error fetching categories:", catsError.message);
+        document.getElementById('fields-list').innerHTML = `<p style="color:var(--text-muted)">Failed to load fields.</p>`;
+        return;
+    }
+
     const fList = document.getElementById('fields-list');
     if(cats?.length) {
         fList.innerHTML = cats.map(c => `
-            <div class="bar-card">
+            <div class="bar-card category-card" data-category-id="${c.id}" data-category-title="${c.title}">
                 <div class="bar-icon"><i class="ph-fill ph-folder-notch"></i></div>
                 <div class="bar-content">
                     <h3>${c.title}</h3>
@@ -145,10 +152,19 @@ async function loadData() {
                 </div>
                 <div class="bar-arrow"><i class="ph-bold ph-caret-right"></i></div>
             </div>
+            <div class="lessons-dropdown" id="lessons-${c.id}">
+                <p style="padding:1rem; color:var(--text-muted);">Click to load lessons...</p>
+            </div>
         `).join('');
-    }
 
-    // 3. Concepts (Now using List Stack)
+        // Attach event listeners to each category card
+        document.querySelectorAll('.category-card').forEach(card => {
+            card.addEventListener('click', toggleCategoryLessons);
+        });
+
+    } else { fList.innerHTML = `<p style="color:var(--text-muted)">No fields found.</p>`; }
+
+    // 3. Concepts
     const { data: concepts } = await sbClient.from('concepts').select('*');
     allConcepts = concepts || [];
     renderConcepts(allConcepts);
@@ -176,6 +192,75 @@ function filterConcepts(query) {
     renderConcepts(filtered);
 }
 
+// --- UPDATED FUNCTION: TOGGLE CATEGORY LESSONS (FETCH FROM SUPABASE) ---
+async function toggleCategoryLessons(event) {
+    const card = event.currentTarget;
+    const categoryId = card.dataset.categoryId; // Use category ID
+    const dropdownId = `lessons-${categoryId}`;
+    const dropdown = document.getElementById(dropdownId);
+    const arrowIcon = card.querySelector('.bar-arrow i');
+
+    if (dropdown.classList.contains('active')) {
+        // If already active, hide it
+        dropdown.classList.remove('active');
+        dropdown.style.maxHeight = '0';
+        card.classList.remove('active'); // Remove active class from card
+        arrowIcon.classList.remove('ph-caret-down');
+        arrowIcon.classList.add('ph-caret-right');
+        setTimeout(() => dropdown.innerHTML = '<p style="padding:1rem; color:var(--text-muted);">Click to load lessons...</p>', 300); // Clear after animation
+    } else {
+        // Hide all other open dropdowns first
+        document.querySelectorAll('.lessons-dropdown.active').forEach(openDropdown => {
+            openDropdown.classList.remove('active');
+            openDropdown.style.maxHeight = '0';
+            const openCard = openDropdown.previousElementSibling; // Get the associated card
+            if (openCard) {
+                openCard.classList.remove('active'); // Remove active class from previous card
+                const openArrowIcon = openCard.querySelector('.bar-arrow i');
+                openArrowIcon.classList.remove('ph-caret-down');
+                openArrowIcon.classList.add('ph-caret-right');
+            }
+            // Clear content of previously opened dropdowns
+            setTimeout(() => openDropdown.innerHTML = '<p style="padding:1rem; color:var(--text-muted);">Click to load lessons...</p>', 300);
+        });
+
+        // Show this dropdown
+        dropdown.classList.add('active');
+        card.classList.add('active'); // Add active class to current card
+        arrowIcon.classList.remove('ph-caret-right');
+        arrowIcon.classList.add('ph-caret-down');
+        dropdown.innerHTML = '<p style="padding:1rem; color:var(--text-muted);">Loading lessons...</p>'; // Show loading
+
+        // Fetch lessons from Supabase
+        try {
+            const { data: lessons, error } = await sbClient
+                .from('videos')
+                .select('title, url')
+                .eq('category_id', categoryId);
+
+            if (error) throw error;
+
+            if (lessons && lessons.length > 0) {
+                dropdown.innerHTML = lessons.map(lesson => `
+                    <a href="${lesson.url}" target="_blank" class="lesson-item">
+                        <i class="ph ph-video"></i>
+                        <span>${lesson.title}</span>
+                        <i class="ph-bold ph-arrow-square-out"></i>
+                    </a>
+                `).join('');
+            } else {
+                dropdown.innerHTML = `<p style="padding:1rem; color:var(--text-muted);">No lessons found for this category.</p>`;
+            }
+        } catch (error) {
+            console.error('Error fetching category lessons from Supabase:', error);
+            dropdown.innerHTML = `<p style="padding:1rem; color:var(--text-muted);">Failed to load lessons. Please try again.</p>`;
+        }
+        // Set max-height after content is loaded to allow transition
+        dropdown.style.maxHeight = dropdown.scrollHeight + 'px';
+    }
+}
+
+
 // --- 5. UTILITIES ---
 function setTheme(c) {
     document.documentElement.style.setProperty('--primary', c);
@@ -192,18 +277,34 @@ async function changePassword() {
     msg.innerText = error ? error.message : "Password updated.";
 }
 
-// --- 6. AI CHAT ---
+// --- 6. AI CHAT (UPDATED) ---
 function toggleChat() {
-    document.getElementById('ai-window').classList.toggle('visible');
+    const win = document.getElementById('ai-window');
+    win.classList.toggle('visible');
+    
+    // Auto-focus the input box when opening
+    if (win.classList.contains('visible')) {
+        setTimeout(() => {
+            document.getElementById('ai-input').focus();
+        }, 300); // 300ms delay to allow the slide-up animation to finish
+    }
 }
 
 async function sendAiMessage() {
     const inp = document.getElementById('ai-input');
-    const txt = inp.value; if(!txt) return;
+    const txt = inp.value; 
+    if(!txt) return;
     
     const box = document.getElementById('ai-messages');
+    
+    // 1. Add User Message
     box.innerHTML += `<div class="msg user">${txt}</div>`;
     inp.value = "";
+    box.scrollTop = box.scrollHeight;
+
+    // 2. Add Loading Indicator
+    const loadingId = "loading-" + Date.now();
+    box.innerHTML += `<div id="${loadingId}" class="msg bot loading">Cyberian is thinking...</div>`;
     box.scrollTop = box.scrollHeight;
 
     try {
@@ -213,8 +314,17 @@ async function sendAiMessage() {
             body: JSON.stringify({ user_id: currentUser.id, question: txt })
         });
         const d = await res.json();
+        
+        // 3. Remove Loading Indicator
+        const loader = document.getElementById(loadingId);
+        if(loader) loader.remove();
+
+        // 4. Add Real Response
         box.innerHTML += `<div class="msg bot">${d.answer}</div>`;
     } catch(e) {
+        // Remove loader and show error
+        const loader = document.getElementById(loadingId);
+        if(loader) loader.remove();
         box.innerHTML += `<div class="msg bot">Connection Error.</div>`;
     }
     box.scrollTop = box.scrollHeight;

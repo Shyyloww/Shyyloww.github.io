@@ -16,7 +16,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# 1. CONNECT SUPABASE
+# 1. CONNECT SUPABASE (Still needed for AI logging, if you enable it)
 SUPABASE_URL = os.environ.get("SUPABASE_URL")
 SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
 
@@ -26,8 +26,6 @@ else:
     supabase = None
 
 # 2. CONNECT TO HUGGING FACE
-# Switching to Llama-3-8B-Instruct. 
-# This is natively a CHAT model, so it works perfectly with chat_completion.
 HF_TOKEN = os.environ.get("HF_TOKEN")
 client = InferenceClient("meta-llama/Meta-Llama-3-8B-Instruct", token=HF_TOKEN)
 
@@ -52,7 +50,6 @@ async def ask_ai(request: ChatRequest):
             pass 
 
     # Generate Answer using CHAT COMPLETION
-    # Llama 3 expects a system prompt and a user prompt.
     messages = [
         {"role": "system", "content": "You are a cybersecurity tutor named Cyberian. Keep answers technical, concise, and focused on security concepts."},
         {"role": "user", "content": request.question}
@@ -64,3 +61,6 @@ async def ask_ai(request: ChatRequest):
 
     except Exception as e:
         return {"answer": f"Backend Error: {str(e)}"}
+
+# The /category-lessons endpoint and CATEGORY_LESSONS dictionary are removed from server.py
+# because the data is now in Supabase and script.js will query Supabase directly.
