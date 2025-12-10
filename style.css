@@ -336,58 +336,64 @@ body {
 /* Category Toggles */
 .toggle-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 10px;
+    /* Responsive: Fits as many as possible, min width 180px */
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 12px;
 }
 
 .cat-toggle {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    cursor: pointer;
-    padding: 8px;
-    border-radius: 6px;
-    transition: 0.2s;
-    user-select: none;
+    display: flex; align-items: center; gap: 12px;
+    cursor: pointer; padding: 14px; border-radius: 8px;
+    transition: 0.2s; background: rgba(255,255,255,0.02);
+    border: 1px solid var(--border); user-select: none;
 }
 
 .cat-toggle:hover {
-    background: rgba(255,255,255,0.03);
+    background: rgba(255,255,255,0.05);
+    border-color: rgba(255,255,255,0.1);
 }
 
 .cat-toggle input {
-    accent-color: var(--primary);
-    width: 16px;
-    height: 16px;
-    cursor: pointer;
+    appearance: none; -webkit-appearance: none;
+    width: 20px; height: 20px;
+    border: 2px solid var(--text-muted); border-radius: 4px;
+    display: flex; align-items: center; justify-content: center;
+    transition: 0.2s; flex-shrink: 0; background: transparent;
 }
 
 .cat-toggle span {
-    font-size: 0.9rem;
-    color: var(--text-muted);
+    font-size: 0.9rem; color: var(--text-muted); font-weight: 500;
 }
 
-.cat-toggle input:checked + span {
-    color: white;
+/* --- CHECKED STATE (EXCLUDED) --- */
+.cat-toggle input:checked {
+    background: #f38ba8; /* Red */
+    border-color: #f38ba8;
+}
+
+.cat-toggle input:checked::after {
+    content: '✕'; font-size: 12px; color: #000; font-weight: 800;
+}
+
+.cat-toggle:has(input:checked) {
+    background: rgba(243, 139, 168, 0.1);
+    border-color: #f38ba8;
+}
+
+.cat-toggle:has(input:checked) span {
+    color: #f38ba8;
+    text-decoration: line-through;
+    opacity: 0.8;
 }
 
 /* --- CATEGORY DROPDOWN --- */
 .lessons-dropdown {
-    background: var(--bg-sidebar); 
-    border: 1px solid var(--border);
-    border-top: none; 
-    border-bottom-left-radius: var(--radius);
-    border-bottom-right-radius: var(--radius);
-    margin-top: -10px; 
-    margin-left: 20px; 
-    margin-right: 20px;
-    padding: 0;
-    overflow: hidden; 
-    max-height: 0; 
+    background: var(--bg-sidebar); border: 1px solid var(--border);
+    border-top: none; border-bottom-left-radius: var(--radius); border-bottom-right-radius: var(--radius);
+    margin-top: -10px; margin-left: 20px; margin-right: 20px;
+    padding: 0; overflow: hidden; max-height: 0;
     transition: max-height 0.3s ease-out, border-color 0.3s ease;
-    display: flex; 
-    flex-direction: column; 
-    gap: 0;
+    display: flex; flex-direction: column; gap: 0;
 }
 
 .lessons-dropdown.active {
@@ -473,307 +479,6 @@ body {
     padding: 8px 0;
     transition: 0.2s;
     font-family: var(--font-body);
-}
-
-.back-btn:hover {
-    color: var(--primary);
-    transform: translateX(-4px);
-}
-
-.video-container {
-    position: relative;
-    padding-bottom: 56.25%; /* 16:9 Aspect Ratio */
-    height: 0;
-    background: #000;
-    border-radius: var(--radius);
-    border: 1px solid var(--border);
-    overflow: hidden;
-    box-shadow: 0 10px 40px rgba(0,0,0,0.4);
-    margin-bottom: 2rem;
-}
-
-.video-container iframe {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-}
-
-/* --- NEW ADDITIONS FOR SMART PATH & VIDEO PLAYER --- */
-
-/* 1. Loading Animation for AI Chat */
-.msg.loading {
-    color: var(--primary);
-    font-style: italic;
-    font-size: 0.85rem;
-    animation: pulse 1.5s infinite;
-}
-
-@keyframes pulse {
-    0% { opacity: 0.4; }
-    50% { opacity: 1; }
-    100% { opacity: 0.4; }
-}
-
-/* 2. Smart Path Builder Interface */
-.path-builder-container {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 1.5rem;
-    margin-bottom: 2rem;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
-}
-
-.path-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1.5rem;
-    border-bottom: 1px solid var(--border);
-    padding-bottom: 1rem;
-}
-
-.path-header h3 {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-size: 1.1rem;
-    color: var(--text-main);
-}
-
-.undo-redo-group {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-}
-
-.icon-btn {
-    background: rgba(255,255,255,0.05);
-    border: 1px solid var(--border);
-    color: var(--text-muted);
-    width: 32px;
-    height: 32px;
-    border-radius: 6px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: 0.2s;
-}
-
-.icon-btn:hover:not(:disabled) {
-    background: var(--bg-hover);
-    color: white;
-}
-
-.icon-btn:disabled {
-    opacity: 0.3;
-    cursor: not-allowed;
-}
-
-.btn-sm.primary {
-    background: var(--primary);
-    color: #000;
-    border: none;
-    padding: 6px 12px;
-    font-size: 0.85rem;
-    font-weight: 600;
-    border-radius: 6px;
-    cursor: pointer;
-    margin-left: 10px;
-}
-
-/* Two Column Grid for Path Options */
-.path-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 2rem;
-}
-
-@media (max-width: 768px) {
-    .path-grid { grid-template-columns: 1fr; gap: 1.5rem; }
-}
-
-.path-col label {
-    display: block;
-    font-size: 0.85rem;
-    color: var(--text-muted);
-    margin-bottom: 1rem;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    font-weight: 700;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-/* Custom Radio Buttons (Focus Selection) */
-.custom-radio {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 10px;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: 0.2s;
-    border: 1px solid transparent;
-}
-
-.custom-radio:hover {
-    background: rgba(255,255,255,0.03);
-    border-color: var(--border);
-}
-
-.custom-radio input {
-    accent-color: var(--primary);
-    width: 18px;
-    height: 18px;
-    cursor: pointer;
-}
-
-.custom-radio span {
-    font-size: 0.95rem;
-    color: var(--text-muted);
-}
-
-.custom-radio input:checked + span {
-    color: white;
-    font-weight: 500;
-}
-
-/* Exclusion Toggles (Deep Filter) */
-.toggle-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-}
-
-.cat-toggle {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    cursor: pointer;
-    padding: 10px;
-    border-radius: 8px;
-    transition: 0.2s;
-    background: rgba(255,255,255,0.02);
-    border: 1px solid transparent;
-}
-
-.cat-toggle:hover {
-    background: rgba(255,255,255,0.05);
-}
-
-.cat-toggle input {
-    accent-color: #f38ba8; /* Red for exclusion */
-    width: 16px;
-    height: 16px;
-    cursor: pointer;
-}
-
-.cat-toggle span {
-    font-size: 0.9rem;
-    color: var(--text-muted);
-}
-
-/* Strikethrough style when excluded */
-.cat-toggle input:checked + span {
-    color: #f38ba8;
-    text-decoration: line-through;
-    opacity: 0.7;
-}
-
-/* 3. Dropdown Lesson List */
-.lessons-dropdown {
-    background: var(--bg-sidebar);
-    border: 1px solid var(--border);
-    border-top: none;
-    border-bottom-left-radius: var(--radius);
-    border-bottom-right-radius: var(--radius);
-    margin-top: -10px;
-    margin-left: 20px;
-    margin-right: 20px;
-    padding: 0;
-    overflow: hidden;
-    max-height: 0;
-    transition: max-height 0.3s ease-out, border-color 0.3s ease;
-    display: flex;
-    flex-direction: column;
-    gap: 0;
-}
-
-.lessons-dropdown.active {
-    border-color: var(--primary);
-}
-
-.lesson-item {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 12px 1.5rem;
-    color: var(--text-muted);
-    text-decoration: none;
-    transition: 0.2s;
-    font-size: 0.9rem;
-    border-bottom: 1px solid var(--border);
-}
-
-.lesson-item:last-child {
-    border-bottom: none;
-}
-
-.lesson-item:hover {
-    background: var(--bg-hover);
-    color: var(--primary);
-}
-
-.lesson-item i:first-child {
-    font-size: 1rem;
-    flex-shrink: 0;
-}
-
-.lesson-item span {
-    flex-grow: 1;
-}
-
-.lesson-item i:last-child {
-    font-size: 1rem;
-    opacity: 0.6;
-}
-
-.lessons-dropdown p {
-    padding: 1rem 1.5rem;
-}
-
-.category-card.active {
-    border-bottom-left-radius: 0;
-    border-bottom-right-radius: 0;
-    border-color: var(--primary);
-}
-
-.category-card.active:hover {
-    background: linear-gradient(90deg, var(--bg-card) 0%, rgba(203, 166, 247, 0.05) 100%);
-}
-
-.category-card .bar-arrow {
-    transform: none !important;
-}
-
-/* 4. Video Player Styles */
-.back-btn {
-    background: none;
-    border: none;
-    color: var(--text-muted);
-    font-size: 0.95rem;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 0;
-    transition: 0.2s;
-    font-family: var(--font-body);
     margin-bottom: 1rem;
 }
 
@@ -801,145 +506,6 @@ body {
     width: 100%;
     height: 100%;
 }
-
-/* --- APPEND TO BOTTOM OF STYLE.CSS --- */
-
-/* 1. Loading Animation */
-.msg.loading {
-    color: var(--primary); font-style: italic; font-size: 0.85rem; animation: pulse 1.5s infinite;
-}
-@keyframes pulse { 0% { opacity: 0.4; } 50% { opacity: 1; } 100% { opacity: 0.4; } }
-
-/* 2. Path Builder Container */
-.path-builder-container {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 1.5rem;
-    margin-bottom: 2rem;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
-}
-
-.path-header {
-    display: flex; justify-content: space-between; align-items: center;
-    margin-bottom: 1rem; border-bottom: 1px solid var(--border); padding-bottom: 1rem;
-}
-.path-header h3 { display: flex; align-items: center; gap: 10px; font-size: 1.1rem; color: var(--text-main); }
-
-.undo-redo-group { display: flex; gap: 8px; align-items: center; }
-
-.icon-btn {
-    background: rgba(255,255,255,0.05); border: 1px solid var(--border);
-    color: var(--text-muted); width: 32px; height: 32px;
-    border-radius: 6px; cursor: pointer;
-    display: flex; align-items: center; justify-content: center; transition: 0.2s;
-}
-.icon-btn:hover:not(:disabled) { background: var(--bg-hover); color: white; }
-.icon-btn:disabled { opacity: 0.3; cursor: not-allowed; }
-
-.btn-sm.primary {
-    background: var(--primary); color: #000; border: none;
-    padding: 6px 12px; font-size: 0.85rem; font-weight: 600;
-    border-radius: 6px; cursor: pointer; margin-left: 10px;
-}
-
-/* 3. Modern Grid for Exclusions */
-.toggle-grid {
-    display: grid;
-    /* Responsive: Fits as many as possible, min width 180px */
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-    gap: 12px;
-}
-
-/* Styled Filter Card */
-.cat-toggle {
-    display: flex; align-items: center; gap: 12px;
-    cursor: pointer; padding: 14px; border-radius: 8px;
-    transition: 0.2s; background: rgba(255,255,255,0.02);
-    border: 1px solid var(--border); user-select: none;
-}
-
-.cat-toggle:hover {
-    background: rgba(255,255,255,0.05);
-    border-color: rgba(255,255,255,0.1);
-}
-
-/* Checkbox Appearance */
-.cat-toggle input {
-    appearance: none; -webkit-appearance: none;
-    width: 20px; height: 20px;
-    border: 2px solid var(--text-muted); border-radius: 4px;
-    display: flex; align-items: center; justify-content: center;
-    transition: 0.2s; flex-shrink: 0; background: transparent;
-}
-
-.cat-toggle span {
-    font-size: 0.9rem; color: var(--text-muted); font-weight: 500;
-}
-
-/* --- CHECKED STATE (EXCLUDED) --- */
-/* Makes the card look "deleted" or "negative" */
-.cat-toggle input:checked {
-    background: #f38ba8; /* Red */
-    border-color: #f38ba8;
-}
-
-/* The X icon inside the checkbox */
-.cat-toggle input:checked::after {
-    content: '✕'; font-size: 12px; color: #000; font-weight: 800;
-}
-
-/* Style the whole card when checked */
-.cat-toggle:has(input:checked) {
-    background: rgba(243, 139, 168, 0.1); /* Faint red background */
-    border-color: #f38ba8;
-}
-
-.cat-toggle:has(input:checked) span {
-    color: #f38ba8;
-    text-decoration: line-through;
-    opacity: 0.8;
-}
-
-/* 4. Dropdown & Video Player Styles */
-.lessons-dropdown {
-    background: var(--bg-sidebar); border: 1px solid var(--border);
-    border-top: none; border-bottom-left-radius: var(--radius); border-bottom-right-radius: var(--radius);
-    margin-top: -10px; margin-left: 20px; margin-right: 20px;
-    padding: 0; overflow: hidden; max-height: 0;
-    transition: max-height 0.3s ease-out, border-color 0.3s ease;
-    display: flex; flex-direction: column; gap: 0;
-}
-.lessons-dropdown.active { border-color: var(--primary); }
-.lessons-dropdown p { padding: 1rem 1.5rem; }
-
-.lesson-item {
-    display: flex; align-items: center; gap: 12px;
-    padding: 12px 1.5rem; color: var(--text-muted);
-    text-decoration: none; transition: 0.2s; font-size: 0.9rem; border-bottom: 1px solid var(--border);
-}
-.lesson-item:hover { background: var(--bg-hover); color: var(--primary); }
-.lesson-item:last-child { border-bottom: none; }
-
-.category-card.active { border-bottom-left-radius: 0; border-bottom-right-radius: 0; border-color: var(--primary); }
-.category-card.active:hover { background: linear-gradient(90deg, var(--bg-card) 0%, rgba(203, 166, 247, 0.05) 100%); }
-.category-card .bar-arrow { transform: none !important; }
-
-.back-btn {
-    background: none; border: none; color: var(--text-muted);
-    font-size: 0.95rem; cursor: pointer; display: flex; align-items: center; gap: 8px;
-    padding: 8px 0; transition: 0.2s; font-family: var(--font-body); margin-bottom: 1rem;
-}
-.back-btn:hover { color: var(--primary); transform: translateX(-4px); }
-
-.video-container {
-    position: relative; padding-bottom: 56.25%; height: 0; background: #000;
-    border-radius: var(--radius); border: 1px solid var(--border);
-    overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.4); margin-bottom: 2rem;
-}
-.video-container iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
-
-/* --- APPEND TO END OF CSS --- */
 
 /* Smart Sort Button (Sparkle) */
 .icon-btn.special {
@@ -960,39 +526,6 @@ body {
     margin: 0 4px;
 }
 
-/* Hidden AI Input Area */
-.smart-input-wrapper {
-    margin-top: 1rem;
-    display: flex;
-    gap: 10px;
-    animation: slideDown 0.2s ease-out;
-}
-
-.smart-input-wrapper.hidden {
-    display: none;
-}
-
-.smart-input-wrapper input {
-    flex: 1;
-    background: var(--bg-body);
-    border: 1px solid var(--border);
-    padding: 10px;
-    border-radius: 8px;
-    color: white;
-    outline: none;
-}
-
-.smart-input-wrapper input:focus {
-    border-color: var(--primary);
-    box-shadow: 0 0 0 2px var(--primary-glow);
-}
-
-@keyframes slideDown {
-    from { opacity: 0; transform: translateY(-10px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-/* Add to bottom of style.css */
 @keyframes spinPulse {
     0% { transform: scale(1); filter: brightness(1); }
     50% { transform: scale(1.1); filter: brightness(1.3); }
@@ -1002,59 +535,4 @@ body {
 .loading-pulse {
     animation: spinPulse 1s infinite ease-in-out;
     pointer-events: none;
-}
-
-/* --- COURSE PLAYLIST (SYLLABUS) --- */
-.playlist-box {
-    margin-top: 2rem;
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    overflow: hidden;
-    animation: fadeIn 0.3s ease-out;
-}
-
-.playlist-header {
-    padding: 1rem 1.5rem;
-    background: rgba(255,255,255,0.03);
-    border-bottom: 1px solid var(--border);
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    color: var(--text-main);
-}
-
-.playlist-header i {
-    color: var(--primary);
-    font-size: 1.2rem;
-}
-
-.playlist-item {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 12px 1.5rem;
-    cursor: pointer;
-    transition: 0.2s;
-    border-bottom: 1px solid var(--border);
-}
-
-.playlist-item:hover {
-    background: var(--bg-hover);
-    color: white;
-}
-
-.playlist-item:last-child {
-    border-bottom: none;
-}
-
-/* Style for the active video in the list */
-.playlist-item i.ph-fill {
-    color: var(--primary);
-}
-
-/* Ensure the course cards look clickable */
-.course-card {
-    cursor: pointer;
 }

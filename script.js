@@ -35,7 +35,6 @@ let pathState = {
 
 let stateHistory = [];
 let stateFuture = [];
-let currentCourseData = []; // To store the playlist currently being watched
 
 // --- INIT ---
 document.addEventListener('DOMContentLoaded', () => {
@@ -43,7 +42,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('auth-btn').addEventListener('click', handleAuth);
     document.getElementById('toggle-text').addEventListener('click', toggleAuthMode);
     document.getElementById('logout-btn').addEventListener('click', logout);
-    document.getElementById('btn-courses').addEventListener('click', () => navTo('courses'));
+    // Courses listener removed
     document.getElementById('btn-fields').addEventListener('click', () => navTo('fields'));
     document.getElementById('btn-concepts').addEventListener('click', () => navTo('concepts'));
     document.getElementById('btn-favorites').addEventListener('click', () => navTo('favorites'));
@@ -115,25 +114,7 @@ async function initApp() {
 
 // --- DATA LOADING ---
 async function loadData() {
-    // 1. Load Courses (NOW CLICKABLE)
-    const { data: courses } = await sbClient.from('courses').select('*').order('id');
-    const cList = document.getElementById('course-list');
-    
-    if (courses && courses.length > 0) {
-        cList.innerHTML = courses.map(c => `
-            <div class="bar-card course-card" onclick="openCourse('${c.id}', '${c.title.replace(/'/g,"\\'")}')">
-                <div class="bar-icon"><i class="ph-fill ph-graduation-cap"></i></div>
-                <div class="bar-content">
-                    <span class="badge">${c.level}</span>
-                    <h3>${c.title}</h3>
-                    <p>${c.description || "Start this learning path."}</p>
-                </div>
-                <div class="bar-arrow"><i class="ph-bold ph-caret-right"></i></div>
-            </div>
-        `).join('');
-    } else {
-        cList.innerHTML = `<p style="color:var(--text-muted)">No courses available.</p>`;
-    }
+    // 1. Courses loading removed
     
     // 2. Load Categories
     const { data: cats } = await sbClient.from('categories').select('*');
@@ -154,52 +135,6 @@ async function loadData() {
 async function loadFavorites() {
     const { data } = await sbClient.from('favorites').select('video_id').eq('user_id', currentUser.id);
     userFavorites = data ? data.map(f => f.video_id) : [];
-}
-
-// --- COURSE LOGIC ---
-async function openCourse(courseId, courseTitle) {
-    // 1. Fetch Syllabus
-    const { data: items, error } = await sbClient
-        .from('course_items')
-        .select(`order_index, videos ( id, title, url )`)
-        .eq('course_id', courseId)
-        .order('order_index');
-
-    if (error || !items || items.length === 0) {
-        alert("This course is currently empty.");
-        return;
-    }
-
-    // 2. Store data for sidebar
-    currentCourseData = items.map(i => ({...i.videos, order: i.order_index}));
-
-    // 3. Play first video
-    const firstVid = currentCourseData[0];
-    playCourseVideo(firstVid, courseTitle);
-}
-
-function playCourseVideo(video, courseTitle) {
-    // 1. Setup Player
-    openLesson(video.title, video.url, courseTitle);
-
-    // 2. Render Sidebar Playlist
-    const playlistContainer = document.getElementById('course-playlist-container');
-    const playlistItems = document.getElementById('course-playlist-items');
-    
-    playlistContainer.classList.remove('hidden');
-    
-    playlistItems.innerHTML = currentCourseData.map(v => {
-        const isPlaying = v.id === video.id ? 'style="color:var(--primary); font-weight:bold;"' : '';
-        const icon = v.id === video.id ? 'ph-fill ph-play-circle' : 'ph ph-circle';
-        
-        return `
-        <div class="playlist-item" onclick="playCourseVideo({id:${v.id}, title:'${v.title.replace(/'/g,"\\'")}', url:'${v.url}'}, '${courseTitle}')">
-            <span style="opacity:0.5; font-size:0.8rem; width:20px;">#${v.order}</span>
-            <i class="${icon}" ${isPlaying}></i>
-            <span ${isPlaying}>${v.title}</span>
-        </div>
-        `;
-    }).join('');
 }
 
 // --- SMART PATH LOGIC ---
@@ -399,8 +334,6 @@ function openLesson(t, u, c) {
         document.getElementById('lesson-title').innerText=t;
         document.getElementById('lesson-category').innerText=c;
         document.getElementById('video-player').src=`https://www.youtube.com/embed/${vid}?autoplay=1`;
-        // Hide Playlist by default, show only if playing a course
-        document.getElementById('course-playlist-container').classList.add('hidden');
         navTo('lesson');
     }
 }
@@ -409,7 +342,6 @@ function openLesson(t, u, c) {
 function navTo(s) {
     if(document.querySelector('.active-view').id === 'view-lesson' && s !== 'lesson') {
         document.getElementById('video-player').src="";
-        document.getElementById('course-playlist-container').classList.add('hidden');
     }
     if(s === 'favorites') renderFavoritesView();
     document.querySelectorAll('.view').forEach(v=>v.classList.remove('active-view'));

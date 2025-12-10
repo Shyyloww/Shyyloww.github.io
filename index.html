@@ -10,7 +10,7 @@
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     
     <!-- Link to your CSS -->
-    <link rel="stylesheet" href="style.css?v=14">
+    <link rel="stylesheet" href="style.css?v=15">
 </head>
 <body>
 
@@ -45,10 +45,8 @@
                 </div>
                 
                 <nav>
-                    <div class="nav-item active" id="btn-courses">
-                        <i class="ph ph-path"></i> Courses
-                    </div>
-                    <div class="nav-item" id="btn-fields">
+                    <!-- "Courses" removed. "Fields" is now the active default. -->
+                    <div class="nav-item active" id="btn-fields">
                         <i class="ph ph-squares-four"></i> Fields
                     </div>
                     <div class="nav-item" id="btn-concepts">
@@ -77,19 +75,10 @@
         <!-- Main Content -->
         <main class="main-content">
             
-            <!-- 1. COURSES VIEW -->
-            <section id="view-courses" class="view active-view">
-                <div class="hero">
-                    <h1>Structured Paths</h1>
-                    <p>Curated curriculums designed to take you from novice to expert.</p>
-                </div>
-                <div id="course-list" class="list-stack">
-                    <div style="color:var(--text-muted)">Loading paths...</div>
-                </div>
-            </section>
+            <!-- 1. COURSES VIEW REMOVED -->
 
-            <!-- 2. FIELDS VIEW -->
-            <section id="view-fields" class="view">
+            <!-- 2. FIELDS VIEW (Now Default) -->
+            <section id="view-fields" class="view active-view">
                 <div class="hero">
                     <h1>Knowledge Fields</h1>
                     <p>Customize your intelligence feed. AI organizes your learning path.</p>
@@ -170,7 +159,7 @@
                 </div>
             </section>
 
-            <!-- 6. LESSON PLAYER VIEW (UPDATED) -->
+            <!-- 6. LESSON PLAYER VIEW -->
             <section id="view-lesson" class="view">
                 <div class="hero">
                     <button class="back-btn" onclick="navTo('fields')"><i class="ph-bold ph-arrow-left"></i> Back</button>
@@ -182,16 +171,7 @@
                 <div class="video-container">
                     <iframe id="video-player" src="" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
                 </div>
-
-                <!-- NEW: Course Syllabus List (Visible only when playing a course) -->
-                <div id="course-playlist-container" class="playlist-box hidden">
-                    <div class="playlist-header">
-                        <i class="ph-fill ph-list-numbers"></i> Course Syllabus
-                    </div>
-                    <div id="course-playlist-items" class="list-stack">
-                        <!-- Items populated via JS -->
-                    </div>
-                </div>
+                <!-- Course Playlist Container Removed -->
             </section>
 
         </main>
@@ -217,6 +197,6 @@
     </div>
 
     <!-- Link to your Javascript -->
-    <script src="script.js?v=14" defer></script>
+    <script src="script.js?v=15" defer></script>
 </body>
 </html>
