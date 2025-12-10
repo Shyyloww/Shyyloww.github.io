@@ -938,3 +938,56 @@ body {
     overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.4); margin-bottom: 2rem;
 }
 .video-container iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+
+/* --- APPEND TO END OF CSS --- */
+
+/* Smart Sort Button (Sparkle) */
+.icon-btn.special {
+    color: var(--primary);
+    border-color: var(--primary);
+    background: rgba(203, 166, 247, 0.1);
+}
+.icon-btn.special:hover {
+    background: var(--primary);
+    color: #000;
+}
+
+/* Divider in toolbar */
+.divider {
+    width: 1px;
+    height: 24px;
+    background: var(--border);
+    margin: 0 4px;
+}
+
+/* Hidden AI Input Area */
+.smart-input-wrapper {
+    margin-top: 1rem;
+    display: flex;
+    gap: 10px;
+    animation: slideDown 0.2s ease-out;
+}
+
+.smart-input-wrapper.hidden {
+    display: none;
+}
+
+.smart-input-wrapper input {
+    flex: 1;
+    background: var(--bg-body);
+    border: 1px solid var(--border);
+    padding: 10px;
+    border-radius: 8px;
+    color: white;
+    outline: none;
+}
+
+.smart-input-wrapper input:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px var(--primary-glow);
+}
+
+@keyframes slideDown {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}

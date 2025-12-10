@@ -28,7 +28,8 @@ const exclusionGroups = {
 
 // --- STATE MANAGEMENT ---
 let pathState = {
-    exclusions: [] // Array of exclusion keys (e.g. ['Code & Scripting'])
+    exclusions: [],      // Array of exclusion keys (e.g. ['Code & Scripting'])
+    customOrder: []      // NEW: Array of Category IDs sorted by AI
 };
 
 let stateHistory = [];
@@ -52,7 +53,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('update-pass-btn').addEventListener('click', changePassword);
     document.querySelectorAll('.swatch').forEach(s => s.addEventListener('click', (e) => setTheme(e.target.dataset.color)));
 
-    // AI Buttons
+    // AI Chat Buttons
     document.getElementById('ai-toggle-btn').addEventListener('click', toggleChat);
     document.getElementById('ai-close-btn').addEventListener('click', toggleChat);
     document.getElementById('ai-send-btn').addEventListener('click', sendAiMessage);
@@ -63,12 +64,21 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('btn-undo').addEventListener('click', undoPathState);
     document.getElementById('btn-redo').addEventListener('click', redoPathState);
 
+    // Smart Sort Toggle & Action
+    document.getElementById('btn-smart-sort').addEventListener('click', () => {
+        const box = document.getElementById('smart-input-area');
+        box.classList.toggle('hidden');
+        if(!box.classList.contains('hidden')) document.getElementById('ai-goal-input').focus();
+    });
+    
+    document.getElementById('btn-run-smart').addEventListener('click', runSmartSort);
+    document.getElementById('ai-goal-input').addEventListener('keypress', (e) => { if(e.key === 'Enter') runSmartSort(); });
+
     // Search
     document.querySelector('.concept-search').addEventListener('keyup', (e) => filterConcepts(e.target.value));
 
-    // Initialize Exclusion Grid
+    // Initialize UI
     initExclusionGrid();
-
     initApp();
 });
 
@@ -81,7 +91,7 @@ function initExclusionGrid() {
         </label>
     `).join('');
 
-    // Attach listeners after creation
+    // Attach listeners dynamically
     container.querySelectorAll('input').forEach(chk => {
         chk.addEventListener('change', (e) => toggleExclusion(e.target.dataset.exclude));
     });
@@ -148,6 +158,50 @@ function pushHistory() {
     updateUndoRedoButtons();
 }
 
+// *** NEW AI SMART SORT FUNCTION ***
+async function runSmartSort() {
+    const goal = document.getElementById('ai-goal-input').value;
+    if(!goal) return;
+
+    const btn = document.getElementById('btn-run-smart');
+    const oldText = btn.innerText;
+    btn.innerText = "Thinking...";
+    btn.disabled = true;
+
+    try {
+        // Prepare simplified list of categories for the AI
+        const catList = allCategories.map(c => ({ id: c.id, title: c.title }));
+
+        const res = await fetch(`${AI_SERVER_URL}/smart-sort`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ goal: goal, categories: catList })
+        });
+        const data = await res.json();
+
+        if(data.sorted_ids && Array.isArray(data.sorted_ids)) {
+            pushHistory(); // Save state before changing
+            
+            // Update state with new order
+            pathState.customOrder = data.sorted_ids;
+            
+            renderFields(); // Re-render logic handles the sort
+            
+            document.getElementById('path-status').innerText = `Path optimized for: "${goal}"`;
+            document.getElementById('smart-input-area').classList.add('hidden'); 
+            document.getElementById('ai-goal-input').value = ""; // Clear input
+        } else {
+            alert("AI could not generate a path. Try a clearer goal.");
+        }
+    } catch(e) {
+        console.error(e);
+        alert("Connection failed. Check backend.");
+    }
+
+    btn.innerText = oldText;
+    btn.disabled = false;
+}
+
 function undoPathState() {
     if (stateHistory.length === 0) return;
     stateFuture.push(JSON.parse(JSON.stringify(pathState)));
@@ -179,9 +233,8 @@ function toggleExclusion(tagGroup) {
         pathState.exclusions.push(tagGroup);
     }
     updateUIFromState();
-    // No need to re-render fields immediately unless you want to hide empty categories dynamically.
-    // The filtering happens when opening a category dropdown.
-    renderFields(); 
+    // Render not strictly needed here unless we hide empty categories, 
+    // but the actual filtering happens on click.
 }
 
 function updateUIFromState() {
@@ -207,10 +260,10 @@ async function savePathPreferences() {
     btn.innerText = "Saving...";
     try {
         await sbClient.from('profiles').update({ learning_preferences: pathState }).eq('id', currentUser.id);
-        document.getElementById('path-status').innerText = "Path saved.";
+        document.getElementById('path-status').innerText = "Configuration saved.";
         setTimeout(() => document.getElementById('path-status').innerText = "", 3000);
     } catch(e) { document.getElementById('path-status').innerText = "Save failed."; }
-    btn.innerText = "Save Filters";
+    btn.innerText = "Save Config";
 }
 
 // --- DATA LOADING & RENDERING ---
@@ -244,11 +297,26 @@ async function loadData() {
     renderConcepts(allConcepts);
 }
 
+// --- SMART RENDER LOGIC ---
 function renderFields() {
     const fList = document.getElementById('fields-list');
     
-    // Sort Categories (Default by ID for stability)
+    // Default: Sort by ID
     let sortedCats = [...allCategories].sort((a, b) => a.id - b.id);
+
+    // If Custom Order exists (from AI), apply it
+    if (pathState.customOrder && pathState.customOrder.length > 0) {
+        sortedCats.sort((a, b) => {
+            const indexA = pathState.customOrder.indexOf(a.id);
+            const indexB = pathState.customOrder.indexOf(b.id);
+            
+            // If ID found in custom order, use index. If not, push to bottom (9999).
+            const rankA = indexA === -1 ? 9999 : indexA;
+            const rankB = indexB === -1 ? 9999 : indexB;
+            
+            return rankA - rankB;
+        });
+    }
 
     if(sortedCats.length > 0) {
         fList.innerHTML = sortedCats.map(c => `
@@ -356,11 +424,14 @@ function openLesson(title, url, categoryName) {
     let videoId = "";
     try {
         const urlObj = new URL(url);
-        if (urlObj.hostname.includes('youtu.be')) { videoId = urlObj.pathname.slice(1); }
-        else if (urlObj.hostname.includes('youtube.com')) { videoId = urlObj.searchParams.get('v'); }
-    } catch (e) {}
+        if (urlObj.hostname.includes('youtu.be')) {
+            videoId = urlObj.pathname.slice(1);
+        } else if (urlObj.hostname.includes('youtube.com')) {
+            videoId = urlObj.searchParams.get('v');
+        }
+    } catch (e) { console.error("Invalid URL format", e); return; }
 
-    if (!videoId) { alert("Video unavailable."); return; }
+    if (!videoId) { alert("Could not load video. Invalid URL format."); return; }
 
     document.getElementById('lesson-title').innerText = title;
     document.getElementById('lesson-category').innerText = categoryName;
@@ -382,21 +453,33 @@ function navTo(sec) {
 
 // Concepts & Utils
 function renderConcepts(list) {
-    const el = document.getElementById('concepts-list');
-    el.innerHTML = list.length ? list.map(c => `
-        <div class="bar-card">
-            <div class="bar-icon"><i class="ph-fill ph-book-bookmark"></i></div>
-            <div class="bar-content"><h3>${c.title}</h3><p>${c.definition}</p></div>
-        </div>`).join('') : `<p style="color:var(--text-muted)">No concepts.</p>`;
+    const listContainer = document.getElementById('concepts-list');
+    if(list.length) {
+        listContainer.innerHTML = list.map(c => `
+            <div class="bar-card">
+                <div class="bar-icon"><i class="ph-fill ph-book-bookmark"></i></div>
+                <div class="bar-content">
+                    <h3>${c.title}</h3>
+                    <p>${c.definition}</p>
+                </div>
+            </div>
+        `).join('');
+    } else {
+        listContainer.innerHTML = `<p style="color:var(--text-muted)">No concepts found.</p>`;
+    }
 }
+
 function filterConcepts(query) {
-    renderConcepts(allConcepts.filter(c => c.title.toLowerCase().includes(query.toLowerCase())));
+    const filtered = allConcepts.filter(c => c.title.toLowerCase().includes(query.toLowerCase()));
+    renderConcepts(filtered);
 }
+
 function setTheme(c) {
     document.documentElement.style.setProperty('--primary', c);
     document.documentElement.style.setProperty('--primary-glow', c + '4d');
     localStorage.setItem('cyberian-theme', c);
 }
+
 async function changePassword() {
     const pass = document.getElementById('new-password').value;
     const msg = document.getElementById('settings-msg');
@@ -411,9 +494,11 @@ function toggleChat() {
     win.classList.toggle('visible');
     if (win.classList.contains('visible')) { setTimeout(() => { document.getElementById('ai-input').focus(); }, 300); }
 }
+
 async function sendAiMessage() {
     const inp = document.getElementById('ai-input');
-    const txt = inp.value; if(!txt) return;
+    const txt = inp.value; 
+    if(!txt) return;
     const box = document.getElementById('ai-messages');
     box.innerHTML += `<div class="msg user">${txt}</div>`;
     inp.value = "";
@@ -423,7 +508,8 @@ async function sendAiMessage() {
     box.scrollTop = box.scrollHeight;
     try {
         const res = await fetch(`${AI_SERVER_URL}/ask-ai`, {
-            method: 'POST', headers: {'Content-Type': 'application/json'},
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({ user_id: currentUser.id, question: txt })
         });
         const d = await res.json();
@@ -433,7 +519,7 @@ async function sendAiMessage() {
     } catch(e) {
         const loader = document.getElementById(loadingId);
         if(loader) loader.remove();
-        box.innerHTML += `<div class="msg bot">Error.</div>`;
+        box.innerHTML += `<div class="msg bot">Connection Error.</div>`;
     }
     box.scrollTop = box.scrollHeight;
 }
