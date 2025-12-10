@@ -9,11 +9,10 @@ let isLoginMode = true;
 let currentUser = null;
 let allConcepts = []; 
 let allCategories = []; 
-let allVideoMeta = []; // Stores lightweight tags for ALL videos to calculate empty categories
-let userFavorites = []; // Stores IDs of favorite videos
+let allVideoMeta = []; 
+let userFavorites = [];
 
-// --- SMART PATH: EXCLUSION DEFINITIONS ---
-// Map UI labels to Database tags for filtering
+// --- EXCLUSION DEFINITIONS ---
 const exclusionGroups = {
     'Code & Scripting': ['programming', 'scripting', 'bash', 'powershell', 'python', 'sql', 'html', 'javascript', 'c'],
     'Windows Internals': ['windows', 'registry', 'active directory', 'ntlm', 'kerberos'],
@@ -28,54 +27,44 @@ const exclusionGroups = {
     'Blue Team Ops': ['blueteam', 'forensics', 'siem', 'threat hunting', 'soc', 'yara']
 };
 
-// --- STATE MANAGEMENT ---
+// --- STATE ---
 let pathState = {
-    exclusions: [],      // Array of strings from exclusionGroups keys
-    customOrder: []      // Array of Category IDs sorted by AI
+    exclusions: [],      
+    customOrder: []      
 };
 
 let stateHistory = [];
 let stateFuture = [];
 
-// --- 1. SETUP EVENT LISTENERS ---
+// --- INIT ---
 document.addEventListener('DOMContentLoaded', () => {
-    // Auth Buttons
+    // Auth & Nav
     document.getElementById('auth-btn').addEventListener('click', handleAuth);
     document.getElementById('toggle-text').addEventListener('click', toggleAuthMode);
     document.getElementById('logout-btn').addEventListener('click', logout);
-
-    // Navigation Buttons
     document.getElementById('btn-courses').addEventListener('click', () => navTo('courses'));
     document.getElementById('btn-fields').addEventListener('click', () => navTo('fields'));
     document.getElementById('btn-concepts').addEventListener('click', () => navTo('concepts'));
     document.getElementById('btn-favorites').addEventListener('click', () => navTo('favorites'));
     document.getElementById('btn-settings').addEventListener('click', () => navTo('settings'));
-
-    // Settings & Theme
     document.getElementById('update-pass-btn').addEventListener('click', changePassword);
-    document.querySelectorAll('.swatch').forEach(s => {
-        s.addEventListener('click', (e) => setTheme(e.target.dataset.color));
-    });
+    
+    document.querySelectorAll('.swatch').forEach(s => s.addEventListener('click', (e) => setTheme(e.target.dataset.color)));
 
-    // AI Chat
+    // AI & Search
     document.getElementById('ai-toggle-btn').addEventListener('click', toggleChat);
     document.getElementById('ai-close-btn').addEventListener('click', toggleChat);
     document.getElementById('ai-send-btn').addEventListener('click', sendAiMessage);
     document.getElementById('ai-input').addEventListener('keypress', (e) => { if(e.key === 'Enter') sendAiMessage(); });
+    document.querySelector('.concept-search').addEventListener('keyup', (e) => filterConcepts(e.target.value));
 
-    // Path Builder Interactions
+    // Path Builder
     document.getElementById('btn-save-path').addEventListener('click', savePathPreferences);
     document.getElementById('btn-undo').addEventListener('click', undoPathState);
     document.getElementById('btn-redo').addEventListener('click', redoPathState);
     document.getElementById('btn-smart-sort').addEventListener('click', runSmartSort);
 
-    // Search
-    document.querySelector('.concept-search').addEventListener('keyup', (e) => filterConcepts(e.target.value));
-
-    // Initialize UI Grid
     initExclusionGrid();
-    
-    // Start App
     initApp();
 });
 
@@ -87,105 +76,87 @@ function initExclusionGrid() {
             <span>${key}</span>
         </label>
     `).join('');
-
-    // Attach listeners
     container.querySelectorAll('input').forEach(chk => {
         chk.addEventListener('change', (e) => toggleExclusion(e.target.dataset.exclude));
     });
 }
 
-// --- 2. AUTHENTICATION ---
+// --- AUTH ---
 async function handleAuth() {
-    try {
-        const u = document.getElementById('username').value.trim();
-        const p = document.getElementById('password').value;
-        const m = document.getElementById('auth-msg');
-
-        if(!u || !p) { m.innerText = "Credentials required."; return; }
-        if(p.length < 6) { m.innerText = "Password too short."; return; }
-        
-        m.innerText = "Authenticating...";
-        const email = u + "@cyberian.io";
-
-        if(isLoginMode) {
-            const { error } = await sbClient.auth.signInWithPassword({ email, password: p });
-            if(error) throw error;
-            location.reload();
-        } else {
-            const { error } = await sbClient.auth.signUp({
-                email: email, password: p,
-                options: { data: { username: u } }
-            });
-            if(error) throw error;
-            m.innerText = "ID Created. Logging in...";
-            setTimeout(() => location.reload(), 1500);
-        }
-    } catch (err) {
-        document.getElementById('auth-msg').innerText = err.message;
+    const u = document.getElementById('username').value.trim();
+    const p = document.getElementById('password').value;
+    const email = u + "@cyberian.io";
+    if(isLoginMode) {
+        const { error } = await sbClient.auth.signInWithPassword({ email, password: p });
+        if(!error) location.reload(); else document.getElementById('auth-msg').innerText = error.message;
+    } else {
+        const { error } = await sbClient.auth.signUp({ email, password: p, options: { data: { username: u } } });
+        if(!error) location.reload(); else document.getElementById('auth-msg').innerText = error.message;
     }
 }
-
-function toggleAuthMode() {
-    isLoginMode = !isLoginMode;
-    document.getElementById('auth-btn').innerText = isLoginMode ? "Initialize Session" : "Create ID";
-    document.getElementById('toggle-text').innerText = isLoginMode ? "Create new operator ID" : "Return to login";
-    document.getElementById('auth-msg').innerText = "";
-}
-
+function toggleAuthMode() { isLoginMode = !isLoginMode; document.getElementById('auth-btn').innerText = isLoginMode ? "Initialize" : "Create"; }
 async function logout() { await sbClient.auth.signOut(); location.reload(); }
 
-// --- 3. APP INITIALIZATION & DATA LOADING ---
 async function initApp() {
     const savedTheme = localStorage.getItem('cyberian-theme');
     if(savedTheme) setTheme(savedTheme);
-
     const { data: { session } } = await sbClient.auth.getSession();
     if(session) {
         currentUser = session.user;
         document.getElementById('auth-container').classList.add('hidden');
         document.getElementById('app-container').style.display = 'flex';
+        document.getElementById('user-display').innerText = currentUser.user_metadata?.username || "Operator";
         
-        const name = currentUser.user_metadata?.username || currentUser.email.split('@')[0];
-        document.getElementById('user-display').innerText = name;
-        
-        // Load in parallel: Preferences, Favorites, Core Data
         await Promise.all([loadUserPreferences(), loadFavorites()]);
         await loadData();
-    } else {
-        document.getElementById('auth-container').style.display = 'flex';
-    }
+    } else { document.getElementById('auth-container').style.display = 'flex'; }
 }
 
+// --- DATA LOADING ---
 async function loadData() {
-    // 1. Courses
-    const { data: courses } = await sbClient.from('courses').select('*');
-    document.getElementById('course-list').innerHTML = courses.map(c => `
-        <div class="bar-card">
-            <div class="bar-icon"><i class="ph-fill ph-graduation-cap"></i></div>
-            <div class="bar-content">
-                <span class="badge">${c.level}</span>
-                <h3>${c.title}</h3>
-                <p>${c.description || "Learning path"}</p>
+    // 1. Load Courses (Updated to be interactive)
+    const { data: courses } = await sbClient.from('courses').select('*').order('id');
+    const cList = document.getElementById('course-list');
+    
+    if (courses && courses.length > 0) {
+        cList.innerHTML = courses.map(c => `
+            <div class="bar-card course-card" data-course-id="${c.id}" data-course-title="${c.title}">
+                <div class="bar-icon"><i class="ph-fill ph-graduation-cap"></i></div>
+                <div class="bar-content">
+                    <span class="badge">${c.level}</span>
+                    <h3>${c.title}</h3>
+                    <p>${c.description || "Structured learning path"}</p>
+                </div>
+                <div class="bar-arrow"><i class="ph-bold ph-caret-right"></i></div>
             </div>
-            <div class="bar-arrow"><i class="ph-bold ph-caret-right"></i></div>
-        </div>
-    `).join('');
+            <!-- Dropdown container for course syllabus -->
+            <div class="lessons-dropdown" id="course-lessons-${c.id}">
+                <p style="padding:1rem;">Click to load syllabus...</p>
+            </div>
+        `).join('');
 
-    // 2. Categories
+        // Attach listeners for Courses
+        document.querySelectorAll('.course-card').forEach(card => {
+            card.addEventListener('click', toggleCourseContents);
+        });
+    } else {
+        cList.innerHTML = `<p style="color:var(--text-muted)">No courses available.</p>`;
+    }
+    
+    // 2. Load Categories
     const { data: cats } = await sbClient.from('categories').select('*');
     allCategories = cats || [];
 
-    // 3. Concepts
-    const { data: concepts } = await sbClient.from('concepts').select('*');
-    allConcepts = concepts || [];
-    renderConcepts(allConcepts);
-
-    // 4. Video Metadata (Crucial for filtering logic)
+    // 3. Load Video Meta
     const { data: vids } = await sbClient.from('videos').select('id, category_id, tags');
     allVideoMeta = vids || [];
 
-    // Render Fields with current preferences applied
-    renderFields();
+    // 4. Load Concepts
+    const { data: conc } = await sbClient.from('concepts').select('*');
+    allConcepts = conc || [];
+    renderConcepts(allConcepts);
+
+    renderFields(); 
 }
 
 async function loadFavorites() {
@@ -193,22 +164,85 @@ async function loadFavorites() {
     userFavorites = data ? data.map(f => f.video_id) : [];
 }
 
-// --- SMART PATH LOGIC ---
+// --- COURSES LOGIC (NEW) ---
+async function toggleCourseContents(e) {
+    const card = e.currentTarget;
+    const courseId = card.dataset.courseId;
+    const dropdown = document.getElementById(`course-lessons-${courseId}`);
+    const arrow = card.querySelector('.bar-arrow i');
 
+    // Toggle
+    if (dropdown.classList.contains('active')) {
+        dropdown.classList.remove('active'); dropdown.style.maxHeight='0'; 
+        card.classList.remove('active'); arrow.classList.replace('ph-caret-down','ph-caret-right');
+        return;
+    }
+
+    // Close others
+    document.querySelectorAll('.lessons-dropdown.active').forEach(d => {
+        d.classList.remove('active'); d.style.maxHeight='0';
+        d.previousElementSibling.classList.remove('active');
+        d.previousElementSibling.querySelector('.bar-arrow i').classList.replace('ph-caret-down','ph-caret-right');
+    });
+
+    dropdown.classList.add('active');
+    card.classList.add('active');
+    arrow.classList.replace('ph-caret-right','ph-caret-down');
+    dropdown.innerHTML = '<p style="padding:1rem;">Loading syllabus...</p>';
+
+    // Fetch Syllabus
+    // We join course_items with videos to get the details
+    const { data: items, error } = await sbClient
+        .from('course_items')
+        .select(`
+            order_index,
+            videos ( id, title, url )
+        `)
+        .eq('course_id', courseId)
+        .order('order_index');
+
+    if (error || !items) {
+        dropdown.innerHTML = '<p style="padding:1rem;">Unable to load course content.</p>';
+        return;
+    }
+
+    if (items.length > 0) {
+        dropdown.innerHTML = items.map(item => {
+            if (!item.videos) return '';
+            const vid = item.videos;
+            const isFav = userFavorites.includes(vid.id);
+            const heartClass = isFav ? "ph-fill ph-heart" : "ph ph-heart";
+            const heartColor = isFav ? "#f38ba8" : "var(--text-muted)";
+
+            return `
+            <div class="lesson-item">
+                <div style="font-size:0.8rem; opacity:0.5; margin-right:10px; min-width:20px;">#${item.order_index}</div>
+                <i class="ph ph-play-circle" style="color:var(--primary)"></i>
+                <span style="flex:1; cursor:pointer;" onclick="openLesson('${vid.title.replace(/'/g,"\\'")}', '${vid.url}', '${card.dataset.courseTitle.replace(/'/g,"\\'")}')">${vid.title}</span>
+                <i class="${heartClass}" style="cursor:pointer; color:${heartColor}; margin-right:10px;" onclick="toggleFavorite(${vid.id}, this)"></i>
+                <i class="ph-bold ph-caret-right"></i>
+            </div>
+            `;
+        }).join('');
+    } else {
+        dropdown.innerHTML = '<p style="padding:1rem;">No videos in this course yet.</p>';
+    }
+    
+    dropdown.style.maxHeight = dropdown.scrollHeight + 'px';
+}
+
+// --- SMART PATH LOGIC ---
 function pushHistory() {
     stateHistory.push(JSON.parse(JSON.stringify(pathState)));
     stateFuture = [];
     updateUndoRedoButtons();
 }
 
-// AUTOMATIC AI SORTING
 async function runSmartSort() {
     const btn = document.getElementById('btn-smart-sort');
     btn.classList.add('loading-pulse');
 
-    // 1. Get visible categories based on current filters
     const visibleCats = getVisibleCategories();
-
     if(visibleCats.length === 0) {
         alert("No visible categories to sort!");
         btn.classList.remove('loading-pulse');
@@ -217,8 +251,6 @@ async function runSmartSort() {
 
     try {
         const catList = visibleCats.map(c => ({ id: c.id, title: c.title }));
-        
-        // No user prompt needed. Backend configured to sort for "Beginner Progression".
         const res = await fetch(`${AI_SERVER_URL}/smart-sort`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -232,35 +264,19 @@ async function runSmartSort() {
             renderFields(); 
             document.getElementById('path-status').innerText = "Path optimized for beginner progression.";
             setTimeout(() => document.getElementById('path-status').innerText = "", 4000);
-        } else {
-            alert("AI sorting failed.");
-        }
-    } catch(e) {
-        console.error(e);
-        alert("Connection failed.");
-    }
+        } else { alert("AI sorting failed."); }
+    } catch(e) { console.error(e); alert("Connection failed."); }
     btn.classList.remove('loading-pulse');
 }
 
-// Logic to identify categories that still have videos after filtering
 function getVisibleCategories() {
-    // 1. Compile forbidden tags list
     let forbidden = [];
     pathState.exclusions.forEach(k => { if(exclusionGroups[k]) forbidden.push(...exclusionGroups[k]); });
-
-    // 2. Identify Categories containing valid videos
     const validCategoryIds = new Set();
-    
     allVideoMeta.forEach(v => {
         if(!v.tags) { validCategoryIds.add(v.category_id); return; }
-        // Check if ANY of the video's tags match the forbidden list
-        const isExcluded = v.tags.some(t => forbidden.includes(t.toLowerCase()));
-        if (!isExcluded) {
-            validCategoryIds.add(v.category_id);
-        }
+        if (!v.tags.some(t => forbidden.includes(t.toLowerCase()))) validCategoryIds.add(v.category_id);
     });
-
-    // 3. Return full category objects that are valid
     return allCategories.filter(c => validCategoryIds.has(c.id));
 }
 
@@ -291,11 +307,9 @@ function toggleExclusion(tagGroup) {
     pushHistory();
     if (pathState.exclusions.includes(tagGroup)) {
         pathState.exclusions = pathState.exclusions.filter(e => e !== tagGroup);
-    } else {
-        pathState.exclusions.push(tagGroup);
-    }
+    } else { pathState.exclusions.push(tagGroup); }
     updateUIFromState();
-    renderFields(); // Immediately hide/show categories
+    renderFields();
 }
 
 function updateUIFromState() {
@@ -304,111 +318,59 @@ function updateUIFromState() {
     });
 }
 
-// --- PERSISTENCE ---
-async function loadUserPreferences() {
-    try {
-        const { data } = await sbClient.from('profiles').select('learning_preferences').eq('id', currentUser.id).single();
-        if (data && data.learning_preferences) {
-            pathState = { ...pathState, ...data.learning_preferences };
-        }
-        updateUIFromState();
-    } catch (e) { console.log("Using default preferences"); }
-}
-
-async function savePathPreferences() {
-    const btn = document.getElementById('btn-save-path');
-    btn.innerText = "Saving...";
-    try {
-        await sbClient.from('profiles').update({ learning_preferences: pathState }).eq('id', currentUser.id);
-        document.getElementById('path-status').innerText = "Configuration saved.";
-        setTimeout(() => document.getElementById('path-status').innerText = "", 3000);
-    } catch(e) { document.getElementById('path-status').innerText = "Save failed."; }
-    btn.innerText = "Save Config";
-}
-
 // --- RENDER FIELDS ---
 function renderFields() {
     const fList = document.getElementById('fields-list');
-    
-    // 1. Get ONLY categories that contain visible videos
     let visibleCats = getVisibleCategories();
 
-    // 2. Sort Logic
-    // If we have an AI-determined order, use it. Otherwise, default ID sort.
     if (pathState.customOrder && pathState.customOrder.length > 0) {
         visibleCats.sort((a, b) => {
             const indexA = pathState.customOrder.indexOf(a.id);
             const indexB = pathState.customOrder.indexOf(b.id);
-            // New/Unknown items go to bottom
             const rankA = indexA === -1 ? 9999 : indexA;
             const rankB = indexB === -1 ? 9999 : indexB;
             return rankA - rankB;
         });
-    } else {
-        visibleCats.sort((a, b) => a.id - b.id);
-    }
+    } else { visibleCats.sort((a, b) => a.id - b.id); }
 
-    // 3. Render HTML
     if(visibleCats.length > 0) {
         fList.innerHTML = visibleCats.map(c => `
             <div class="bar-card category-card" data-category-id="${c.id}" data-category-title="${c.title}">
                 <div class="bar-icon"><i class="ph-fill ph-folder-notch"></i></div>
-                <div class="bar-content">
-                    <h3>${c.title}</h3>
-                    <p>${c.description || "Explore domain"}</p>
-                </div>
+                <div class="bar-content"><h3>${c.title}</h3><p>${c.description}</p></div>
                 <div class="bar-arrow"><i class="ph-bold ph-caret-right"></i></div>
             </div>
-            <div class="lessons-dropdown" id="lessons-${c.id}">
-                <p style="padding:1rem;">Click to load...</p>
-            </div>
+            <div class="lessons-dropdown" id="lessons-${c.id}"><p style="padding:1rem;">Click to load...</p></div>
         `).join('');
-
-        document.querySelectorAll('.category-card').forEach(card => {
-            card.addEventListener('click', toggleCategoryLessons);
-        });
-    } else {
-        fList.innerHTML = `<div style="text-align:center; padding:2rem; color:var(--text-muted)">All content hidden by your filters.</div>`;
-    }
+        document.querySelectorAll('.category-card').forEach(card => card.addEventListener('click', toggleCategoryLessons));
+    } else { fList.innerHTML = `<div style="text-align:center; padding:2rem; color:var(--text-muted)">All content hidden by your filters.</div>`; }
 }
 
-// --- LESSON DROPDOWNS & FAVORITES ---
+// --- CATEGORY DROPDOWNS ---
 async function toggleCategoryLessons(e) {
     const card = e.currentTarget;
     const catId = card.dataset.categoryId;
     const dropdown = document.getElementById(`lessons-${catId}`);
     const arrow = card.querySelector('.bar-arrow i');
 
-    // Close logic
     if (dropdown.classList.contains('active')) {
-        dropdown.classList.remove('active'); 
-        dropdown.style.maxHeight='0'; 
-        card.classList.remove('active'); 
-        arrow.classList.replace('ph-caret-down','ph-caret-right');
+        dropdown.classList.remove('active'); dropdown.style.maxHeight='0'; 
+        card.classList.remove('active'); arrow.classList.replace('ph-caret-down','ph-caret-right');
         return;
     }
 
-    // Close others
     document.querySelectorAll('.lessons-dropdown.active').forEach(d => {
-        d.classList.remove('active'); 
-        d.style.maxHeight='0';
+        d.classList.remove('active'); d.style.maxHeight='0';
         d.previousElementSibling.classList.remove('active');
         d.previousElementSibling.querySelector('.bar-arrow i').classList.replace('ph-caret-down','ph-caret-right');
     });
 
-    // Open current
-    dropdown.classList.add('active');
-    card.classList.add('active');
-    arrow.classList.replace('ph-caret-right','ph-caret-down');
+    dropdown.classList.add('active'); card.classList.add('active'); arrow.classList.replace('ph-caret-right','ph-caret-down');
     dropdown.innerHTML = '<p style="padding:1rem;">Loading...</p>';
 
-    // Fetch Videos
     const { data: lessons } = await sbClient.from('videos').select('*').eq('category_id', catId).order('id', {ascending:true});
-    
-    // Filter Videos based on exclusions
     let forbidden = [];
     pathState.exclusions.forEach(k => { if(exclusionGroups[k]) forbidden.push(...exclusionGroups[k]); });
-    
     const visible = lessons.filter(v => {
         if(!v.tags) return true;
         return !v.tags.some(t => forbidden.includes(t.toLowerCase()));
@@ -419,67 +381,41 @@ async function toggleCategoryLessons(e) {
             const isFav = userFavorites.includes(l.id);
             const heartClass = isFav ? "ph-fill ph-heart" : "ph ph-heart";
             const heartColor = isFav ? "#f38ba8" : "var(--text-muted)";
-            
             return `
             <div class="lesson-item">
                 <i class="ph ph-play-circle" style="color:var(--primary)"></i>
                 <span style="flex:1; cursor:pointer;" onclick="openLesson('${l.title.replace(/'/g,"\\'")}', '${l.url}', '${card.dataset.categoryTitle.replace(/'/g,"\\'")}')">${l.title}</span>
-                
-                <i class="${heartClass}" style="cursor:pointer; color:${heartColor}; margin-right:10px; font-size:1.1rem;" onclick="toggleFavorite(${l.id}, this)"></i>
+                <i class="${heartClass}" style="cursor:pointer; color:${heartColor}; margin-right:10px;" onclick="toggleFavorite(${l.id}, this)"></i>
                 <i class="ph-bold ph-caret-right"></i>
             </div>
         `}).join('');
-    } else { 
-        dropdown.innerHTML = `<p style="padding:1rem;color:var(--text-muted)">Hidden by filters.</p>`; 
-    }
-    
+    } else { dropdown.innerHTML = `<p style="padding:1rem;color:var(--text-muted)">Hidden by filters.</p>`; }
     dropdown.style.maxHeight = dropdown.scrollHeight + 'px';
 }
 
 async function toggleFavorite(vidId, icon) {
-    // Prevent bubble up (clicking heart shouldn't open video)
     event.stopPropagation();
-
     if (userFavorites.includes(vidId)) {
-        // Remove
         await sbClient.from('favorites').delete().match({ user_id: currentUser.id, video_id: vidId });
         userFavorites = userFavorites.filter(id => id !== vidId);
-        icon.className = "ph ph-heart";
-        icon.style.color = "var(--text-muted)";
+        icon.className = "ph ph-heart"; icon.style.color = "var(--text-muted)";
     } else {
-        // Add
         await sbClient.from('favorites').insert({ user_id: currentUser.id, video_id: vidId });
         userFavorites.push(vidId);
-        icon.className = "ph-fill ph-heart";
-        icon.style.color = "#f38ba8";
+        icon.className = "ph-fill ph-heart"; icon.style.color = "#f38ba8";
     }
-    
-    // If the favorites view is active, update it
-    if (document.getElementById('view-favorites').classList.contains('active-view')) {
-        renderFavoritesView();
-    }
+    if (document.getElementById('view-favorites').classList.contains('active-view')) renderFavoritesView();
 }
 
 async function renderFavoritesView() {
     const grid = document.getElementById('favorites-grid');
-    if(userFavorites.length === 0) {
-        grid.innerHTML = `<p style="color:var(--text-muted)">No favorites yet.</p>`;
-        return;
-    }
-    
+    if(userFavorites.length === 0) { grid.innerHTML = `<p style="color:var(--text-muted)">No favorites yet.</p>`; return; }
     const { data: vids } = await sbClient.from('videos').select('*').in('id', userFavorites);
-    
     grid.innerHTML = vids.map(v => `
         <div class="bar-card">
             <div class="bar-icon"><i class="ph-fill ph-heart" style="color:#f38ba8"></i></div>
-            <div class="bar-content">
-                <h3>${v.title}</h3>
-                <p>Click arrow to play</p>
-            </div>
-            <div class="bar-arrow" onclick="openLesson('${v.title.replace(/'/g,"\\'")}', '${v.url}', 'Favorites')">
-                <i class="ph-bold ph-play"></i>
-            </div>
-            <!-- Remove from favs button -->
+            <div class="bar-content"><h3>${v.title}</h3><p>Click arrow to play</p></div>
+            <div class="bar-arrow" onclick="openLesson('${v.title.replace(/'/g,"\\'")}', '${v.url}', 'Favorites')"><i class="ph-bold ph-play"></i></div>
             <i class="ph ph-trash" style="margin-left:15px; color:var(--text-muted); cursor:pointer;" onclick="toggleFavorite(${v.id}, this.parentNode)"></i>
         </div>
     `).join('');
@@ -496,7 +432,7 @@ function openLesson(t, u, c) {
     }
 }
 
-// --- NAVIGATION & UTILS ---
+// Utils
 function navTo(s) {
     if(document.querySelector('.active-view').id === 'view-lesson' && s !== 'lesson') document.getElementById('video-player').src="";
     if(s === 'favorites') renderFavoritesView();
@@ -508,6 +444,17 @@ function navTo(s) {
 
 function renderConcepts(l) { document.getElementById('concepts-list').innerHTML = l.length ? l.map(c=>`<div class="bar-card"><div class="bar-icon"><i class="ph-fill ph-book-bookmark"></i></div><div class="bar-content"><h3>${c.title}</h3><p>${c.definition}</p></div></div>`).join('') : `<p>No concepts.</p>`; }
 function filterConcepts(q) { renderConcepts(allConcepts.filter(c=>c.title.toLowerCase().includes(q.toLowerCase()))); }
+async function loadUserPreferences() {
+    try {
+        const { data } = await sbClient.from('profiles').select('learning_preferences').eq('id', currentUser.id).single();
+        if (data?.learning_preferences) pathState = { ...pathState, ...data.learning_preferences };
+        updateUIFromState();
+    } catch(e) {}
+}
+async function savePathPreferences() {
+    await sbClient.from('profiles').update({ learning_preferences: pathState }).eq('id', currentUser.id);
+    const s = document.getElementById('path-status'); s.innerText = "Config Saved."; setTimeout(()=>s.innerText="", 2000);
+}
 function setTheme(c) { document.documentElement.style.setProperty('--primary', c); document.documentElement.style.setProperty('--primary-glow', c+'4d'); localStorage.setItem('cyberian-theme',c); }
 async function changePassword() { 
     const pass = document.getElementById('new-password').value;
@@ -516,33 +463,23 @@ async function changePassword() {
     document.getElementById('settings-msg').innerText="Updated.";
 }
 
-// --- AI CHAT ---
 function toggleChat() { 
     const win = document.getElementById('ai-window');
     win.classList.toggle('visible');
     if (win.classList.contains('visible')) setTimeout(() => document.getElementById('ai-input').focus(), 300);
 }
-
 async function sendAiMessage() {
     const inp = document.getElementById('ai-input');
     const txt = inp.value; if(!txt)return;
     const box = document.getElementById('ai-messages');
     box.innerHTML+=`<div class="msg user">${txt}</div>`;
-    inp.value="";
-    box.scrollTop=box.scrollHeight;
-    
-    // Loading indicator
+    inp.value=""; box.scrollTop=box.scrollHeight;
     const loadId = 'load-'+Date.now();
     box.innerHTML+=`<div id="${loadId}" class="msg bot loading">Thinking...</div>`;
-    
     try {
         const res = await fetch(`${AI_SERVER_URL}/ask-ai`, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({user_id:currentUser.id,question:txt})});
-        const d = await res.json();
-        document.getElementById(loadId).remove();
+        const d = await res.json(); document.getElementById(loadId).remove();
         box.innerHTML+=`<div class="msg bot">${d.answer}</div>`;
-    } catch(e){ 
-        document.getElementById(loadId).remove();
-        box.innerHTML+=`<div class="msg bot">Connection Error.</div>`;
-    }
+    } catch(e){ document.getElementById(loadId).remove(); box.innerHTML+=`<div class="msg bot">Error.</div>`; }
     box.scrollTop=box.scrollHeight;
 }
