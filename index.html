@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ESP32 Controller</title>
+    <style>
+        body { font-family: sans-serif; text-align: center; padding: 50px; background-color: #f4f4f9; }
+        h1 { color: #333; }
+        .button {
+            padding: 20px 40px;
+            font-size: 20px;
+            cursor: pointer;
+            border: none;
+            border-radius: 10px;
+            margin: 10px;
+            color: white;
+            transition: 0.3s;
+        }
+        #btn-on { background-color: #28a745; } /* Green */
+        #btn-off { background-color: #dc3545; } /* Red */
+        #btn-on:hover { background-color: #218838; }
+        #btn-off:hover { background-color: #c82333; }
+        #status-display { margin-top: 20px; font-weight: bold; font-size: 1.2em;}
+    </style>
+</head>
+<body>
+
+    <h1>ESP32 WiFi Manager</h1>
+    
+    <p>Control your ESP32 Access Point:</p>
+    
+    <button id="btn-on" class="button" onclick="sendCommand('ON')">Turn WiFi ON</button>
+    <button id="btn-off" class="button" onclick="sendCommand('OFF')">Turn WiFi OFF</button>
+
+    <div id="status-display">Current State: Checking...</div>
+
+    <script>
+        // REPLACE THIS URL WITH YOUR ACTUAL RENDER URL FROM PHASE 1
+        const RENDER_URL = "https://YOUR-RENDER-NAME.onrender.com"; 
+
+        function sendCommand(state) {
+            document.getElementById('status-display').innerText = "Sending command...";
+            
+            // This talks to your Render Backend
+            fetch(`${RENDER_URL}/set_hotspot?state=${state}`)
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('status-display').innerText = "State: " + data.current_state;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('status-display').innerText = "Error connecting to server";
+            });
+        }
+    </script>
+
+</body>
+</html>
