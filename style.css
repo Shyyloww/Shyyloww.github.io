@@ -1,35 +1,566 @@
-from flask import Flask, request, jsonify
-from flask_cors import CORS
+/* =========================================
+   BASE STYLES, RESET & PRO SCROLLBAR
+========================================= */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
 
-app = Flask(__name__)
-# CORS allows your GitHub site to talk to this Render site without security errors
-CORS(app) 
+::-webkit-scrollbar { width: 12px; }
+::-webkit-scrollbar-track { background: #0d0d0d; }
+::-webkit-scrollbar-thumb { background: #3a1a6b; border-radius: 6px; border: 3px solid #0d0d0d; }
+::-webkit-scrollbar-thumb:hover { background: #9146FF; }
 
-# This variable holds the state of your ESP32 Hotspot
-# In a real app, you might use a database, but a variable works for now.
-# Note: If Render restarts, this resets to "OFF".
-hotspot_state = "OFF"
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #0d0d0d; 
+    color: #ffffff;
+    text-align: center;
+    overflow-x: hidden;
+}
 
-@app.route('/')
-def home():
-    return "ESP32 Controller Backend is Running!"
+::selection {
+    background: #9146FF;
+    color: white;
+}
 
-# The GitHub Website uses this to change the state
-@app.route('/set_hotspot', methods=['GET'])
-def set_hotspot():
-    global hotspot_state
-    # We look for ?state=ON or ?state=OFF in the URL
-    status = request.args.get('state')
-    if status in ["ON", "OFF"]:
-        hotspot_state = status
-        return jsonify({"message": f"Hotspot set to {hotspot_state}", "current_state": hotspot_state})
-    return jsonify({"error": "Invalid state. Use ON or OFF"}), 400
+/* =========================================
+   HERO SECTION & DYNAMIC BADGE
+========================================= */
+.hero {
+    background-color: #1a1a1a;
+    padding: 40px 20px 30px;
+    border-bottom: 2px solid #333;
+    position: relative;
+}
 
-# The ESP32 uses this to check what it should do
-@app.route('/get_status', methods=['GET'])
-def get_status():
-    # Returns just the text "ON" or "OFF" to make it easy for ESP32
-    return hotspot_state
+.hero::before {
+    content: '';
+    position: absolute;
+    top: -50px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 400px;
+    height: 200px;
+    background: #9146FF;
+    filter: blur(120px);
+    opacity: 0.2;
+    z-index: 0;
+    animation: breathe 4s infinite alternate;
+}
 
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=10000)
+@keyframes breathe {
+    from { opacity: 0.15; transform: translateX(-50%) scale(0.9); }
+    to { opacity: 0.3; transform: translateX(-50%) scale(1.1); }
+}
+
+.profile-container {
+    position: relative;
+    display: inline-block;
+    z-index: 2;
+}
+
+.profile-pic {
+    width: 140px;
+    height: 140px;
+    border-radius: 50%;
+    border: 3px solid #fff;
+    margin-bottom: 15px;
+    box-shadow: 0 0 20px rgba(145, 70, 255, 0.4); 
+    object-fit: cover; 
+    transition: transform 0.3s ease;
+}
+
+.profile-pic:hover {
+    transform: scale(1.05);
+}
+
+/* LIVE STATUS BADGE LOGIC */
+.live-badge {
+    position: absolute;
+    bottom: 20px;
+    right: 0;
+    font-size: 0.8rem;
+    font-weight: bold;
+    padding: 4px 10px;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.3s ease;
+}
+
+/* When the Javascript says he is LIVE */
+.live-badge.live {
+    background-color: #e91e63;
+    color: white;
+    border: 2px solid #1a1a1a;
+    box-shadow: 0 4px 10px rgba(233, 30, 99, 0.5);
+}
+
+/* When the Javascript says he is OFFLINE */
+.live-badge.offline {
+    background-color: #333333;
+    color: #aaaaaa;
+    border: 2px solid #1a1a1a;
+    box-shadow: none;
+}
+
+.pulse {
+    display: block;
+    width: 8px;
+    height: 8px;
+    background-color: white;
+    border-radius: 50%;
+    animation: pulse-dot 1.5s infinite;
+}
+
+@keyframes pulse-dot {
+    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.7); }
+    70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(255, 255, 255, 0); }
+    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(255, 255, 255, 0); }
+}
+
+.hero h1 {
+    position: relative;
+    z-index: 1;
+    font-size: 3rem;
+    margin-bottom: 5px;
+    letter-spacing: 2px;
+}
+
+.hero p {
+    position: relative;
+    z-index: 1;
+    color: #aaaaaa;
+    font-size: 1rem;
+}
+
+.quote {
+    margin-top: 15px;
+    font-style: italic;
+    color: #888888;
+    font-size: 0.9rem;
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* =========================================
+   MAIN LAYOUT & HEADINGS
+========================================= */
+main {
+    padding: 30px 20px;
+    max-width: 1100px;
+    margin: 0 auto;
+}
+
+main h2 {
+    font-size: 1.5rem;
+    margin-bottom: 25px;
+    color: #eeeeee;
+    text-align: left;
+    border-left: 4px solid #9146FF;
+    padding-left: 10px;
+}
+
+/* =========================================
+   SOCIAL LINKS BUTTONS
+========================================= */
+.social-links {
+    margin-bottom: 40px;
+    margin-top: 10px;
+}
+
+.button-container {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.btn {
+    padding: 10px 20px;
+    text-decoration: none;
+    color: white;
+    font-weight: bold;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px; 
+}
+
+.btn:hover {
+    transform: translateY(-3px) scale(1.02);
+    filter: brightness(1.2); 
+    box-shadow: 0 5px 15px rgba(0,0,0,0.4);
+}
+
+.twitch { background-color: #9146FF; }
+.youtube { background-color: #FF0000; }
+.discord { background-color: #5865F2; }
+.tiktok { background-color: #111111; border: 1px solid #333; }
+.instagram { background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%); }
+
+/* =========================================
+   STATS DASHBOARD
+========================================= */
+.stats-dashboard {
+    margin-bottom: 50px;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+}
+
+@media (min-width: 768px) {
+    .stats-grid { grid-template-columns: repeat(4, 1fr); }
+}
+
+.stat-card {
+    background-color: #1a1a1a;
+    border: 1px solid #2a2a2a;
+    padding: 20px;
+    border-radius: 10px;
+    text-align: center;
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.stat-card:hover {
+    transform: translateY(-8px);
+    border-color: #555;
+    background-color: #222;
+}
+
+.stat-card i {
+    font-size: 2rem;
+    margin-bottom: 10px;
+}
+
+.stat-card h3 {
+    font-size: 2rem;
+    margin-bottom: 5px;
+}
+
+.stat-card p {
+    color: #888;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* =========================================
+   HALL OF FAME VIDEOS
+========================================= */
+.videos-section {
+    margin-bottom: 50px;
+}
+
+.videos-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 15px;
+}
+
+@media (min-width: 768px) {
+    .videos-grid { grid-template-columns: 1fr 1fr; }
+}
+
+.video-card {
+    background-color: #1a1a1a;
+    border: 1px solid #333;
+    border-radius: 10px;
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    text-decoration: none;
+    color: white;
+    text-align: left;
+    transition: all 0.2s ease;
+}
+
+.video-info h3 {
+    font-size: 1.1rem;
+    margin-bottom: 4px;
+}
+
+.video-info p {
+    color: #888;
+    font-size: 0.9rem;
+}
+
+.video-card:hover {
+    background-color: #242424;
+    border-color: #9146FF;
+    transform: translateX(5px);
+}
+
+.video-card:hover i {
+    transform: scale(1.1);
+    transition: transform 0.2s ease;
+}
+
+/* =========================================
+   INTERACTIVE SCHEDULE
+========================================= */
+.schedule-section {
+    margin-bottom: 50px;
+}
+
+.schedule-container {
+    background-color: #1a1a1a;
+    border: 1px solid #333;
+    padding: 30px;
+    border-radius: 12px;
+    text-align: center;
+}
+
+.timezone-note {
+    color: #888;
+    font-size: 0.9rem;
+    margin-bottom: 5px;
+}
+
+.live-time {
+    color: #9146FF;
+    font-size: 1.8rem;
+    margin-bottom: 25px;
+    letter-spacing: 1px;
+}
+
+.calendar-grid {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.cal-day {
+    background-color: #242424;
+    border: 1px solid #333;
+    padding: 15px 10px;
+    border-radius: 8px;
+    width: 70px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    transition: all 0.3s ease;
+}
+
+.cal-day strong {
+    color: #ccc;
+    font-size: 1.1rem;
+}
+
+.cal-day span {
+    font-size: 0.8rem;
+    color: #666;
+    text-transform: uppercase;
+    font-weight: bold;
+}
+
+.cal-day.active {
+    background-color: #9146FF;
+    border-color: #b985ff;
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(145, 70, 255, 0.4);
+}
+
+.cal-day.active strong, .cal-day.active span {
+    color: #ffffff;
+}
+
+/* =========================================
+   NEWS BOARD
+========================================= */
+.news-board {
+    margin-bottom: 50px;
+}
+
+.news-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px;
+}
+
+@media (min-width: 768px) {
+    .news-grid { grid-template-columns: 1fr 1fr; }
+}
+
+.news-card {
+    background-color: #1a1a1a;
+    border: 1px solid #333;
+    padding: 25px;
+    border-radius: 10px;
+    text-align: left;
+    position: relative;
+    margin-top: 15px; 
+}
+
+.news-tag {
+    position: absolute;
+    top: -12px;
+    left: 20px;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: bold;
+}
+
+.upcoming { background-color: #eab308; color: #000; }
+.highlight { background-color: #9146FF; color: #fff; }
+
+.news-card h3 {
+    margin-top: 10px;
+    margin-bottom: 10px;
+    font-size: 1.3rem;
+}
+
+.news-card p {
+    color: #aaa;
+    line-height: 1.5;
+    font-size: 0.95rem;
+}
+
+/* =========================================
+   WULF DEN FEATURES
+========================================= */
+.about-community {
+    margin-bottom: 40px;
+}
+
+.features-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px;
+}
+
+@media (min-width: 768px) {
+    .features-grid { grid-template-columns: 1fr 1fr; }
+}
+
+.feature-card {
+    background-color: #1a1a1a;
+    border: 1px solid #2a2a2a;
+    padding: 25px;
+    border-radius: 10px;
+    text-align: left;
+    transition: transform 0.2s ease;
+}
+
+.feature-card:hover {
+    transform: translateY(-3px);
+}
+
+.feature-card h3 {
+    margin-bottom: 15px;
+    font-size: 1.2rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.feature-card p {
+    color: #aaaaaa;
+    margin-bottom: 15px;
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+
+.card-list {
+    list-style-type: none;
+    color: #dddddd;
+    font-size: 0.9rem;
+}
+
+.card-list li {
+    margin-bottom: 10px;
+    padding-left: 20px;
+    position: relative;
+}
+
+.card-list li::before {
+    content: "\f0da"; 
+    font-family: "Font Awesome 6 Free";
+    font-weight: 900;
+    color: #9146FF; 
+    position: absolute;
+    left: 0;
+}
+
+.discord-card .card-list li::before {
+    color: #5865F2;
+}
+
+/* =========================================
+   PARTNERSHIPS BANNER
+========================================= */
+.partnership-banner {
+    background: linear-gradient(135deg, #1a1a1a 0%, #2a113a 100%);
+    border: 1px solid #9146FF;
+    padding: 40px 30px;
+    border-radius: 12px;
+    text-align: center;
+    margin-bottom: 40px;
+    position: relative;
+    overflow: hidden;
+}
+
+.partnership-banner::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background-color: #9146FF;
+}
+
+.partner-content h2 {
+    color: #ffffff;
+    border: none;
+    text-align: center;
+    padding-left: 0;
+    margin-bottom: 15px;
+}
+
+.partner-content p {
+    color: #cccccc;
+    max-width: 800px;
+    margin: 0 auto 25px;
+    line-height: 1.6;
+    font-size: 1.05rem;
+}
+
+.business-btn {
+    background-color: transparent;
+    border: 2px solid #9146FF;
+    color: #ffffff;
+    display: inline-flex;
+    justify-content: center;
+    width: fit-content;
+    margin: 0 auto;
+}
+
+.business-btn:hover {
+    background-color: #9146FF;
+    transform: translateY(-3px);
+}
+
+/* =========================================
+   FOOTER
+========================================= */
+footer {
+    margin-top: 20px;
+    padding: 30px;
+    color: #555;
+    font-size: 0.85rem;
+    border-top: 1px solid #222;
+}
