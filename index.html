@@ -3,58 +3,199 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ESP32 Controller</title>
-    <style>
-        body { font-family: sans-serif; text-align: center; padding: 50px; background-color: #f4f4f9; }
-        h1 { color: #333; }
-        .button {
-            padding: 20px 40px;
-            font-size: 20px;
-            cursor: pointer;
-            border: none;
-            border-radius: 10px;
-            margin: 10px;
-            color: white;
-            transition: 0.3s;
-        }
-        #btn-on { background-color: #28a745; } /* Green */
-        #btn-off { background-color: #dc3545; } /* Red */
-        #btn-on:hover { background-color: #218838; }
-        #btn-off:hover { background-color: #c82333; }
-        #status-display { margin-top: 20px; font-weight: bold; font-size: 1.2em;}
-    </style>
+    <title>Wulfrad | Creator Hub</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
 
-    <h1>ESP32 WiFi Manager</h1>
-    
-    <p>Control your ESP32 Access Point:</p>
-    
-    <button id="btn-on" class="button" onclick="sendCommand('ON')">Turn WiFi ON</button>
-    <button id="btn-off" class="button" onclick="sendCommand('OFF')">Turn WiFi OFF</button>
+    <header class="hero">
+        <div class="profile-container">
+            <img src="icon.png" alt="Wulfrad Logo" class="profile-pic">
+            <!-- Defaults to offline, but the Javascript will instantly check Twitch when the page loads! -->
+            <div id="live-status-badge" class="live-badge offline">
+                <i class="fa-solid fa-moon"></i> OFFLINE
+            </div>
+        </div>
+        
+        <h1>Wulfrad</h1>
+        <p>YouTuber | Twitch Streamer | Owner of The Wulf Den</p>
+        <p class="quote">"If you wanna make the world a better place, take a look at yourself, and make a change. Hooo" - Batman</p>
+    </header>
 
-    <div id="status-display">Current State: Checking...</div>
+    <main>
+        <!-- SOCIAL LINKS -->
+        <section class="social-links">
+            <div class="button-container">
+                <a href="https://www.twitch.tv/wulfraddd" target="_blank" class="btn twitch"><i class="fa-brands fa-twitch"></i> Twitch</a>
+                <a href="https://www.youtube.com/@Wulfrad" target="_blank" class="btn youtube"><i class="fa-brands fa-youtube"></i> YouTube</a>
+                <a href="https://discord.gg/bHXCAExXGC" target="_blank" class="btn discord"><i class="fa-brands fa-discord"></i> The Wulf Den</a>
+                <a href="https://www.tiktok.com/@wulfradd" target="_blank" class="btn tiktok"><i class="fa-brands fa-tiktok"></i> TikTok</a>
+                <a href="https://www.instagram.com/wulfrad_/" target="_blank" class="btn instagram"><i class="fa-brands fa-instagram"></i> Instagram</a>
+            </div>
+        </section>
 
+        <!-- STATS DASHBOARD -->
+        <section class="stats-dashboard">
+            <h2><i class="fa-solid fa-chart-simple"></i> Hub Statistics</h2>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <i class="fa-brands fa-youtube" style="color: #FF0000;"></i>
+                    <h3>107</h3>
+                    <p>YouTube Subs</p>
+                </div>
+                <div class="stat-card">
+                    <i class="fa-brands fa-twitch" style="color: #9146FF;"></i>
+                    <h3>23</h3>
+                    <p>Twitch Followers</p>
+                </div>
+                <div class="stat-card">
+                    <i class="fa-brands fa-discord" style="color: #5865F2;"></i>
+                    <h3>19</h3>
+                    <p>Den Members</p>
+                </div>
+                <div class="stat-card">
+                    <i class="fa-solid fa-flag" style="color: #00ffcc;"></i>
+                    <h3>15</h3>
+                    <p>Countries Reached</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- HALL OF FAME VIDEOS -->
+        <section class="videos-section">
+            <h2><i class="fa-solid fa-fire"></i> Hall of Fame Videos</h2>
+            <div class="videos-grid">
+                <a href="https://www.youtube.com/@Wulfrad" target="_blank" class="video-card">
+                    <i class="fa-brands fa-youtube" style="color: #FF0000; background: none; font-size: 2.5rem;"></i>
+                    <div class="video-info">
+                        <h3>Worst Cheapskate I've Seen...</h3>
+                        <p>YouTube Video</p>
+                    </div>
+                </a>
+                
+                <a href="https://www.youtube.com/@Wulfrad" target="_blank" class="video-card">
+                    <i class="fa-brands fa-youtube" style="color: #FF0000; background: none; font-size: 2.5rem;"></i>
+                    <div class="video-info">
+                        <h3>Outnumbered = Free Gold</h3>
+                        <p>League of Legends Play</p>
+                    </div>
+                </a>
+            </div>
+        </section>
+
+        <!-- STATIC EST SCHEDULE -->
+        <section class="schedule-section">
+            <h2><i class="fa-solid fa-calendar-days"></i> Stream Schedule</h2>
+            <div class="schedule-container">
+                <p class="timezone-note">Standard Stream Time (Eastern Time):</p>
+                <h3 class="live-time">Every Friday @ 3:30 PM - 4:00 PM EST</h3>
+                
+                <div class="calendar-grid">
+                    <div class="cal-day"><strong>Mon</strong><span>Off</span></div>
+                    <div class="cal-day"><strong>Tue</strong><span>Off</span></div>
+                    <div class="cal-day"><strong>Wed</strong><span>Off</span></div>
+                    <div class="cal-day"><strong>Thu</strong><span>Off</span></div>
+                    <div class="cal-day active"><strong>Fri</strong><span>LIVE</span></div>
+                    <div class="cal-day"><strong>Sat</strong><span>Off</span></div>
+                    <div class="cal-day"><strong>Sun</strong><span>Off</span></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- NEWS & UPCOMING BOARD -->
+        <section class="news-board">
+            <h2><i class="fa-solid fa-bullhorn"></i> News & Upcoming Events</h2>
+            <div class="news-grid">
+                <div class="news-card">
+                    <span class="news-tag upcoming">Upcoming Stream</span>
+                    <h3>The Friday Chaos</h3>
+                    <p>Kicking off the weekend with Viewer Games, Reacting to Clips, and jumping into whatever game is causing us the most pain right now. Be in the Discord voice channels to join the lobby!</p>
+                </div>
+                <div class="news-card">
+                    <span class="news-tag highlight">Community Event</span>
+                    <h3>Looking for "OG"s!</h3>
+                    <p>The Wulf Den is growing! Join the Discord now to secure your spot. We have custom roles like "1st Member", "OG", and country tags for players across the globe.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- WULF DEN SECTION -->
+        <section class="about-community">
+            <div class="community-header">
+                <h2>🐺 Welcome to The Wulf Den</h2>
+            </div>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <h3><i class="fa-solid fa-gamepad"></i> Variety Gaming</h3>
+                    <p>From high-stakes competitive shooters to relaxing indies and absolute suffering in Souls games.</p>
+                    <ul class="card-list">
+                        <li>Apex Legends & Valorant</li>
+                        <li>League of Legends & World of Warcraft</li>
+                        <li>Elden Ring & Dark Souls</li>
+                        <li>Terraria & Horror Games</li>
+                    </ul>
+                </div>
+
+                <div class="feature-card discord-card">
+                    <h3><i class="fa-solid fa-users"></i> Interactive Content</h3>
+                    <p>We don't just play games, we create together. There's a seat for you at our table.</p>
+                    <ul class="card-list">
+                        <li><strong>Playing LIVE with viewers</strong></li>
+                        <li>Reacting to Viewer-Submitted Clips</li>
+                        <li>Playing Community Levels & Games</li>
+                        <li>Modded Playthroughs & Unique Challenges</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- PARTNERSHIPS SECTION -->
+        <section class="partnership-banner">
+            <div class="partner-content">
+                <h2><i class="fa-solid fa-handshake"></i> Partnerships & Collaborations</h2>
+                <p>The Wulf Den is growing rapidly, and we are currently open to community partnerships, brand sponsorships, and collaborations with other content creators. If you align with our vision of interactive, high-energy gaming content, we want to hear from you.</p>
+                <a href="https://discord.gg/bHXCAExXGC" target="_blank" class="btn business-btn">Inquire in Discord</a>
+            </div>
+        </section>
+
+    </main>
+
+    <footer>
+        <p>&copy; 2024 Wulfrad. Make love not warcraft.</p>
+    </footer>
+
+    <!-- REAL-TIME TWITCH API CHECKER -->
     <script>
-        // REPLACE THIS URL WITH YOUR ACTUAL RENDER URL FROM PHASE 1
-        const RENDER_URL = "https://esp32controller.onrender.com"; 
+        async function checkTwitchLiveStatus() {
+            try {
+                // We use DecAPI, a free public API for streamers that checks Twitch status without needing passwords!
+                const twitchUsername = 'wulfraddd';
+                const response = await fetch(`https://decapi.me/twitch/uptime/${twitchUsername}`);
+                const data = await response.text();
+                
+                const badge = document.getElementById('live-status-badge');
 
-        function sendCommand(state) {
-            document.getElementById('status-display').innerText = "Sending command...";
-            
-            // This talks to your Render Backend
-            fetch(`${RENDER_URL}/set_hotspot?state=${state}`)
-            .then(response => response.json())
-            .then(data => {
-                document.getElementById('status-display').innerText = "State: " + data.current_state;
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                document.getElementById('status-display').innerText = "Error connecting to server";
-            });
+                // If DecAPI returns the word "offline", he isn't live.
+                if (data.includes('offline')) {
+                    badge.className = 'live-badge offline';
+                    badge.innerHTML = '<i class="fa-solid fa-power-off" style="font-size:0.7rem;"></i> OFFLINE';
+                } 
+                // If it returns anything else (like "1 hour, 20 minutes"), it means he IS live!
+                else {
+                    badge.className = 'live-badge live';
+                    badge.innerHTML = '<span class="pulse"></span>LIVE';
+                }
+            } catch (error) {
+                console.error("Couldn't fetch Twitch status:", error);
+            }
         }
+
+        // Run the API check immediately when the page loads
+        checkTwitchLiveStatus();
+        
+        // Re-check Twitch every 60 seconds automatically
+        setInterval(checkTwitchLiveStatus, 60000);
     </script>
-
 </body>
-
 </html>
