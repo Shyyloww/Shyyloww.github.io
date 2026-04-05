@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Device Dashboard | Forensics</title>
+    <style>
+        body { background-color: #121212; color: #00ffcc; font-family: 'Courier New', Courier, monospace; padding: 20px; }
+        .container { max-width: 900px; margin: 0 auto; }
+        input, button { padding: 10px; font-family: inherit; background: #222; color: #00ffcc; border: 1px solid #00ffcc; }
+        button { cursor: pointer; background: #004433; }
+        button:hover { background: #00ffcc; color: #000; }
+        .card { background: #1e1e1e; border-left: 4px solid #00ffcc; padding: 15px; margin-top: 15px; white-space: pre-wrap; word-wrap: break-word;}
+        .timestamp { color: #888; font-size: 0.8em; }
+        .category { font-weight: bold; color: #fff; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>[ TAPEWORM DATA DASHBOARD ]</h1>
+    <p>Enter your hardware Device ID to view harvested logs.</p>
+    
+    <input type="text" id="deviceId" placeholder="e.g. DUCK-ALPHA-001" autocomplete="off">
+    <button onclick="fetchData()">Access Terminal</button>
+
+    <div id="output"></div>
+</div>
+
+<script>
+    // --- SUPABASE CONFIGURATION ---
+    const SUPABASE_URL = "https://YOUR_PROJECT_ID.supabase.co/rest/v1/harvested_logs";
+    const SUPABASE_KEY = "YOUR_SUPABASE_ANON_KEY";
+
+    async function fetchData() {
+        const deviceId = document.getElementById('deviceId').value;
+        const outputDiv = document.getElementById('output');
+        
+        if (!deviceId) {
+            alert("Please enter a Device ID.");
+            return;
+        }
+
+        outputDiv.innerHTML = "<p>Connecting to secure database...</p>";
+
+        try {
+            // Fetch data from Supabase where device_id equals the user's input
+            const response = await fetch(`${SUPABASE_URL}?device_id=eq.${deviceId}&order=created_at.desc`, {
+                method: 'GET',
+                headers: {
+                    'apikey': SUPABASE_KEY,
+                    'Authorization': `Bearer ${SUPABASE_KEY}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            const data = await response.json();
+
+            if (data.length === 0) {
+                outputDiv.innerHTML = "<p>No data found for this Device ID. Make sure the payload was executed successfully.</p>";
+                return;
+            }
+
+            outputDiv.innerHTML = "";
+            
+            // Loop through and display data
+            data.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.innerHTML = `
+                    <div class="category">[CATEGORY: ${item.category}]</div>
+                    <div class="timestamp">Logged at: ${new Date(item.created_at).toLocaleString()}</div>
+                    <hr style="border: 0; border-top: 1px solid #333; margin: 10px 0;">
+                    <div>${item.content}</div>
+                `;
+                outputDiv.appendChild(card);
+            });
+
+        } catch (error) {
+            outputDiv.innerHTML = `<p style="color:red;">Error connecting to database.</p>`;
+        }
+    }
+</script>
+
+</body>
+</html>
