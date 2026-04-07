@@ -44,13 +44,6 @@
         }
         @keyframes gridMove { 0% { transform: translateY(0); } 100% { transform: translateY(30px); } }
 
-        /* CRT Scanlines */
-        body::after {
-            content: " "; display: block; position: fixed; top: 0; left: 0; bottom: 0; right: 0;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%);
-            z-index: 999; background-size: 100% 4px; pointer-events: none;
-        }
-
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: #050810; }
         ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
@@ -65,70 +58,69 @@
         
         .tab-content { display: none; }
         .tab-content.active { display: block; animation: fadeIn 0.3s ease-in-out; }
-        
-        .blur-reveal { filter: blur(5px); transition: filter 0.3s; cursor: crosshair; }
-        .blur-reveal:hover { filter: blur(0px); }
 
         .cursor-blink::after { content: '█'; animation: blink 1s step-start infinite; color: #ff4757; margin-left: 4px; }
         @keyframes blink { 50% { opacity: 0; } }
 
-        /* --- Window Manager Styles --- */
+        /* --- Tiling Window Manager Styles --- */
         #workspace {
             position: relative;
             width: 100%;
             height: 80vh;
-            border: 1px dashed rgba(255, 71, 87, 0.2);
-            border-radius: 10px;
-            overflow: hidden;
+            display: flex;
+        }
+
+        .tiling-col { display: flex; flex-direction: column; transition: flex-basis 0.2s ease; min-width: 200px; }
+        .slot {
+            position: relative; 
+            flex: 1 1 auto; 
+            display: flex; 
+            flex-direction: column;
+            transition: flex-basis 0.2s ease;
+            min-height: 48px;
+        }
+
+        /* Drop Zone Highlight */
+        .slot.drag-over::before {
+            content: ''; position: absolute; inset: 0; z-index: 50;
+            background: rgba(0, 210, 211, 0.1); border: 2px dashed #00d2d3;
+            border-radius: 0.75rem; pointer-events: none;
         }
 
         .win-panel {
-            position: absolute;
-            display: flex;
-            flex-direction: column;
+            width: 100%; height: 100%;
+            display: flex; flex-direction: column;
             background: rgba(15, 20, 35, 0.95);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 71, 87, 0.2);
-            border-radius: 0.75rem;
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.7);
-            overflow: hidden;
-            resize: both; /* Native resizing */
-            min-width: 250px;
-            min-height: 150px;
+            backdrop-filter: blur(12px); border: 1px solid rgba(255, 71, 87, 0.2);
+            border-radius: 0.75rem; box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.7);
+            transition: opacity 0.2s ease;
         }
+        
+        .win-panel.dragging { opacity: 0.4; }
 
-        /* Transition for snapping/maximizing, removed during drag via JS */
-        .win-anim { transition: top 0.3s ease, left 0.3s ease, width 0.3s ease, height 0.3s ease; }
-
-        .win-header {
-            cursor: grab;
-            user-select: none;
-            flex-shrink: 0;
-        }
+        .win-header { cursor: grab; user-select: none; flex-shrink: 0; }
         .win-header:active { cursor: grabbing; }
-
-        .win-content {
-            flex-grow: 1;
-            overflow-y: auto;
-            overflow-x: hidden;
-        }
+        .win-content { flex-grow: 1; overflow-y: auto; overflow-x: hidden; }
 
         /* Minimize / Rollup State */
-        .win-panel.collapsed {
-            height: 48px !important; /* Just header height */
-            min-height: 48px;
-            resize: none;
-            border-bottom: 1px solid rgba(255, 71, 87, 0.5);
-        }
+        .win-panel.collapsed { height: 48px !important; flex: 0 0 48px !important; border-bottom: 1px solid rgba(255, 71, 87, 0.5); }
         .win-panel.collapsed .win-content { display: none; }
-        .win-panel.collapsed .resize-handle { display: none; }
 
-        /* Maximize State */
+        /* Maximize (Fullscreen overlay) */
         .win-panel.maximized {
-            top: 0 !important; left: 0 !important;
-            width: 100% !important; height: 100% !important;
-            resize: none; border-radius: 10px;
+            position: fixed !important; inset: 2rem !important;
+            width: calc(100% - 4rem) !important; height: calc(100% - 4rem) !important;
+            z-index: 9999 !important; border-radius: 10px;
         }
+
+        /* Draggable Gutters (Resizers) */
+        .resizer-v { cursor: col-resize; width: 12px; margin: 0 -6px; z-index: 10; position: relative; flex-shrink: 0; }
+        .resizer-v::after { content: ''; position: absolute; left: 5px; top: 0; bottom: 0; width: 2px; background: rgba(255, 71, 87, 0.1); transition: 0.2s; }
+        .resizer-v:hover::after, .resizer-v.active::after { background: #00d2d3; box-shadow: 0 0 8px #00d2d3; }
+
+        .resizer-h { cursor: row-resize; height: 12px; margin: -6px 0; z-index: 10; position: relative; flex-shrink: 0; }
+        .resizer-h::after { content: ''; position: absolute; top: 5px; left: 0; right: 0; height: 2px; background: rgba(255, 71, 87, 0.1); transition: 0.2s; }
+        .resizer-h:hover::after, .resizer-h.active::after { background: #00d2d3; box-shadow: 0 0 8px #00d2d3; }
 
         /* File Explorer Modal Styles */
         #fileExplorerModal { transition: opacity 0.3s, backdrop-filter 0.3s; }
@@ -162,208 +154,196 @@
         <!-- Navigation Tabs -->
         <div class="flex justify-center mb-6 fade-in flex-shrink-0">
             <div class="glass-panel p-1.5 rounded-lg inline-flex gap-1 border border-gray-800">
-                <button onclick="switchTab('extraction')" id="tab-extraction" class="px-8 py-2.5 rounded-md font-semibold text-sm transition-all bg-neon text-white shadow-[0_0_15px_rgba(255,71,87,0.3)]">
+                <button onclick="switchTab('extraction')" id="tab-extraction" class="px-8 py-2.5 rounded-md font-semibold text-sm transition-all text-gray-400 hover:text-white hover:bg-white/5">
                     <i class="fa-solid fa-database mr-2"></i> Vault Extraction
                 </button>
-                <button onclick="switchTab('rat')" id="tab-rat" class="px-8 py-2.5 rounded-md font-semibold text-sm transition-all text-gray-400 hover:text-white hover:bg-white/5">
+                <button onclick="switchTab('rat')" id="tab-rat" class="px-8 py-2.5 rounded-md font-semibold text-sm transition-all bg-neon text-white shadow-[0_0_15px_rgba(255,71,87,0.3)]">
                     <i class="fa-solid fa-network-wired mr-2"></i> C2 Live Control
                 </button>
             </div>
         </div>
 
         <!-- ========================================== -->
-        <!-- TAB 1: DATA EXTRACTION (Private Login View)-->
+        <!-- TAB 1: DATA EXTRACTION (Simplified for space) -->
         <!-- ========================================== -->
-        <div id="view-extraction" class="tab-content active flex-grow">
+        <div id="view-extraction" class="tab-content flex-grow">
             <div class="text-center mb-8">
                 <h1 class="text-4xl md:text-5xl font-bold text-white mb-3 tracking-tight">Secure <span class="text-neon text-glow">Vault</span></h1>
                 <p class="text-gray-400 font-mono text-sm">Awaiting authentication parameters to decrypt harvested logs...</p>
             </div>
-
-            <!-- Input Section -->
-            <div class="max-w-2xl mx-auto glass-panel p-8 rounded-2xl glow-border mb-8 relative overflow-hidden">
-                <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-neon to-transparent opacity-50"></div>
-                <label class="block text-xs font-bold text-cyberBlue mb-3 uppercase tracking-widest"><i class="fa-solid fa-microchip mr-2"></i>Target Identifier</label>
-                <div class="flex flex-col sm:flex-row gap-3">
-                    <div class="relative flex-grow">
-                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                            <i class="fa-solid fa-fingerprint text-gray-500"></i>
-                        </div>
-                        <input type="text" id="deviceId" placeholder="Enter Ducky ID (e.g. JOHNS_DUCKY)" autocomplete="off" 
-                            class="block w-full pl-12 pr-4 py-4 bg-[#050810] border border-gray-700 rounded-lg text-white placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-neon focus:border-transparent transition-all font-mono text-lg shadow-inner">
-                    </div>
-                    <button onclick="fetchData()" id="connectBtn" class="bg-neon hover:bg-neonHover text-white font-bold py-4 px-8 rounded-lg transition-all flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(255,71,87,0.4)]">
-                        <i class="fa-solid fa-unlock-keyhole"></i> Decrypt
-                    </button>
+            <div class="max-w-2xl mx-auto glass-panel p-8 rounded-2xl glow-border relative">
+                <div class="flex gap-3">
+                    <input type="text" id="deviceId" placeholder="Enter Ducky ID" class="w-full px-4 py-3 bg-[#050810] border border-gray-700 rounded-lg text-white font-mono shadow-inner outline-none focus:border-neon">
+                    <button onclick="fetchData()" id="connectBtn" class="bg-neon hover:bg-neonHover text-white font-bold px-8 rounded-lg transition-all shadow-[0_0_20px_rgba(255,71,87,0.4)]">Decrypt</button>
                 </div>
             </div>
-
-            <!-- Filters -->
-            <div id="filterContainer" class="hidden max-w-7xl mx-auto mb-6 flex flex-wrap gap-2 justify-center border-b border-gray-800/50 pb-8"></div>
-            <!-- Results -->
-            <div id="output" class="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-6 pb-20"></div>
+            <div id="output" class="mt-8 max-w-2xl mx-auto"></div>
         </div>
 
         <!-- ========================================== -->
-        <!-- TAB 2: LIVE CONTROL (Hyprland UI)          -->
+        <!-- TAB 2: LIVE CONTROL (Tiling Window UI)     -->
         <!-- ========================================== -->
-        <div id="view-rat" class="tab-content flex-grow flex flex-col h-full">
+        <div id="view-rat" class="tab-content active flex-grow flex flex-col h-full">
             
             <div class="flex justify-between items-center mb-4 px-2">
-                <div class="font-mono text-xs text-cyberBlue"><i class="fa-solid fa-desktop mr-2"></i>Virtual Desktop Workspace</div>
+                <div class="font-mono text-xs text-cyberBlue"><i class="fa-solid fa-border-all mr-2"></i>Hypr-Tiling Active <span class="text-gray-500 ml-2">(Drag headers to swap slots. Drag gutters to resize.)</span></div>
                 <button onclick="resetLayout()" class="px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-gray-300 text-xs font-mono rounded border border-gray-700 transition-colors">
-                    <i class="fa-solid fa-border-all mr-1"></i> Tile Default Layout
+                    <i class="fa-solid fa-rotate-left mr-1"></i> Reset Grid
                 </button>
             </div>
 
-            <!-- Workspace Container for Floating Windows -->
-            <div id="workspace" class="flex-grow w-full relative">
+            <!-- Tiling Workspace -->
+            <div id="workspace">
                 
-                <!-- Panel 1: Targets -->
-                <div id="panel-targets" class="win-panel win-anim" style="left: 0%; top: 0%; width: 25%; height: 100%;">
-                    <div class="win-header p-3 border-b border-gray-800 bg-[#0f1423] flex justify-between items-center z-10">
-                        <h2 class="font-bold text-xs tracking-wider uppercase text-gray-300 pointer-events-none"><i class="fa-solid fa-crosshairs text-neon mr-2 text-glow"></i>Infected Nodes</h2>
-                        <div class="flex gap-2">
-                            <button onclick="toggleMinimize('panel-targets')" class="w-4 h-4 rounded-full bg-yellow-500/20 text-yellow-500 hover:bg-yellow-500 hover:text-white flex items-center justify-center text-[8px]"><i class="fa-solid fa-minus"></i></button>
-                            <button onclick="toggleMaximize('panel-targets')" class="w-4 h-4 rounded-full bg-green-500/20 text-green-500 hover:bg-green-500 hover:text-white flex items-center justify-center text-[8px]"><i class="fa-solid fa-expand"></i></button>
-                        </div>
-                    </div>
-                    <div class="win-content p-3 space-y-2 bg-[#050810]/50">
-                        <div class="p-3 border border-neon bg-neon/5 rounded-lg cursor-pointer relative overflow-hidden group">
-                            <div class="absolute left-0 top-0 bottom-0 w-1 bg-neon"></div>
-                            <div class="flex justify-between items-start mb-2 pl-2">
-                                <div class="flex items-center gap-2">
-                                    <i class="fa-brands fa-windows text-cyberBlue text-lg"></i>
-                                    <div>
-                                        <p class="text-sm font-bold text-white">DESKTOP-Q1A2Z</p>
-                                        <p class="text-[10px] text-gray-400 font-mono">192.168.1.44 • JOHN-PC</p>
+                <!-- LEFT COLUMN -->
+                <div id="col-left" class="tiling-col" style="flex-basis: 25%;">
+                    <div class="slot" id="slot-1">
+                        <!-- Panel: Targets -->
+                        <div id="panel-targets" class="win-panel" data-minimized="false">
+                            <div class="win-header p-3 border-b border-gray-800 bg-[#0f1423] flex justify-between items-center" draggable="true">
+                                <h2 class="font-bold text-xs tracking-wider uppercase text-gray-300 pointer-events-none"><i class="fa-solid fa-crosshairs text-neon mr-2 text-glow"></i>Infected Nodes</h2>
+                                <div class="flex gap-2">
+                                    <button onclick="toggleMinimize(this, 'panel-targets')" class="w-4 h-4 rounded-full bg-yellow-500/20 text-yellow-500 hover:bg-yellow-500 hover:text-white flex items-center justify-center text-[8px]"><i class="fa-solid fa-minus"></i></button>
+                                    <button onclick="toggleMaximize(this, 'panel-targets')" class="w-4 h-4 rounded-full bg-green-500/20 text-green-500 hover:bg-green-500 hover:text-white flex items-center justify-center text-[8px]"><i class="fa-solid fa-expand"></i></button>
+                                </div>
+                            </div>
+                            <div class="win-content p-3 space-y-2 bg-[#050810]/50">
+                                <div class="p-3 border border-neon bg-neon/5 rounded-lg cursor-pointer relative overflow-hidden group">
+                                    <div class="absolute left-0 top-0 bottom-0 w-1 bg-neon"></div>
+                                    <div class="flex justify-between items-start mb-2 pl-2">
+                                        <div class="flex items-center gap-2">
+                                            <i class="fa-brands fa-windows text-cyberBlue text-lg"></i>
+                                            <div>
+                                                <p class="text-sm font-bold text-white">DESKTOP-Q1A2Z</p>
+                                                <p class="text-[10px] text-gray-400 font-mono">192.168.1.44</p>
+                                            </div>
+                                        </div>
+                                        <span class="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse"></span>
                                     </div>
                                 </div>
-                                <span class="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse"></span>
-                            </div>
-                        </div>
-                        <div class="p-3 border border-gray-800 bg-[#050810] rounded-lg cursor-not-allowed opacity-60">
-                            <div class="flex justify-between items-start mb-2">
-                                <div class="flex items-center gap-2">
-                                    <i class="fa-brands fa-apple text-gray-500 text-lg"></i>
-                                    <div><p class="text-sm font-bold text-gray-300">MACBOOK-PRO-99</p></div>
+                                <div class="p-3 border border-gray-800 bg-[#050810] rounded-lg cursor-not-allowed opacity-60">
+                                    <div class="flex justify-between items-start mb-2">
+                                        <div class="flex items-center gap-2">
+                                            <i class="fa-brands fa-apple text-gray-500 text-lg"></i>
+                                            <div><p class="text-sm font-bold text-gray-300">MACBOOK-PRO-99</p></div>
+                                        </div>
+                                        <span class="w-2.5 h-2.5 rounded-full bg-red-500"></span>
+                                    </div>
                                 </div>
-                                <span class="w-2.5 h-2.5 rounded-full bg-red-500"></span>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Panel 2: Video Stream -->
-                <div id="panel-video" class="win-panel win-anim" style="left: 25%; top: 0%; width: 50%; height: 50%;">
-                    <div class="win-header p-3 border-b border-gray-800 bg-[#0f1423] flex justify-between items-center z-10">
-                        <h2 class="font-bold text-xs tracking-wider uppercase text-gray-300 pointer-events-none"><i class="fa-solid fa-video text-purple-400 mr-2"></i>Live Feed</h2>
-                        <div class="flex gap-2">
-                            <button onclick="toggleMinimize('panel-video')" class="w-4 h-4 rounded-full bg-yellow-500/20 text-yellow-500 hover:bg-yellow-500 hover:text-white flex items-center justify-center text-[8px]"><i class="fa-solid fa-minus"></i></button>
-                            <button onclick="toggleMaximize('panel-video')" class="w-4 h-4 rounded-full bg-green-500/20 text-green-500 hover:bg-green-500 hover:text-white flex items-center justify-center text-[8px]"><i class="fa-solid fa-expand"></i></button>
+                <!-- Resizer Vertical 1 -->
+                <div class="resizer-v" id="rz-v1"></div>
+
+                <!-- MIDDLE COLUMN -->
+                <div id="col-mid" class="tiling-col" style="flex-basis: 50%;">
+                    
+                    <div class="slot" id="slot-2" style="flex-basis: 50%;">
+                        <!-- Panel: Video -->
+                        <div id="panel-video" class="win-panel" data-minimized="false">
+                            <div class="win-header p-3 border-b border-gray-800 bg-[#0f1423] flex justify-between items-center" draggable="true">
+                                <h2 class="font-bold text-xs tracking-wider uppercase text-gray-300 pointer-events-none"><i class="fa-solid fa-video text-purple-400 mr-2"></i>Live Feed</h2>
+                                <div class="flex gap-2">
+                                    <button onclick="toggleMinimize(this, 'panel-video')" class="w-4 h-4 rounded-full bg-yellow-500/20 text-yellow-500 hover:bg-yellow-500 hover:text-white flex items-center justify-center text-[8px]"><i class="fa-solid fa-minus"></i></button>
+                                    <button onclick="toggleMaximize(this, 'panel-video')" class="w-4 h-4 rounded-full bg-green-500/20 text-green-500 hover:bg-green-500 hover:text-white flex items-center justify-center text-[8px]"><i class="fa-solid fa-expand"></i></button>
+                                </div>
+                            </div>
+                            <div class="win-content bg-[#000] relative flex items-center justify-center">
+                                <div class="absolute inset-0 opacity-20 pointer-events-none" style="background-image: repeating-linear-gradient(0deg, transparent, transparent 2px, #fff 2px, #fff 4px); background-size: 100% 4px;"></div>
+                                <div class="text-center z-10">
+                                    <i class="fa-solid fa-video-slash text-4xl text-gray-700 mb-2"></i>
+                                    <p class="text-gray-500 font-mono text-sm">STREAM OFFLINE</p>
+                                    <button onclick="termLog('Initiating WebRTC stream... [FAILED: Connection refused]')" class="mt-3 px-4 py-1.5 border border-neon text-neon text-xs font-mono rounded hover:bg-neon hover:text-white transition-colors">START STREAM</button>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <div class="win-content bg-[#000] relative flex items-center justify-center">
-                        <div class="absolute inset-0 opacity-20 pointer-events-none" style="background-image: repeating-linear-gradient(0deg, transparent, transparent 2px, #fff 2px, #fff 4px); background-size: 100% 4px;"></div>
-                        <div class="text-center z-10">
-                            <i class="fa-solid fa-video-slash text-4xl text-gray-700 mb-2"></i>
-                            <p class="text-gray-500 font-mono text-sm">STREAM OFFLINE</p>
-                            <button onclick="termLog('Initiating WebRTC stream... [FAILED: Connection refused]')" class="mt-3 px-4 py-1.5 border border-neon text-neon text-xs font-mono rounded hover:bg-neon hover:text-white transition-colors">START STREAM</button>
+
+                    <!-- Resizer Horizontal -->
+                    <div class="resizer-h" id="rz-h1"></div>
+
+                    <div class="slot" id="slot-3" style="flex-basis: 50%;">
+                        <!-- Panel: Terminal -->
+                        <div id="panel-terminal" class="win-panel" data-minimized="false">
+                            <div class="win-header p-2 border-b border-gray-800 bg-[#0B0F19] flex justify-between items-center" draggable="true">
+                                <div class="flex gap-1.5 ml-2 pointer-events-none">
+                                    <div class="w-3 h-3 rounded-full bg-red-500"></div><div class="w-3 h-3 rounded-full bg-yellow-500"></div><div class="w-3 h-3 rounded-full bg-green-500"></div>
+                                </div>
+                                <span class="text-xs font-mono text-gray-500 pointer-events-none">ducky@c2-server:~</span>
+                                <div class="flex gap-2 mr-1">
+                                    <button onclick="document.getElementById('terminal-output').innerHTML=''" class="text-gray-500 hover:text-white text-[10px]" title="Clear Shell"><i class="fa-solid fa-trash"></i></button>
+                                    <button onclick="toggleMinimize(this, 'panel-terminal')" class="text-yellow-500 hover:text-white text-[10px]"><i class="fa-solid fa-minus"></i></button>
+                                    <button onclick="toggleMaximize(this, 'panel-terminal')" class="text-green-500 hover:text-white text-[10px]"><i class="fa-solid fa-expand"></i></button>
+                                </div>
+                            </div>
+                            <div class="win-content p-4 font-mono text-xs bg-black/80 text-gray-300 flex flex-col">
+                                <div class="flex-grow overflow-y-auto" id="terminal-output">
+                                    <div class="text-cyberBlue">UglyDucky Shell v2.4.0</div>
+                                    <div class="text-gray-500">Connected to DESKTOP-Q1A2Z via reverse TCP</div>
+                                    <div class="mt-2 text-green-400">C:\Users\John> <span class="cursor-blink"></span></div>
+                                </div>
+                                <div class="pt-2 border-t border-gray-800 flex mt-2 flex-shrink-0">
+                                    <span class="text-neon font-bold mr-2">></span>
+                                    <input type="text" placeholder="Enter shell command..." class="w-full bg-transparent outline-none font-mono text-xs text-white placeholder-gray-600" onkeypress="if(event.key === 'Enter') executeTermCommand(this)">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Resizer Vertical 2 -->
+                <div class="resizer-v" id="rz-v2"></div>
+
+                <!-- RIGHT COLUMN -->
+                <div id="col-right" class="tiling-col" style="flex-basis: 25%;">
+                    <div class="slot" id="slot-4">
+                        <!-- Panel: Modules -->
+                        <div id="panel-modules" class="win-panel" data-minimized="false">
+                            <div class="win-header p-3 border-b border-gray-800 bg-[#0f1423] flex justify-between items-center" draggable="true">
+                                <h2 class="font-bold text-xs tracking-wider uppercase text-gray-300 pointer-events-none"><i class="fa-solid fa-bolt text-yellow-400 mr-2"></i>Modules</h2>
+                                <div class="flex gap-2">
+                                    <button onclick="toggleMinimize(this, 'panel-modules')" class="w-4 h-4 rounded-full bg-yellow-500/20 text-yellow-500 hover:bg-yellow-500 hover:text-white flex items-center justify-center text-[8px]"><i class="fa-solid fa-minus"></i></button>
+                                    <button onclick="toggleMaximize(this, 'panel-modules')" class="w-4 h-4 rounded-full bg-green-500/20 text-green-500 hover:bg-green-500 hover:text-white flex items-center justify-center text-[8px]"><i class="fa-solid fa-expand"></i></button>
+                                </div>
+                            </div>
+                            <div class="win-content p-3 space-y-4 bg-[#050810]/50">
+                                <div>
+                                    <h3 class="text-[10px] font-bold text-neon uppercase mb-2 tracking-wider pl-1">System Control</h3>
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <button onclick="openFileSystem()" class="bg-[#1a2235] hover:bg-neon/20 border border-gray-700 hover:border-neon p-2 rounded text-center transition-colors group col-span-2">
+                                            <i class="fa-solid fa-folder-tree text-gray-400 group-hover:text-neon mb-1"></i>
+                                            <h4 class="text-[10px] text-gray-200">Open File Browser</h4>
+                                        </button>
+                                        <button onclick="termLog('Privilege Escalation...')" class="bg-[#1a2235] hover:bg-neon/20 border border-gray-700 hover:border-neon p-2 rounded text-center transition-colors group">
+                                            <i class="fa-solid fa-user-shield text-gray-400 group-hover:text-neon mb-1"></i>
+                                            <h4 class="text-[10px] text-gray-200">Privesc</h4>
+                                        </button>
+                                        <button onclick="termLog('Executing payload...')" class="bg-[#1a2235] hover:bg-neon/20 border border-gray-700 hover:border-neon p-2 rounded text-center transition-colors group">
+                                            <i class="fa-solid fa-file-code text-gray-400 group-hover:text-neon mb-1"></i>
+                                            <h4 class="text-[10px] text-gray-200">Execute</h4>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div>
+                                    <h3 class="text-[10px] font-bold text-purple-400 uppercase mb-2 tracking-wider pl-1">Trolling</h3>
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <button onclick="termLog('BSOD Sent.')" class="bg-[#1a2235] hover:bg-purple-900/40 border border-gray-700 hover:border-purple-500 p-2 rounded text-center transition-colors">
+                                            <i class="fa-solid fa-skull text-gray-400 mb-1"></i><h4 class="text-[9px] text-gray-200">BSOD</h4>
+                                        </button>
+                                        <button onclick="termLog('Audio maxed.')" class="bg-[#1a2235] hover:bg-purple-900/40 border border-gray-700 hover:border-purple-500 p-2 rounded text-center transition-colors">
+                                            <i class="fa-solid fa-volume-high text-gray-400 mb-1"></i><h4 class="text-[9px] text-gray-200">Audio</h4>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Panel 3: Terminal -->
-                <div id="panel-terminal" class="win-panel win-anim" style="left: 25%; top: 50%; width: 50%; height: 50%;">
-                    <div class="win-header p-2 border-b border-gray-800 bg-[#0B0F19] flex justify-between items-center z-10">
-                        <div class="flex gap-1.5 ml-2 pointer-events-none">
-                            <div class="w-3 h-3 rounded-full bg-red-500"></div>
-                            <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
-                            <div class="w-3 h-3 rounded-full bg-green-500"></div>
-                        </div>
-                        <span class="text-xs font-mono text-gray-500 pointer-events-none">ducky@c2-server:~</span>
-                        <div class="flex gap-2 mr-1">
-                            <button onclick="document.getElementById('terminal-output').innerHTML=''" class="text-gray-500 hover:text-white text-[10px]"><i class="fa-solid fa-trash"></i></button>
-                            <button onclick="toggleMinimize('panel-terminal')" class="text-yellow-500 hover:text-white text-[10px]"><i class="fa-solid fa-minus"></i></button>
-                            <button onclick="toggleMaximize('panel-terminal')" class="text-green-500 hover:text-white text-[10px]"><i class="fa-solid fa-expand"></i></button>
-                        </div>
-                    </div>
-                    <div class="win-content p-4 font-mono text-xs bg-black/80 text-gray-300 flex flex-col">
-                        <div class="flex-grow overflow-y-auto" id="terminal-output">
-                            <div class="text-cyberBlue">UglyDucky Shell v2.4.0</div>
-                            <div class="text-gray-500">Connected to DESKTOP-Q1A2Z via reverse TCP</div>
-                            <div class="mt-2 text-green-400">C:\Users\John> <span class="cursor-blink"></span></div>
-                        </div>
-                        <div class="pt-2 border-t border-gray-800 flex mt-2 flex-shrink-0">
-                            <span class="text-neon font-bold mr-2">></span>
-                            <input type="text" placeholder="Enter shell command..." class="w-full bg-transparent outline-none font-mono text-xs text-white placeholder-gray-600" onkeypress="if(event.key === 'Enter') executeTermCommand(this)">
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Panel 4: Execution Modules -->
-                <div id="panel-modules" class="win-panel win-anim" style="left: 75%; top: 0%; width: 25%; height: 100%;">
-                    <div class="win-header p-3 border-b border-gray-800 bg-[#0f1423] flex justify-between items-center z-10">
-                        <h2 class="font-bold text-xs tracking-wider uppercase text-gray-300 pointer-events-none"><i class="fa-solid fa-bolt text-yellow-400 mr-2"></i>Modules</h2>
-                        <div class="flex gap-2">
-                            <button onclick="toggleMinimize('panel-modules')" class="w-4 h-4 rounded-full bg-yellow-500/20 text-yellow-500 hover:bg-yellow-500 hover:text-white flex items-center justify-center text-[8px]"><i class="fa-solid fa-minus"></i></button>
-                            <button onclick="toggleMaximize('panel-modules')" class="w-4 h-4 rounded-full bg-green-500/20 text-green-500 hover:bg-green-500 hover:text-white flex items-center justify-center text-[8px]"><i class="fa-solid fa-expand"></i></button>
-                        </div>
-                    </div>
-                    <div class="win-content p-3 space-y-4 bg-[#050810]/50">
-                        
-                        <div>
-                            <h3 class="text-[10px] font-bold text-cyberBlue uppercase mb-2 tracking-wider pl-1">Surveillance</h3>
-                            <div class="grid grid-cols-2 gap-2">
-                                <button onclick="termLog('Capturing desktop screenshot...')" class="bg-[#1a2235] hover:bg-gray-700 border border-gray-700 p-2 rounded text-center transition-colors group">
-                                    <i class="fa-solid fa-camera text-gray-400 group-hover:text-cyberBlue mb-1"></i>
-                                    <h4 class="text-[10px] text-gray-200">Screenshot</h4>
-                                </button>
-                                <button onclick="termLog('Keylogger hooked.')" class="bg-[#1a2235] hover:bg-gray-700 border border-gray-700 p-2 rounded text-center transition-colors group">
-                                    <i class="fa-solid fa-keyboard text-gray-400 group-hover:text-cyberBlue mb-1"></i>
-                                    <h4 class="text-[10px] text-gray-200">Keylogger</h4>
-                                </button>
-                            </div>
-                        </div>
-
-                        <div>
-                            <h3 class="text-[10px] font-bold text-neon uppercase mb-2 tracking-wider pl-1">System Control</h3>
-                            <div class="grid grid-cols-2 gap-2">
-                                <button onclick="openFileSystem()" class="bg-[#1a2235] hover:bg-neon/20 border border-gray-700 hover:border-neon p-2 rounded text-center transition-colors group col-span-2">
-                                    <i class="fa-solid fa-folder-tree text-gray-400 group-hover:text-neon mb-1"></i>
-                                    <h4 class="text-[10px] text-gray-200">Open File Browser</h4>
-                                </button>
-                                <button onclick="termLog('Privilege Escalation...')" class="bg-[#1a2235] hover:bg-neon/20 border border-gray-700 hover:border-neon p-2 rounded text-center transition-colors group">
-                                    <i class="fa-solid fa-user-shield text-gray-400 group-hover:text-neon mb-1"></i>
-                                    <h4 class="text-[10px] text-gray-200">Privesc</h4>
-                                </button>
-                                <button onclick="termLog('Executing payload...')" class="bg-[#1a2235] hover:bg-neon/20 border border-gray-700 hover:border-neon p-2 rounded text-center transition-colors group">
-                                    <i class="fa-solid fa-file-code text-gray-400 group-hover:text-neon mb-1"></i>
-                                    <h4 class="text-[10px] text-gray-200">Execute</h4>
-                                </button>
-                            </div>
-                        </div>
-
-                        <div>
-                            <h3 class="text-[10px] font-bold text-purple-400 uppercase mb-2 tracking-wider pl-1">Trolling</h3>
-                            <div class="grid grid-cols-3 gap-2">
-                                <button onclick="termLog('BSOD Sent.')" class="bg-[#1a2235] hover:bg-purple-900/40 border border-gray-700 hover:border-purple-500 p-2 rounded text-center transition-colors">
-                                    <i class="fa-solid fa-skull text-gray-400 mb-1"></i>
-                                    <h4 class="text-[9px] text-gray-200">BSOD</h4>
-                                </button>
-                                <button onclick="termLog('Audio maxed.')" class="bg-[#1a2235] hover:bg-purple-900/40 border border-gray-700 hover:border-purple-500 p-2 rounded text-center transition-colors">
-                                    <i class="fa-solid fa-volume-high text-gray-400 mb-1"></i>
-                                    <h4 class="text-[9px] text-gray-200">Audio</h4>
-                                </button>
-                                <button onclick="termLog('CD Tray opened.')" class="bg-[#1a2235] hover:bg-purple-900/40 border border-gray-700 hover:border-purple-500 p-2 rounded text-center transition-colors">
-                                    <i class="fa-solid fa-compact-disc text-gray-400 mb-1"></i>
-                                    <h4 class="text-[9px] text-gray-200">CD Tray</h4>
-                                </button>
-                            </div>
-                        </div>
-
-                    </div>
-                </div>
             </div>
         </div>
     </main>
@@ -387,17 +367,13 @@
                 <table class="w-full text-sm text-left">
                     <thead class="sticky top-0 bg-[#050810] z-10 border-b border-gray-700">
                         <tr class="text-gray-400 font-mono text-xs uppercase">
-                            <th class="p-3 w-12"></th>
-                            <th class="p-3">Name</th>
-                            <th class="p-3 w-32 text-right">Size</th>
-                            <th class="p-3 w-48 text-right">Date Modified</th>
-                            <th class="p-3 w-24 text-center">Actions</th>
+                            <th class="p-3 w-12"></th><th class="p-3">Name</th><th class="p-3 w-32 text-right">Size</th>
+                            <th class="p-3 w-48 text-right">Date Modified</th><th class="p-3 w-24 text-center">Actions</th>
                         </tr>
                     </thead>
                     <tbody id="fsTbody" class="font-mono text-gray-300"></tbody>
                 </table>
             </div>
-            <div id="fsFooter" class="p-2 border-t border-gray-800 text-xs font-mono text-gray-500 bg-[#050810] rounded-b-2xl flex-shrink-0"></div>
         </div>
     </div>
 
@@ -408,118 +384,165 @@
     </div>
 
     <script>
-        // --- WINDOW MANAGER LOGIC ---
-        let winZIndex = 10;
-        
-        // Initial setup
-        document.addEventListener("DOMContentLoaded", () => {
-            const panels = document.querySelectorAll('.win-panel');
-            const workspace = document.getElementById('workspace');
+        // --- TILING WINDOW MANAGER (DRAG & DROP SWAPPING) ---
+        let draggedPanel = null;
 
-            panels.forEach(panel => {
-                const header = panel.querySelector('.win-header');
-                
-                // Bring to front on click anywhere
-                panel.addEventListener('mousedown', () => {
-                    panel.style.zIndex = ++winZIndex;
-                });
+        document.querySelectorAll('.win-header').forEach(header => {
+            header.addEventListener('dragstart', (e) => {
+                // Prevent drag if maximizing/minimizing buttons were clicked
+                if (e.target.tagName === 'BUTTON' || e.target.closest('button') || header.parentElement.classList.contains('maximized')) {
+                    e.preventDefault(); return;
+                }
+                draggedPanel = header.closest('.win-panel');
+                e.dataTransfer.effectAllowed = 'move';
+                setTimeout(() => draggedPanel.classList.add('dragging'), 0);
+            });
 
-                // Drag Logic
-                header.addEventListener('mousedown', (e) => {
-                    // Don't drag if clicking buttons, or if minimized/maximized
-                    if (e.target.closest('button') || panel.classList.contains('maximized')) return;
-                    
-                    panel.style.zIndex = ++winZIndex;
-                    panel.classList.remove('win-anim'); // Remove snap animations during drag
-                    
-                    const rect = panel.getBoundingClientRect();
-                    const wsRect = workspace.getBoundingClientRect();
-                    
-                    // Offset relative to panel
-                    const offsetX = e.clientX - rect.left;
-                    const offsetY = e.clientY - rect.top;
-
-                    function onMouseMove(mEvent) {
-                        let newLeft = mEvent.clientX - wsRect.left - offsetX;
-                        let newTop = mEvent.clientY - wsRect.top - offsetY;
-                        
-                        // Bounds checking
-                        newLeft = Math.max(0, Math.min(newLeft, wsRect.width - panel.offsetWidth));
-                        newTop = Math.max(0, Math.min(newTop, wsRect.height - panel.offsetHeight));
-
-                        // Override inline styles to px for absolute positioning
-                        panel.style.left = `${newLeft}px`;
-                        panel.style.top = `${newTop}px`;
-                        panel.style.bottom = 'auto';
-                        panel.style.right = 'auto';
-                    }
-
-                    function onMouseUp() {
-                        document.removeEventListener('mousemove', onMouseMove);
-                        document.removeEventListener('mouseup', onMouseUp);
-                        panel.classList.add('win-anim'); // Restore transition
-                    }
-
-                    document.addEventListener('mousemove', onMouseMove);
-                    document.addEventListener('mouseup', onMouseUp);
-                });
+            header.addEventListener('dragend', () => {
+                if(draggedPanel) draggedPanel.classList.remove('dragging');
+                draggedPanel = null;
+                document.querySelectorAll('.slot').forEach(s => s.classList.remove('drag-over'));
             });
         });
 
-        // Window Controls
-        function toggleMinimize(panelId) {
-            const panel = document.getElementById(panelId);
-            if (panel.classList.contains('maximized')) panel.classList.remove('maximized');
-            panel.classList.toggle('collapsed');
-            panel.style.zIndex = ++winZIndex;
+        document.querySelectorAll('.slot').forEach(slot => {
+            slot.addEventListener('dragover', (e) => {
+                e.preventDefault(); // Necessary to allow dropping
+                if(draggedPanel && slot !== draggedPanel.parentElement) {
+                    slot.classList.add('drag-over');
+                }
+            });
+
+            slot.addEventListener('dragleave', () => {
+                slot.classList.remove('drag-over');
+            });
+
+            slot.addEventListener('drop', (e) => {
+                e.preventDefault();
+                slot.classList.remove('drag-over');
+                
+                if (draggedPanel) {
+                    const targetPanel = slot.querySelector('.win-panel');
+                    const sourceSlot = draggedPanel.parentElement;
+                    
+                    // Perform the Swap!
+                    if (targetPanel && sourceSlot !== slot) {
+                        sourceSlot.appendChild(targetPanel);
+                        slot.appendChild(draggedPanel);
+                    }
+                }
+            });
+        });
+
+        // --- TILING WINDOW MANAGER (GUTTER RESIZERS) ---
+        function setupResizer(resizerId, prevId, nextId, isVertical) {
+            const resizer = document.getElementById(resizerId);
+            const prev = document.getElementById(prevId);
+            const next = document.getElementById(nextId);
+            
+            resizer.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                resizer.classList.add('active');
+                
+                // Disable transitions during drag for smooth performance
+                prev.style.transition = 'none';
+                next.style.transition = 'none';
+
+                const startPos = isVertical ? e.clientX : e.clientY;
+                const parentSize = isVertical ? resizer.parentElement.offsetWidth : resizer.parentElement.offsetHeight;
+                
+                const prevStartBasis = (prev[isVertical ? 'offsetWidth' : 'offsetHeight'] / parentSize) * 100;
+                const nextStartBasis = (next[isVertical ? 'offsetWidth' : 'offsetHeight'] / parentSize) * 100;
+
+                const onMouseMove = (moveEvent) => {
+                    const delta = isVertical ? moveEvent.clientX - startPos : moveEvent.clientY - startPos;
+                    const deltaPercent = (delta / parentSize) * 100;
+                    
+                    let newPrev = prevStartBasis + deltaPercent;
+                    let newNext = nextStartBasis - deltaPercent;
+
+                    // Min size constraint (15%)
+                    if (newPrev > 15 && newNext > 15) {
+                        prev.style.flexBasis = `${newPrev}%`;
+                        next.style.flexBasis = `${newNext}%`;
+                    }
+                };
+
+                const onMouseUp = () => {
+                    resizer.classList.remove('active');
+                    prev.style.transition = '';
+                    next.style.transition = '';
+                    document.removeEventListener('mousemove', onMouseMove);
+                    document.removeEventListener('mouseup', onMouseUp);
+                };
+
+                document.addEventListener('mousemove', onMouseMove);
+                document.addEventListener('mouseup', onMouseUp);
+            });
         }
 
-        function toggleMaximize(panelId) {
+        // Initialize Resizers
+        document.addEventListener("DOMContentLoaded", () => {
+            setupResizer('rz-v1', 'col-left', 'col-mid', true);
+            setupResizer('rz-v2', 'col-mid', 'col-right', true);
+            setupResizer('rz-h1', 'slot-2', 'slot-3', false);
+        });
+
+        // --- WINDOW CONTROLS (Min/Max) ---
+        function toggleMinimize(btn, panelId) {
+            // Find btn based on context. If it's a click, btn is the button.
+            // If it's the <i> tag inside, get parent.
+            const buttonEl = btn.tagName === 'I' ? btn.parentElement : btn;
             const panel = document.getElementById(panelId);
-            if (panel.classList.contains('collapsed')) panel.classList.remove('collapsed');
+            const isMinimized = panel.dataset.minimized === 'true';
             
-            if (panel.classList.contains('maximized')) {
-                // Restore logic
-                panel.classList.remove('maximized');
-                if(panel.dataset.prevLeft) {
-                    panel.style.left = panel.dataset.prevLeft;
-                    panel.style.top = panel.dataset.prevTop;
-                    panel.style.width = panel.dataset.prevWidth;
-                    panel.style.height = panel.dataset.prevHeight;
-                }
+            // Cannot minimize if fullscreened
+            if(panel.classList.contains('maximized')) return;
+
+            if (isMinimized) {
+                panel.dataset.minimized = 'false';
+                buttonEl.innerHTML = '<i class="fa-solid fa-minus"></i>';
+                panel.classList.remove('collapsed');
             } else {
-                // Save state and Maximize
-                panel.dataset.prevLeft = panel.style.left;
-                panel.dataset.prevTop = panel.style.top;
-                panel.dataset.prevWidth = panel.style.width;
-                panel.dataset.prevHeight = panel.style.height;
-                
-                panel.style.left = '0px';
-                panel.style.top = '0px';
-                panel.style.width = '100%';
-                panel.style.height = '100%';
-                panel.classList.add('maximized');
+                panel.dataset.minimized = 'true';
+                buttonEl.innerHTML = '<i class="fa-solid fa-window-restore"></i>'; // Changed Icon!
+                panel.classList.add('collapsed');
             }
-            panel.style.zIndex = ++winZIndex;
+        }
+
+        function toggleMaximize(btn, panelId) {
+            const buttonEl = btn.tagName === 'I' ? btn.parentElement : btn;
+            const panel = document.getElementById(panelId);
+            const isMax = panel.classList.contains('maximized');
+            
+            if (isMax) {
+                panel.classList.remove('maximized');
+                buttonEl.innerHTML = '<i class="fa-solid fa-expand"></i>';
+            } else {
+                // Prevent maximizing a collapsed window
+                if(panel.dataset.minimized === 'true') toggleMinimize(panel.querySelector('.fa-window-restore').parentElement, panelId);
+                
+                panel.classList.add('maximized');
+                buttonEl.innerHTML = '<i class="fa-solid fa-compress"></i>';
+            }
         }
 
         function resetLayout() {
-            const layout = {
-                'panel-targets':  { left: '0%',  top: '0%',  width: '25%', height: '100%' },
-                'panel-video':    { left: '25%', top: '0%',  width: '50%', height: '50%' },
-                'panel-terminal': { left: '25%', top: '50%', width: '50%', height: '50%' },
-                'panel-modules':  { left: '75%', top: '0%',  width: '25%', height: '100%' }
-            };
+            document.getElementById('col-left').style.flexBasis = '25%';
+            document.getElementById('col-mid').style.flexBasis = '50%';
+            document.getElementById('col-right').style.flexBasis = '25%';
+            document.getElementById('slot-2').style.flexBasis = '50%';
+            document.getElementById('slot-3').style.flexBasis = '50%';
+            
+            // Un-minimize and un-maximize everything
+            document.querySelectorAll('.win-panel').forEach(p => {
+                p.classList.remove('maximized', 'collapsed');
+                p.dataset.minimized = 'false';
+            });
+            document.querySelectorAll('.win-header button .fa-window-restore').forEach(i => i.className = "fa-solid fa-minus");
+            document.querySelectorAll('.win-header button .fa-compress').forEach(i => i.className = "fa-solid fa-expand");
 
-            for (const [id, bounds] of Object.entries(layout)) {
-                const panel = document.getElementById(id);
-                panel.classList.remove('collapsed', 'maximized');
-                panel.style.left = bounds.left;
-                panel.style.top = bounds.top;
-                panel.style.width = bounds.width;
-                panel.style.height = bounds.height;
-            }
-            showToast('Layout Reset to Tiled', 'success');
+            showToast('Layout Reset', 'success');
         }
 
         // --- TAB LOGIC ---
@@ -532,30 +555,29 @@
             document.getElementById('tab-' + tabId).className = "px-8 py-2.5 rounded-md font-semibold text-sm transition-all bg-neon text-white shadow-[0_0_15px_rgba(255,71,87,0.3)]";
         }
 
-        // --- DATA EXTRACTION (Simplified Mock for demo) ---
         function fetchData() {
             const btn = document.getElementById('connectBtn');
             const output = document.getElementById('output');
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Working';
+            btn.innerHTML = 'Working...';
             setTimeout(() => {
-                btn.innerHTML = '<i class="fa-solid fa-unlock-keyhole"></i> Decrypt';
-                output.innerHTML = `<div class="glass-panel p-4 rounded-xl text-center text-gray-400 border border-neon font-mono text-sm">Demo Data Loaded. Switch to C2 Live Control.</div>`;
+                btn.innerHTML = 'Decrypt';
+                output.innerHTML = `<div class="glass-panel p-4 rounded-xl text-center text-gray-400 border border-neon font-mono text-sm">Demo Data. Switch to C2 Live Control tab.</div>`;
                 showToast("Vault Decrypted");
             }, 1000);
         }
 
-        // --- MOCK TERMINAL LOGIC ---
+        // --- TERMINAL LOGIC ---
         function termLog(msg) {
             const term = document.getElementById('terminal-output');
             term.innerHTML = term.innerHTML.replace('<span class="cursor-blink"></span>', '');
-            const outputLine = document.createElement('div');
-            outputLine.className = "text-gray-300 mt-1";
-            outputLine.innerText = `[*] ${msg}`;
-            term.appendChild(outputLine);
-            const newLine = document.createElement('div');
-            newLine.className = "mt-2 text-green-400";
-            newLine.innerHTML = `C:\\Users\\John> <span class="cursor-blink"></span>`;
-            term.appendChild(newLine);
+            const line = document.createElement('div');
+            line.className = "text-gray-300 mt-1";
+            line.innerText = `[*] ${msg}`;
+            term.appendChild(line);
+            const prompt = document.createElement('div');
+            prompt.className = "mt-2 text-green-400";
+            prompt.innerHTML = `C:\\Users\\John> <span class="cursor-blink"></span>`;
+            term.appendChild(prompt);
             term.scrollTop = term.scrollHeight;
         }
 
@@ -564,28 +586,16 @@
             if(!val) return;
             const term = document.getElementById('terminal-output');
             term.innerHTML = term.innerHTML.replace('<span class="cursor-blink"></span>', val);
-            
             setTimeout(() => {
-                let response = `'${val}' is not recognized.`;
                 if(val.toLowerCase() === 'clear') { term.innerHTML = `<div class="text-green-400">C:\\Users\\John> <span class="cursor-blink"></span></div>`; inputEl.value = ''; return; }
-                if(val.toLowerCase() === 'ls' || val.toLowerCase() === 'dir') response = "Directory of C:\\Users\\John\n 10/26/2023  Desktop\n 10/25/2023  Downloads\n";
-                termLog(response);
+                termLog(`'${val}' executed successfully.`);
             }, 200);
             inputEl.value = '';
         }
 
-        // --- TOAST NOTIFICATIONS ---
-        function showToast(message, type="success") {
+        function showToast(msg, type="success") {
             const toast = document.getElementById('toast');
-            const icon = toast.querySelector('i');
-            document.getElementById('toastMsg').innerText = message;
-            if(type === "error") {
-                toast.classList.replace('border-neon', 'border-red-500');
-                icon.className = "fa-solid fa-triangle-exclamation text-red-500";
-            } else {
-                toast.classList.replace('border-red-500', 'border-neon');
-                icon.className = "fa-solid fa-circle-check text-neon";
-            }
+            document.getElementById('toastMsg').innerText = msg;
             toast.classList.replace('translate-y-24', 'translate-y-0');
             toast.classList.replace('opacity-0', 'opacity-100');
             setTimeout(() => {
@@ -595,24 +605,7 @@
         }
 
         // --- FILE EXPLORER LOGIC ---
-        const mockFileSystem = {
-            'C:': {
-                'Users': {
-                    type: 'folder',
-                    items: {
-                        'John': {
-                            type: 'folder',
-                            items: {
-                                'Desktop': { type: 'folder', items: { 'passwords.txt': { type: 'file', size: 2048, modified: '2023-01-15 20:55' }} },
-                                'Downloads': { type: 'folder', items: { 'malware.exe': { type: 'file', size: 560000, modified: '2023-10-25 18:12' }} }
-                            }
-                        }
-                    }
-                },
-                'Windows': { type: 'folder', items: {} }
-            }
-        };
-
+        const mockFileSystem = { 'C:': { 'Users': { type: 'folder', items: { 'John': { type: 'folder', items: { 'passwords.txt': { type: 'file', size: 2048, modified: '2023-01-15' }} } } } } };
         let currentPath = ['C:'];
 
         function openFileSystem() {
@@ -628,60 +621,33 @@
             setTimeout(() => modal.classList.add('hidden'), 300);
         }
 
-        function navigateTo(pathArray) { currentPath = pathArray; renderFileSystem(); }
-        function navigateUp() { if (currentPath.length > 1) { currentPath.pop(); renderFileSystem(); } }
-
-        function getCurrentDirContents() {
-            let current = mockFileSystem;
-            for (const part of currentPath) current = current[part].items;
-            return current;
-        }
-
         function renderFileSystem() {
+            let current = mockFileSystem;
+            for (const p of currentPath) current = current[p].items;
             const tbody = document.getElementById('fsTbody');
-            const breadcrumbs = document.getElementById('fsBreadcrumbs');
-            const contents = getCurrentDirContents();
-            const items = Object.entries(contents).sort((a, b) => (a[1].type === 'folder' && b[1].type !== 'folder' ? -1 : 1));
-
-            tbody.innerHTML = items.length === 0 ? `<tr><td colspan="5" class="p-8 text-center text-gray-500">Empty directory</td></tr>` : '';
+            tbody.innerHTML = '';
             
-            items.forEach(([name, data]) => {
+            Object.entries(current).forEach(([name, data]) => {
                 const isFolder = data.type === 'folder';
-                const icon = isFolder ? 'fa-solid fa-folder text-yellow-500' : 'fa-solid fa-file text-gray-400';
                 const row = document.createElement('tr');
-                row.className = 'border-b border-gray-800/60 hover:bg-neon/10 transition-colors';
-                if (isFolder) row.classList.add('cursor-pointer');
+                row.className = 'border-b border-gray-800/60 hover:bg-neon/10 transition-colors cursor-pointer';
                 row.innerHTML = `
-                    <td class="p-3 text-center"><i class="${icon}"></i></td>
+                    <td class="p-3 text-center"><i class="${isFolder ? 'fa-solid fa-folder text-yellow-500' : 'fa-solid fa-file text-gray-400'}"></i></td>
                     <td class="p-3 font-bold ${isFolder ? 'text-white' : 'text-gray-300'}">${name}</td>
                     <td class="p-3 text-right text-gray-400">${isFolder ? '' : (data.size/1024).toFixed(1) + ' KB'}</td>
                     <td class="p-3 text-right text-gray-500 text-xs">${data.modified || ''}</td>
-                    <td class="p-3 text-center">${!isFolder ? `<button onclick="showToast('Downloading ${name}...'); termLog('File ${name} saved locally.')" class="text-gray-500 hover:text-cyberBlue"><i class="fa-solid fa-circle-down"></i></button>` : ''}</td>
+                    <td class="p-3 text-center">${!isFolder ? `<i class="fa-solid fa-download text-gray-500 hover:text-cyberBlue" onclick="showToast('Downloaded ${name}')"></i>` : ''}</td>
                 `;
                 if (isFolder) row.onclick = () => { currentPath.push(name); renderFileSystem(); };
                 tbody.appendChild(row);
             });
-
-            breadcrumbs.innerHTML = currentPath.map((part, i) =>
-                `<span onclick="navigateTo(['${currentPath.slice(0, i + 1).join("','")}'])" class="cursor-pointer hover:text-neon transition-colors px-2 py-1 rounded bg-gray-800/50">${part}</span>` +
-                (i < currentPath.length - 1 ? `<i class="fa-solid fa-chevron-right text-gray-600 text-xs mx-1"></i>` : '')
-            ).join('');
-            
+            document.getElementById('fsBreadcrumbs').innerHTML = currentPath.map(p => `<span class="px-2 bg-gray-800/50 rounded mx-1">${p}</span>`).join('');
             document.getElementById('fsUpBtn').disabled = currentPath.length <= 1;
-            document.getElementById('fsFooter').innerText = `${items.length} items`;
         }
 
+        function navigateUp() { if (currentPath.length > 1) { currentPath.pop(); renderFileSystem(); } }
         function triggerUpload() { document.getElementById('fileUploadInput').click(); }
-        document.getElementById('fileUploadInput').onchange = function(e) {
-            if (e.target.files[0]) {
-                const file = e.target.files[0];
-                getCurrentDirContents()[file.name] = { type: 'file', size: file.size, modified: new Date().toISOString().slice(0, 16).replace('T', ' ') };
-                showToast(`Uploaded ${file.name}`);
-                termLog(`Uploaded ${file.name} to target.`);
-                renderFileSystem();
-                e.target.value = '';
-            }
-        };
+        document.getElementById('fileUploadInput').onchange = function(e) { if(e.target.files[0]) showToast(`Uploaded ${e.target.files[0].name}`); };
     </script>
 </body>
 </html>
