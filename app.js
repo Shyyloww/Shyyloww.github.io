@@ -95,7 +95,7 @@ async function fetchData() {
         showToast(error.message, "error");
     } finally {
         btn.disabled = false;
-        btn.innerHTML = '<i class="fa-solid fa-unlock-keyhole"></i> Decrypt';
+        btn.innerHTML = '<i class="fa-solid fa-unlock-keyhole mr-2"></i> Decrypt';
     }
 }
 
@@ -322,16 +322,23 @@ function renderNodesList() {
         let activeLine = '<div class="absolute left-0 top-0 bottom-0 w-1 bg-neon"></div>';
         let pulse = node.status === 'green' ? 'animate-pulse' : '';
 
+        // Safely determine OS Icon (Defaults to Windows if assumed or wmic output)
+        let osLower = (node.os || "windows").toLowerCase();
+        let osIcon = 'fa-windows text-cyberBlue'; // Default to Windows
+        if(osLower.includes('mac')) osIcon = 'fa-apple text-gray-300';
+        if(osLower.includes('linux') || osLower.includes('ubuntu')) osIcon = 'fa-linux text-yellow-400';
+
         container.innerHTML += `
             <div class="p-3 ${activeBorder} rounded-lg relative overflow-hidden group transition-all">
                 ${activeLine}
                 <div class="flex justify-between items-start mb-2 pl-2">
                     <div class="flex items-center gap-2">
-                        <i class="fa-brands ${node.os.includes('Win') ? 'fa-windows text-cyberBlue' : (node.os.includes('mac') ? 'fa-apple text-gray-400' : 'fa-linux text-yellow-400')} text-lg"></i>
+                        <i class="fa-brands ${osIcon} text-lg"></i>
                         <div><p class="text-sm font-bold text-white truncate max-w-[120px]">${node.id}</p><p class="text-[10px] text-gray-400 font-mono">${node.ip}</p></div>
                     </div>
                     <span class="w-2.5 h-2.5 rounded-full ${dotColor} ${pulse} shadow-[0_0_8px_currentColor]"></span>
                 </div>
+                <p class="text-[10px] text-gray-500 mt-1 pl-2 truncate" title="${node.os}">${node.os}</p>
             </div>`;
     });
 }
