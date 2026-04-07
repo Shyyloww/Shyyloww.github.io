@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ugly Ducky | Command Center</title>
+    <title>Ugly Ducky | C2 Command Center</title>
     
     <!-- Fonts & Icons -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -16,57 +16,96 @@
             theme: {
                 extend: {
                     fontFamily: { sans: ['Inter', 'sans-serif'], mono: ['JetBrains Mono', 'monospace'], },
-                    colors: { dark: '#0B0F19', panel: '#151C2C', neon: '#ff4757', neonHover: '#ff6b81' }
+                    colors: { dark: '#050810', panel: '#0f1423', neon: '#ff4757', neonHover: '#ff6b81', cyberBlue: '#00d2d3' }
                 }
             }
         }
     </script>
 
     <style>
-        body { background-color: #0B0F19; color: #e2e8f0; }
-        ::-webkit-scrollbar { width: 8px; height: 8px; }
-        ::-webkit-scrollbar-track { background: #0B0F19; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        body { 
+            background-color: #050810; 
+            color: #e2e8f0; 
+            position: relative;
+        }
+        
+        /* Animated Cyber Grid Background */
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background-image: 
+                linear-gradient(rgba(255, 71, 87, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 71, 87, 0.03) 1px, transparent 1px);
+            background-size: 30px 30px;
+            z-index: -2;
+            animation: gridMove 20s linear infinite;
+        }
+        @keyframes gridMove { 0% { transform: translateY(0); } 100% { transform: translateY(30px); } }
+
+        /* CRT Scanlines */
+        body::after {
+            content: " "; display: block; position: fixed; top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%);
+            z-index: 999; background-size: 100% 4px; pointer-events: none;
+        }
+
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #050810; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
         ::-webkit-scrollbar-thumb:hover { background: #ff4757; }
 
-        .glass-panel { background: rgba(21, 28, 44, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.05); }
-        .fade-in { animation: fadeIn 0.4s ease-in-out forwards; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .text-glow { text-shadow: 0 0 10px rgba(255, 71, 87, 0.5); }
+        .glass-panel { background: rgba(15, 20, 35, 0.85); backdrop-filter: blur(12px); border: 1px solid rgba(255, 71, 87, 0.15); box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5); }
+        .glow-border { border: 1px solid rgba(255, 71, 87, 0.4); box-shadow: 0 0 15px rgba(255, 71, 87, 0.1); }
+        .text-glow { text-shadow: 0 0 10px rgba(255, 71, 87, 0.7); }
+        .text-glow-blue { text-shadow: 0 0 10px rgba(0, 210, 211, 0.7); }
+        
+        .fade-in { animation: fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
         
         .tab-content { display: none; }
         .tab-content.active { display: block; animation: fadeIn 0.3s ease-in-out; }
         
-        /* Blur reveal for passwords */
-        .blur-reveal { filter: blur(5px); transition: filter 0.2s; cursor: crosshair; }
+        .blur-reveal { filter: blur(5px); transition: filter 0.3s; cursor: crosshair; }
         .blur-reveal:hover { filter: blur(0px); }
+
+        /* Terminal blinking cursor */
+        .cursor-blink::after { content: '█'; animation: blink 1s step-start infinite; color: #ff4757; margin-left: 4px; }
+        @keyframes blink { 50% { opacity: 0; } }
     </style>
 </head>
 <body class="min-h-screen flex flex-col font-sans antialiased selection:bg-neon selection:text-white">
 
     <!-- Navbar -->
-    <nav class="glass-panel border-b border-gray-800 sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex items-center justify-center md:justify-between h-16">
+    <nav class="glass-panel border-b border-gray-800/80 sticky top-0 z-50">
+        <div class="max-w-[95%] mx-auto px-4">
+            <div class="flex items-center justify-between h-16">
                 <div class="flex items-center gap-3">
                     <i class="fa-solid fa-duck text-neon text-2xl text-glow"></i>
-                    <span class="font-bold text-xl tracking-wider text-white uppercase">Ugly<span class="text-neon">Ducky</span></span>
+                    <span class="font-bold text-xl tracking-wider text-white uppercase">Ugly<span class="text-neon">Ducky</span> <span class="text-xs text-gray-500 font-mono tracking-normal ml-2 hidden sm:inline-block">v2.4.0_NIGHTLY</span></span>
+                </div>
+                
+                <!-- System Status -->
+                <div class="hidden md:flex items-center gap-6 font-mono text-xs">
+                    <div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_8px_#22c55e] animate-pulse"></span> <span class="text-gray-300">SERVER: ONLINE</span></div>
+                    <div class="flex items-center gap-2 text-gray-400"><i class="fa-solid fa-satellite-dish text-cyberBlue"></i> PING: 24ms</div>
+                    <div class="flex items-center gap-2 text-gray-400"><i class="fa-solid fa-shield-halved text-neon"></i> SEC: ENCRYPTED</div>
                 </div>
             </div>
         </div>
     </nav>
 
     <!-- Main Content -->
-    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+    <main class="flex-grow max-w-[95%] mx-auto px-2 py-8 w-full">
         
         <!-- Navigation Tabs -->
         <div class="flex justify-center mb-10 fade-in">
-            <div class="glass-panel p-1 rounded-lg inline-flex">
-                <button onclick="switchTab('extraction')" id="tab-extraction" class="px-6 py-2.5 rounded-md font-semibold text-sm transition-all bg-neon text-white shadow-lg">
-                    <i class="fa-solid fa-database mr-2"></i> Harvested Logs
+            <div class="glass-panel p-1.5 rounded-lg inline-flex gap-1 border border-gray-800">
+                <button onclick="switchTab('extraction')" id="tab-extraction" class="px-8 py-2.5 rounded-md font-semibold text-sm transition-all bg-neon text-white shadow-[0_0_15px_rgba(255,71,87,0.3)]">
+                    <i class="fa-solid fa-database mr-2"></i> Vault Extraction
                 </button>
-                <button onclick="switchTab('rat')" id="tab-rat" class="px-6 py-2.5 rounded-md font-semibold text-sm transition-all text-gray-400 hover:text-white">
-                    <i class="fa-solid fa-network-wired mr-2"></i> Live Control (RAT)
+                <button onclick="switchTab('rat')" id="tab-rat" class="px-8 py-2.5 rounded-md font-semibold text-sm transition-all text-gray-400 hover:text-white hover:bg-white/5">
+                    <i class="fa-solid fa-network-wired mr-2"></i> C2 Live Control
                 </button>
             </div>
         </div>
@@ -76,92 +115,275 @@
         <!-- ========================================== -->
         <div id="view-extraction" class="tab-content active">
             <div class="text-center mb-8">
-                <h1 class="text-3xl md:text-4xl font-bold text-white mb-3">Secure <span class="text-neon text-glow">Vault</span></h1>
-                <p class="text-gray-400">Authenticate with your Ducky ID to view your private harvested logs.</p>
+                <h1 class="text-4xl md:text-5xl font-bold text-white mb-3 tracking-tight">Secure <span class="text-neon text-glow">Vault</span></h1>
+                <p class="text-gray-400 font-mono text-sm">Awaiting authentication parameters to decrypt harvested logs...</p>
             </div>
 
             <!-- Input Section -->
-            <div class="max-w-xl mx-auto glass-panel p-6 rounded-2xl shadow-xl mb-8">
-                <label class="block text-sm font-semibold text-gray-300 mb-2 uppercase tracking-wide">Enter Ducky ID</label>
-                <div class="flex gap-3">
+            <div class="max-w-2xl mx-auto glass-panel p-8 rounded-2xl glow-border mb-8 relative overflow-hidden">
+                <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-neon to-transparent opacity-50"></div>
+                <label class="block text-xs font-bold text-cyberBlue mb-3 uppercase tracking-widest"><i class="fa-solid fa-microchip mr-2"></i>Target Identifier</label>
+                <div class="flex flex-col sm:flex-row gap-3">
                     <div class="relative flex-grow">
                         <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                            <i class="fa-solid fa-key text-gray-500"></i>
+                            <i class="fa-solid fa-fingerprint text-gray-500"></i>
                         </div>
-                        <input type="text" id="deviceId" placeholder="e.g. JOHNS_DUCKY" autocomplete="off" 
-                            class="block w-full pl-11 pr-4 py-3 bg-[#0B0F19] border border-gray-700 rounded-lg text-white placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-neon focus:border-transparent transition-all font-mono text-lg">
+                        <input type="text" id="deviceId" placeholder="Enter Ducky ID (e.g. JOHNS_DUCKY)" autocomplete="off" 
+                            class="block w-full pl-12 pr-4 py-4 bg-[#050810] border border-gray-700 rounded-lg text-white placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-neon focus:border-transparent transition-all font-mono text-lg shadow-inner">
                     </div>
-                    <button onclick="fetchData()" id="connectBtn" class="bg-neon hover:bg-neonHover text-white font-bold py-3 px-6 rounded-lg transition-all flex items-center gap-2 shadow-[0_0_15px_rgba(255,71,87,0.4)]">
-                        Unlock
+                    <button onclick="fetchData()" id="connectBtn" class="bg-neon hover:bg-neonHover text-white font-bold py-4 px-8 rounded-lg transition-all flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(255,71,87,0.4)]">
+                        <i class="fa-solid fa-unlock-keyhole"></i> Decrypt
                     </button>
                 </div>
-                <p id="statusMsg" class="mt-3 text-sm text-gray-400 hidden"></p>
+                
+                <div class="flex justify-between items-center mt-4">
+                    <p id="statusMsg" class="text-sm font-mono text-gray-400 hidden"></p>
+                    <button id="exportBtn" class="hidden text-xs font-mono bg-gray-800 hover:bg-gray-700 text-white px-3 py-1.5 rounded transition-colors">
+                        <i class="fa-solid fa-download mr-1"></i> Export Logs
+                    </button>
+                </div>
             </div>
 
             <!-- Filters -->
-            <div id="filterContainer" class="hidden max-w-7xl mx-auto mb-6 flex flex-wrap gap-2 justify-center border-b border-gray-800 pb-6"></div>
+            <div id="filterContainer" class="hidden max-w-7xl mx-auto mb-6 flex flex-wrap gap-2 justify-center border-b border-gray-800/50 pb-8"></div>
 
             <!-- Results -->
-            <div id="output" class="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-20"></div>
+            <div id="output" class="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-6 pb-20"></div>
         </div>
 
         <!-- ========================================== -->
-        <!-- TAB 2: LIVE CONTROL (Future Feature UI)    -->
+        <!-- TAB 2: LIVE CONTROL (Massively Expanded C2)-->
         <!-- ========================================== -->
         <div id="view-rat" class="tab-content">
-            <div class="text-center mb-8">
-                <h1 class="text-3xl md:text-4xl font-bold text-white mb-3">Live <span class="text-neon text-glow">Session</span> Control</h1>
-                <p class="text-gray-400">Real-time interaction and system manipulation. <span class="text-neon font-bold">(In Development)</span></p>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <!-- Target Selection Panel -->
-                <div class="md:col-span-1 glass-panel p-6 rounded-xl h-fit">
-                    <h2 class="font-bold text-lg border-b border-gray-700 pb-3 mb-4"><i class="fa-solid fa-crosshairs text-neon mr-2"></i>Active Targets</h2>
-                    <div class="space-y-3">
-                        <div class="p-3 border border-gray-700 rounded-lg bg-[#0B0F19] flex justify-between items-center cursor-not-allowed opacity-50">
-                            <div>
-                                <p class="text-sm font-bold">DESKTOP-Q1A2Z</p>
-                                <p class="text-xs text-gray-500">Awaiting Payload...</p>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 h-[80vh]">
+                
+                <!-- LEFT: Target Manager -->
+                <div class="lg:col-span-3 glass-panel rounded-xl flex flex-col h-full border border-gray-800">
+                    <div class="p-4 border-b border-gray-800 bg-[#0f1423] rounded-t-xl flex justify-between items-center">
+                        <h2 class="font-bold text-sm tracking-wider uppercase text-gray-300"><i class="fa-solid fa-crosshairs text-neon mr-2 text-glow"></i>Infected Nodes</h2>
+                        <span class="bg-neon/20 text-neon text-[10px] px-2 py-1 rounded font-mono border border-neon/30">3 ONLINE</span>
+                    </div>
+                    
+                    <div class="flex-grow p-3 space-y-2 overflow-y-auto">
+                        <!-- Active Target -->
+                        <div class="p-3 border border-neon bg-neon/5 rounded-lg cursor-pointer transition-all relative overflow-hidden group">
+                            <div class="absolute left-0 top-0 bottom-0 w-1 bg-neon"></div>
+                            <div class="flex justify-between items-start mb-2 pl-2">
+                                <div class="flex items-center gap-2">
+                                    <i class="fa-brands fa-windows text-cyberBlue text-lg"></i>
+                                    <div>
+                                        <p class="text-sm font-bold text-white">DESKTOP-Q1A2Z</p>
+                                        <p class="text-[10px] text-gray-400 font-mono">192.168.1.44 • JOHN-PC</p>
+                                    </div>
+                                </div>
+                                <span class="w-2.5 h-2.5 rounded-full bg-green-500 shadow-[0_0_8px_#22c55e] animate-pulse"></span>
                             </div>
-                            <span class="w-3 h-3 rounded-full bg-red-500 shadow-[0_0_8px_#ef4444]"></span>
+                            <div class="flex justify-between text-[10px] font-mono text-gray-500 pl-2">
+                                <span>Ping: <span class="text-green-400">12ms</span></span>
+                                <span>Admin: <span class="text-neon">YES</span></span>
+                            </div>
+                        </div>
+
+                        <!-- Offline Target -->
+                        <div class="p-3 border border-gray-800 bg-[#050810] rounded-lg cursor-not-allowed opacity-60">
+                            <div class="flex justify-between items-start mb-2">
+                                <div class="flex items-center gap-2">
+                                    <i class="fa-brands fa-apple text-gray-500 text-lg"></i>
+                                    <div>
+                                        <p class="text-sm font-bold text-gray-300">MACBOOK-PRO-99</p>
+                                        <p class="text-[10px] text-gray-600 font-mono">10.0.0.12 • ALICE</p>
+                                    </div>
+                                </div>
+                                <span class="w-2.5 h-2.5 rounded-full bg-red-500"></span>
+                            </div>
+                            <div class="flex justify-between text-[10px] font-mono text-gray-600">
+                                <span>Ping: TIMEOUT</span>
+                                <span>Last Seen: 2hr ago</span>
+                            </div>
+                        </div>
+
+                         <!-- Sleep Target -->
+                         <div class="p-3 border border-gray-800 bg-[#050810] rounded-lg hover:border-gray-600 cursor-pointer transition-all">
+                            <div class="flex justify-between items-start mb-2">
+                                <div class="flex items-center gap-2">
+                                    <i class="fa-brands fa-linux text-yellow-500 text-lg"></i>
+                                    <div>
+                                        <p class="text-sm font-bold text-gray-300">UBUNTU-SERV-01</p>
+                                        <p class="text-[10px] text-gray-500 font-mono">192.168.1.100 • ROOT</p>
+                                    </div>
+                                </div>
+                                <span class="w-2.5 h-2.5 rounded-full bg-yellow-500"></span>
+                            </div>
+                            <div class="flex justify-between text-[10px] font-mono text-gray-600">
+                                <span>Ping: <span class="text-yellow-500">145ms</span></span>
+                                <span>Status: SLEEP</span>
+                            </div>
                         </div>
                     </div>
+                    
+                    <div class="p-3 border-t border-gray-800 text-center">
+                        <button class="w-full py-2 bg-gray-800 hover:bg-gray-700 rounded text-xs font-mono text-gray-300 transition-colors"><i class="fa-solid fa-rotate-right mr-1"></i> Scan Network</button>
+                    </div>
                 </div>
 
-                <!-- Action Grid -->
-                <div class="md:col-span-2 glass-panel p-6 rounded-xl">
-                    <div class="flex justify-between items-center border-b border-gray-700 pb-3 mb-4">
-                        <h2 class="font-bold text-lg"><i class="fa-solid fa-bolt text-neon mr-2"></i>Execution Commands</h2>
-                        <span class="text-xs font-mono bg-gray-800 px-2 py-1 rounded text-gray-400">STATUS: OFFLINE</span>
+                <!-- CENTER: Live Terminal & Visuals -->
+                <div class="lg:col-span-6 flex flex-col gap-4 h-full">
+                    
+                    <!-- Screen/Cam Placeholder -->
+                    <div class="glass-panel rounded-xl h-1/2 border border-gray-800 relative overflow-hidden flex flex-col">
+                        <div class="absolute top-2 left-2 z-10 bg-black/60 px-2 py-1 rounded text-[10px] font-mono border border-gray-700 flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span> LIVE: SCREEN_01
+                        </div>
+                        <div class="flex-grow bg-[#000] relative flex items-center justify-center">
+                            <!-- Fake visual noise/grid -->
+                            <div class="absolute inset-0 opacity-20" style="background-image: repeating-linear-gradient(0deg, transparent, transparent 2px, #fff 2px, #fff 4px); background-size: 100% 4px;"></div>
+                            <div class="text-center z-10">
+                                <i class="fa-solid fa-video-slash text-4xl text-gray-700 mb-2"></i>
+                                <p class="text-gray-500 font-mono text-sm">STREAM OFFLINE</p>
+                                <button onclick="termLog('Initiating WebRTC stream... [FAILED: Connection refused]')" class="mt-3 px-4 py-1.5 border border-neon text-neon text-xs font-mono rounded hover:bg-neon hover:text-white transition-colors">START STREAM</button>
+                            </div>
+                        </div>
                     </div>
-                    <div class="grid grid-cols-2 gap-4">
-                        <button class="bg-[#1a2235] border border-gray-700 p-4 rounded-lg text-left opacity-50 cursor-not-allowed"><i class="fa-solid fa-desktop text-2xl mb-2 text-gray-500"></i><h3 class="font-bold text-white">Live Screen</h3></button>
-                        <button class="bg-[#1a2235] border border-gray-700 p-4 rounded-lg text-left opacity-50 cursor-not-allowed"><i class="fa-solid fa-keyboard text-2xl mb-2 text-gray-500"></i><h3 class="font-bold text-white">Block Inputs</h3></button>
-                        <button class="bg-[#1a2235] border border-gray-700 p-4 rounded-lg text-left opacity-50 cursor-not-allowed"><i class="fa-solid fa-terminal text-2xl mb-2 text-gray-500"></i><h3 class="font-bold text-white">Hidden Shell</h3></button>
-                        <button class="bg-[#1a2235] border border-gray-700 p-4 rounded-lg text-left opacity-50 cursor-not-allowed"><i class="fa-solid fa-power-off text-2xl mb-2 text-gray-500"></i><h3 class="font-bold text-white">Power Options</h3></button>
+
+                    <!-- Interactive Terminal -->
+                    <div class="glass-panel rounded-xl h-1/2 border border-gray-800 flex flex-col">
+                        <div class="p-2 border-b border-gray-800 bg-[#0B0F19] flex justify-between items-center rounded-t-xl">
+                            <div class="flex gap-1.5 ml-2">
+                                <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                                <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+                                <div class="w-3 h-3 rounded-full bg-green-500"></div>
+                            </div>
+                            <span class="text-xs font-mono text-gray-500">ducky@c2-server:~</span>
+                            <button onclick="document.getElementById('terminal-output').innerHTML=''" class="text-gray-500 hover:text-white text-xs mr-2"><i class="fa-solid fa-trash"></i></button>
+                        </div>
+                        <div class="flex-grow p-4 font-mono text-xs overflow-y-auto bg-black/50 text-gray-300" id="terminal-output">
+                            <div class="text-cyberBlue">UglyDucky Shell v2.4.0</div>
+                            <div class="text-gray-500">Connected to DESKTOP-Q1A2Z via reverse TCP</div>
+                            <div class="mt-2 text-green-400">C:\Users\John> <span class="cursor-blink"></span></div>
+                        </div>
+                        <div class="p-2 border-t border-gray-800 flex bg-[#0B0F19] rounded-b-xl">
+                            <span class="text-neon font-bold mr-2 ml-1">></span>
+                            <input type="text" placeholder="Enter shell command..." class="w-full bg-transparent outline-none font-mono text-xs text-white placeholder-gray-600" onkeypress="if(event.key === 'Enter') executeTermCommand(this)">
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- RIGHT: Attack Modules Grid -->
+                <div class="lg:col-span-3 glass-panel rounded-xl border border-gray-800 flex flex-col h-full overflow-hidden">
+                    <div class="p-4 border-b border-gray-800 bg-[#0f1423] rounded-t-xl">
+                        <h2 class="font-bold text-sm tracking-wider uppercase text-gray-300"><i class="fa-solid fa-bolt text-yellow-400 mr-2"></i>Execution Modules</h2>
+                    </div>
+
+                    <div class="flex-grow overflow-y-auto p-3 space-y-5">
+                        
+                        <!-- Info Widget -->
+                        <div class="bg-[#050810] rounded-lg p-3 border border-gray-800">
+                            <h3 class="text-[10px] font-bold text-gray-500 uppercase mb-2 border-b border-gray-800 pb-1">Victim Hardware</h3>
+                            <div class="grid grid-cols-2 gap-2 text-[10px] font-mono">
+                                <div><span class="text-gray-600">CPU:</span> <span class="text-white">Intel i7-9700k</span></div>
+                                <div><span class="text-gray-600">RAM:</span> <span class="text-white">16GB / 32GB</span></div>
+                                <div><span class="text-gray-600">OS:</span> <span class="text-white">Win 11 Pro</span></div>
+                                <div><span class="text-gray-600">BAT:</span> <span class="text-green-400">100% (AC)</span></div>
+                            </div>
+                        </div>
+
+                        <!-- Module Group: Surveillance -->
+                        <div>
+                            <h3 class="text-[10px] font-bold text-cyberBlue uppercase mb-2 tracking-wider pl-1">Surveillance</h3>
+                            <div class="grid grid-cols-2 gap-2">
+                                <button onclick="termLog('Capturing desktop screenshot... [SAVED: screen_01.png]')" class="bg-[#1a2235] hover:bg-gray-700 border border-gray-700 p-2.5 rounded text-left transition-colors group">
+                                    <i class="fa-solid fa-camera text-gray-400 group-hover:text-cyberBlue mb-1"></i>
+                                    <h4 class="text-xs text-gray-200">Screenshot</h4>
+                                </button>
+                                <button onclick="termLog('Keylogger initialized. Hooking keyboard events...')" class="bg-[#1a2235] hover:bg-gray-700 border border-gray-700 p-2.5 rounded text-left transition-colors group">
+                                    <i class="fa-solid fa-keyboard text-gray-400 group-hover:text-cyberBlue mb-1"></i>
+                                    <h4 class="text-xs text-gray-200">Keylogger</h4>
+                                </button>
+                                <button onclick="termLog('Dumping browser cookies... [1420 entries found]')" class="bg-[#1a2235] hover:bg-gray-700 border border-gray-700 p-2.5 rounded text-left transition-colors group">
+                                    <i class="fa-solid fa-cookie-bite text-gray-400 group-hover:text-cyberBlue mb-1"></i>
+                                    <h4 class="text-xs text-gray-200">Steal Cookies</h4>
+                                </button>
+                                <button onclick="termLog('Requesting microphone access... [Bypassing UAC]')" class="bg-[#1a2235] hover:bg-gray-700 border border-gray-700 p-2.5 rounded text-left transition-colors group">
+                                    <i class="fa-solid fa-microphone text-gray-400 group-hover:text-cyberBlue mb-1"></i>
+                                    <h4 class="text-xs text-gray-200">Record Mic</h4>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Module Group: System Control -->
+                        <div>
+                            <h3 class="text-[10px] font-bold text-neon uppercase mb-2 tracking-wider pl-1">System Control</h3>
+                            <div class="grid grid-cols-2 gap-2">
+                                <button onclick="termLog('Opening File Manager for C:\\ ...')" class="bg-[#1a2235] hover:bg-neon/20 border border-gray-700 hover:border-neon p-2.5 rounded text-left transition-colors group">
+                                    <i class="fa-solid fa-folder-tree text-gray-400 group-hover:text-neon mb-1"></i>
+                                    <h4 class="text-xs text-gray-200">Filesystem</h4>
+                                </button>
+                                <button onclick="termLog('Downloading external payload... Executing silently.')" class="bg-[#1a2235] hover:bg-neon/20 border border-gray-700 hover:border-neon p-2.5 rounded text-left transition-colors group">
+                                    <i class="fa-solid fa-file-code text-gray-400 group-hover:text-neon mb-1"></i>
+                                    <h4 class="text-xs text-gray-200">Run Payload</h4>
+                                </button>
+                                <button onclick="termLog('Initiating system reboot... Connection will be lost.')" class="bg-[#1a2235] hover:bg-neon/20 border border-gray-700 hover:border-neon p-2.5 rounded text-left transition-colors group">
+                                    <i class="fa-solid fa-power-off text-gray-400 group-hover:text-neon mb-1"></i>
+                                    <h4 class="text-xs text-gray-200">Force Restart</h4>
+                                </button>
+                                <button onclick="termLog('Elevating privileges to NT AUTHORITY\\SYSTEM...')" class="bg-[#1a2235] hover:bg-neon/20 border border-gray-700 hover:border-neon p-2.5 rounded text-left transition-colors group">
+                                    <i class="fa-solid fa-user-shield text-gray-400 group-hover:text-neon mb-1"></i>
+                                    <h4 class="text-xs text-gray-200">Privesc</h4>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Module Group: Pranks / Troll -->
+                        <div>
+                            <h3 class="text-[10px] font-bold text-purple-400 uppercase mb-2 tracking-wider pl-1">Trolling Vectors</h3>
+                            <div class="grid grid-cols-3 gap-2">
+                                <button onclick="termLog('Sending BSOD command (CRITICAL_PROCESS_DIED)...')" class="bg-[#1a2235] hover:bg-purple-900/40 border border-gray-700 hover:border-purple-500 p-2 rounded text-center transition-colors">
+                                    <i class="fa-solid fa-skull text-gray-400 mb-1"></i>
+                                    <h4 class="text-[9px] text-gray-200">BSOD</h4>
+                                </button>
+                                <button onclick="termLog('Playing audio file: screaming.mp3 at MAX volume.')" class="bg-[#1a2235] hover:bg-purple-900/40 border border-gray-700 hover:border-purple-500 p-2 rounded text-center transition-colors">
+                                    <i class="fa-solid fa-volume-high text-gray-400 mb-1"></i>
+                                    <h4 class="text-[9px] text-gray-200">Audio</h4>
+                                </button>
+                                <button onclick="termLog('Opening CD-ROM Drive...')" class="bg-[#1a2235] hover:bg-purple-900/40 border border-gray-700 hover:border-purple-500 p-2 rounded text-center transition-colors">
+                                    <i class="fa-solid fa-compact-disc text-gray-400 mb-1"></i>
+                                    <h4 class="text-[9px] text-gray-200">CD Tray</h4>
+                                </button>
+                            </div>
+                        </div>
+
                     </div>
                 </div>
+
             </div>
         </div>
 
     </main>
 
     <!-- Toast Notification -->
-    <div id="toast" class="fixed bottom-5 right-5 bg-gray-800 border-l-4 border-neon text-white px-6 py-4 rounded shadow-2xl transition-transform transform translate-y-24 opacity-0 z-50 flex items-center gap-3">
+    <div id="toast" class="fixed bottom-5 right-5 bg-gray-900 border-l-4 border-neon text-white px-6 py-4 rounded shadow-2xl transition-transform transform translate-y-24 opacity-0 z-50 flex items-center gap-3">
         <i class="fa-solid fa-circle-check text-neon"></i>
-        <span id="toastMsg">Copied!</span>
+        <span id="toastMsg" class="font-mono text-sm">Copied!</span>
     </div>
 
     <script>
         // --- TAB LOGIC ---
         function switchTab(tabId) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-            document.getElementById('tab-extraction').className = "px-6 py-2.5 rounded-md font-semibold text-sm transition-all text-gray-400 hover:text-white";
-            document.getElementById('tab-rat').className = "px-6 py-2.5 rounded-md font-semibold text-sm transition-all text-gray-400 hover:text-white";
             
+            // Reset tab styles
+            const btnExtr = document.getElementById('tab-extraction');
+            const btnRat = document.getElementById('tab-rat');
+            
+            btnExtr.className = "px-8 py-2.5 rounded-md font-semibold text-sm transition-all text-gray-400 hover:text-white hover:bg-white/5";
+            btnRat.className = "px-8 py-2.5 rounded-md font-semibold text-sm transition-all text-gray-400 hover:text-white hover:bg-white/5";
+            
+            // Activate selected
             document.getElementById('view-' + tabId).classList.add('active');
-            document.getElementById('tab-' + tabId).className = "px-6 py-2.5 rounded-md font-semibold text-sm transition-all bg-neon text-white shadow-lg";
+            const activeBtn = document.getElementById('tab-' + tabId);
+            activeBtn.className = "px-8 py-2.5 rounded-md font-semibold text-sm transition-all bg-neon text-white shadow-[0_0_15px_rgba(255,71,87,0.3)]";
         }
 
         // --- DATA EXTRACTION LOGIC ---
@@ -178,15 +400,18 @@
             const outputDiv = document.getElementById('output');
             const statusMsg = document.getElementById('statusMsg');
             const btn = document.getElementById('connectBtn');
+            const exportBtn = document.getElementById('exportBtn');
             const filterContainer = document.getElementById('filterContainer');
             
-            if (!deviceId) return showToast("Please enter a Ducky ID.", "error");
+            if (!deviceId) return showToast("Target Identifier missing.", "error");
 
             statusMsg.classList.remove('hidden');
-            statusMsg.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin text-neon mr-2"></i>Decrypting vault...';
+            statusMsg.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin text-neon mr-2"></i>Decrypting vault nodes...';
             btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Working';
             outputDiv.innerHTML = "";
             filterContainer.classList.add('hidden');
+            exportBtn.classList.add('hidden');
 
             try {
                 const response = await fetch(`${SUPABASE_URL}?device_id=eq.${deviceId}&order=created_at.desc`, {
@@ -199,16 +424,18 @@
                 globalData = await response.json();
 
                 if (globalData.length === 0) {
-                    statusMsg.innerHTML = '<i class="fa-solid fa-triangle-exclamation text-yellow-500 mr-2"></i>No data logged for this Ducky ID.';
+                    statusMsg.innerHTML = '<i class="fa-solid fa-triangle-exclamation text-yellow-500 mr-2"></i>No payload data found for this ID.';
                 } else {
-                    statusMsg.innerHTML = `<i class="fa-solid fa-lock-open text-green-500 mr-2"></i>Vault Unlocked. ${globalData.length} logs found.`;
+                    statusMsg.innerHTML = `<i class="fa-solid fa-lock-open text-green-500 mr-2"></i>Vault Decrypted. [${globalData.length} records]`;
+                    exportBtn.classList.remove('hidden');
                     buildFilters();
                     renderCards(globalData);
                 }
             } catch (error) {
-                statusMsg.innerHTML = `<i class="fa-solid fa-xmark text-red-500 mr-2"></i>Connection failed.`;
+                statusMsg.innerHTML = `<i class="fa-solid fa-xmark text-red-500 mr-2"></i>Handshake failed.`;
             } finally {
                 btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-unlock-keyhole"></i> Decrypt';
             }
         }
 
@@ -225,14 +452,14 @@
 
         function createFilterBtn(text, isActive) {
             const btn = document.createElement('button');
-            const activeClasses = 'bg-neon text-white font-bold shadow-[0_0_10px_rgba(255,71,87,0.4)] border-neon';
-            const inactiveClasses = 'bg-panel text-gray-400 border-gray-700 hover:text-white hover:border-gray-500';
-            btn.className = `px-4 py-2 rounded-full border text-sm transition-all duration-200 filter-btn ${isActive ? activeClasses : inactiveClasses}`;
+            const activeClasses = 'bg-neon/20 text-neon font-bold border-neon shadow-[0_0_10px_rgba(255,71,87,0.2)]';
+            const inactiveClasses = 'bg-[#0f1423] text-gray-400 border-gray-700 hover:text-white hover:border-gray-500';
+            btn.className = `px-5 py-2 rounded border text-xs font-mono transition-all duration-200 filter-btn ${isActive ? activeClasses : inactiveClasses}`;
             btn.innerText = text;
             
             btn.onclick = () => {
-                document.querySelectorAll('.filter-btn').forEach(b => b.className = `px-4 py-2 rounded-full border text-sm transition-all duration-200 filter-btn ${inactiveClasses}`);
-                btn.className = `px-4 py-2 rounded-full border text-sm transition-all duration-200 filter-btn ${activeClasses}`;
+                document.querySelectorAll('.filter-btn').forEach(b => b.className = `px-5 py-2 rounded border text-xs font-mono transition-all duration-200 filter-btn ${inactiveClasses}`);
+                btn.className = `px-5 py-2 rounded border text-xs font-mono transition-all duration-200 filter-btn ${activeClasses}`;
                 renderCards(text === 'All' ? globalData : globalData.filter(item => item.category === text));
             };
             return btn;
@@ -244,30 +471,29 @@
 
             data.forEach((item, index) => {
                 let icon = 'fa-file-code';
-                if(item.category.includes('Wi-Fi')) icon = 'fa-wifi';
-                if(item.category.includes('System')) icon = 'fa-server';
-                if(item.category.includes('Password') || item.category.includes('Cred')) icon = 'fa-key';
-                if(item.category.includes('Cookie')) icon = 'fa-cookie-bite';
-                if(item.category.includes('Discord')) icon = 'fa-discord';
-                if(item.category.includes('Minecraft')) icon = 'fa-cube';
+                let color = 'text-neon';
+                if(item.category.includes('Wi-Fi')) { icon = 'fa-wifi'; color = 'text-blue-400'; }
+                if(item.category.includes('System')) { icon = 'fa-server'; color = 'text-green-400'; }
+                if(item.category.includes('Password') || item.category.includes('Cred')) { icon = 'fa-key'; color = 'text-yellow-400'; }
+                if(item.category.includes('Cookie')) { icon = 'fa-cookie-bite'; color = 'text-orange-400'; }
+                if(item.category.includes('Discord')) { icon = 'fa-discord'; color = 'text-indigo-400'; }
+                if(item.category.includes('Minecraft')) { icon = 'fa-cube'; color = 'text-emerald-400'; }
 
                 const htmlContent = parseToHTML(item.category, item.content);
 
                 const card = document.createElement('div');
-                card.className = `glass-panel rounded-xl overflow-hidden fade-in flex flex-col h-full`;
+                card.className = `glass-panel rounded-xl overflow-hidden fade-in flex flex-col h-full border border-gray-800 hover:border-gray-600 transition-colors`;
                 card.style.animationDelay = `${index * 0.05}s`;
                 
                 card.innerHTML = `
-                    <div class="px-5 py-3 border-b border-gray-800 flex justify-between items-center bg-[#1a2235]">
-                        <div class="flex items-center gap-3">
-                            <i class="fa-solid ${icon} text-neon"></i>
-                            <div>
-                                <h3 class="font-bold text-white text-sm uppercase tracking-wider">${item.category}</h3>
-                            </div>
+                    <div class="px-4 py-3 border-b border-gray-800 flex justify-between items-center bg-[#050810]">
+                        <div class="flex items-center gap-2">
+                            <i class="fa-solid ${icon} ${color}"></i>
+                            <h3 class="font-bold text-gray-200 text-xs uppercase tracking-widest">${item.category}</h3>
                         </div>
                         <div class="flex items-center gap-3">
-                            <span class="text-xs text-gray-500">${new Date(item.created_at).toLocaleString()}</span>
-                            <button onclick="copyData(this)" class="text-gray-400 hover:text-neon transition-colors p-1" title="Copy Raw"><i class="fa-regular fa-copy"></i></button>
+                            <span class="text-[10px] font-mono text-gray-500">${new Date(item.created_at).toLocaleString()}</span>
+                            <button onclick="copyData(this)" class="text-gray-500 hover:text-white transition-colors p-1" title="Copy Raw"><i class="fa-regular fa-copy"></i></button>
                         </div>
                     </div>
                     <div class="p-0 flex-grow bg-[#0f1423] max-h-[350px] overflow-y-auto">
@@ -279,51 +505,46 @@
             });
         }
 
-        // *** THE BEAUTIFIER PARSER *** (Wi-Fi Bug Fixed!)
+        // *** THE BEAUTIFIER PARSER *** 
         function parseToHTML(category, content) {
-            let defaultRaw = `<pre class="p-4 font-mono text-xs text-gray-300 whitespace-pre-wrap break-all">${escapeHtml(content)}</pre>`;
+            let defaultRaw = `<pre class="p-4 font-mono text-xs text-cyberBlue whitespace-pre-wrap break-all">${escapeHtml(content)}</pre>`;
             
             try {
-                // FIXED: Handle Wi-Fi Separately (SSID instead of URL)
                 if (category.includes('Wi-Fi')) {
                     const blocks = content.split(/-{10,}/).filter(b => b.trim().length > 0);
                     let rows = blocks.map(block => {
                         let ssidMatch = block.match(/SSID:\s*(.*)/i);
                         let passMatch = block.match(/PASS:\s*(.*)/i);
-                        
                         let ssid = ssidMatch ? escapeHtml(ssidMatch[1]) : 'Unknown';
                         let pass = passMatch ? escapeHtml(passMatch[1]) : 'N/A';
                         
-                        return `<tr class="border-b border-gray-800 hover:bg-[#1a2235] transition-colors">
-                            <td class="px-4 py-3 text-neon font-bold w-1/2 break-all">${ssid}</td>
-                            <td class="px-4 py-3 font-mono text-white blur-reveal bg-black/30 rounded break-all w-1/2" title="Hover to reveal">${pass}</td>
+                        return `<tr class="border-b border-gray-800/50 hover:bg-white/5 transition-colors">
+                            <td class="px-4 py-2.5 text-blue-400 font-bold w-1/2 break-all">${ssid}</td>
+                            <td class="px-4 py-2.5 font-mono text-white blur-reveal rounded break-all w-1/2" title="Hover to reveal">${pass}</td>
                         </tr>`;
                     }).join('');
-                    if (rows) return `<table class="w-full text-left text-sm table-fixed"><thead class="bg-[#0B0F19] text-gray-500 uppercase text-xs"><tr><th class="px-4 py-2 w-1/2">Network (SSID)</th><th class="px-4 py-2 w-1/2">Password</th></tr></thead><tbody>${rows}</tbody></table>`;
+                    if (rows) return `<table class="w-full text-left text-xs table-fixed"><thead class="bg-[#050810] text-gray-500 uppercase"><tr><th class="px-4 py-2 font-medium w-1/2">Network (SSID)</th><th class="px-4 py-2 font-medium w-1/2">PSK Password</th></tr></thead><tbody>${rows}</tbody></table>`;
                 }
 
-                // Handle Browsers & Credentials (URL/USER/PASS)
                 if (category.includes('Password') || category.includes('Cred') || category.includes('FileZilla')) {
                     const blocks = content.split(/-{10,}/).filter(b => b.trim().length > 0);
                     let rows = blocks.map(block => {
                         let urlMatch = block.match(/(?:URL|HOST|TARGET):\s*(.*)/i);
                         let userMatch = block.match(/USER:\s*(.*)/i);
                         let passMatch = block.match(/PASS:\s*(.*)/i);
-                        
                         let url = urlMatch ? escapeHtml(urlMatch[1]) : 'N/A';
                         let user = userMatch ? escapeHtml(userMatch[1]) : 'N/A';
                         let pass = passMatch ? escapeHtml(passMatch[1]) : 'N/A';
                         
-                        return `<tr class="border-b border-gray-800 hover:bg-[#1a2235] transition-colors">
-                            <td class="px-4 py-3 text-neon truncate max-w-[120px]" title="${url}">${url}</td>
-                            <td class="px-4 py-3 text-gray-300 truncate max-w-[100px]">${user}</td>
-                            <td class="px-4 py-3 font-mono text-white blur-reveal bg-black/30 rounded" title="Hover to reveal">${pass}</td>
+                        return `<tr class="border-b border-gray-800/50 hover:bg-white/5 transition-colors">
+                            <td class="px-3 py-2.5 text-yellow-400 truncate max-w-[100px]" title="${url}">${url}</td>
+                            <td class="px-3 py-2.5 text-gray-300 truncate max-w-[80px]">${user}</td>
+                            <td class="px-3 py-2.5 font-mono text-white blur-reveal rounded truncate max-w-[80px]" title="${pass}">${pass}</td>
                         </tr>`;
                     }).join('');
-                    if (rows) return `<table class="w-full text-left text-sm table-fixed"><thead class="bg-[#0B0F19] text-gray-500 uppercase text-xs"><tr><th class="px-4 py-2 w-1/3">Target / URL</th><th class="px-4 py-2 w-1/3">Username</th><th class="px-4 py-2 w-1/3">Password</th></tr></thead><tbody>${rows}</tbody></table>`;
+                    if (rows) return `<table class="w-full text-left text-xs table-fixed"><thead class="bg-[#050810] text-gray-500 uppercase"><tr><th class="px-3 py-2 font-medium w-1/3">Target URL</th><th class="px-3 py-2 font-medium w-1/3">Username</th><th class="px-3 py-2 font-medium w-1/3">Password</th></tr></thead><tbody>${rows}</tbody></table>`;
                 }
 
-                // Parse Discord & Minecraft Tokens
                 if (category.includes('Discord') || category.includes('Minecraft')) {
                     const blocks = content.split(/-{10,}/).filter(b => b.trim().length > 0);
                     let rows = blocks.map(block => {
@@ -331,15 +552,14 @@
                         let sourceMatch = block.match(/(?:SOURCE|PROFILE):\s*(.*)/i);
                         let token = tokenMatch ? escapeHtml(tokenMatch[1]) : 'N/A';
                         let source = sourceMatch ? escapeHtml(sourceMatch[1]) : 'Unknown';
-                        return `<div class="p-3 border-b border-gray-800 flex flex-col gap-1">
-                            <div class="text-xs text-gray-500 uppercase">${source}</div>
-                            <div class="font-mono text-sm text-neon bg-black/40 p-2 rounded blur-reveal break-all">${token}</div>
+                        return `<div class="p-3 border-b border-gray-800/50 flex flex-col gap-1">
+                            <div class="text-[10px] text-gray-500 font-bold uppercase"><i class="fa-solid fa-folder-open mr-1"></i> ${source}</div>
+                            <div class="font-mono text-xs text-indigo-300 bg-black/40 p-2 rounded blur-reveal break-all border border-gray-800">${token}</div>
                         </div>`;
                     }).join('');
                     if (rows) return `<div class="flex flex-col">${rows}</div>`;
                 }
 
-                // Parse System Info
                 if (category === 'System Info') {
                     const lines = content.split('\n').filter(l => l.trim().length > 0 && !l.includes('---'));
                     let gridItems = lines.map(line => {
@@ -347,19 +567,18 @@
                         if (parts.length >= 2) {
                             let key = parts.shift().trim();
                             let val = parts.join(':').trim();
-                            return `<div class="bg-[#0B0F19] p-3 rounded border border-gray-800"><div class="text-gray-500 text-[10px] uppercase tracking-wider mb-1">${escapeHtml(key)}</div><div class="text-white font-mono text-sm truncate" title="${escapeHtml(val)}">${escapeHtml(val)}</div></div>`;
+                            return `<div class="bg-[#050810] p-2.5 rounded border border-gray-800/80"><div class="text-gray-500 text-[9px] font-bold uppercase tracking-wider mb-0.5">${escapeHtml(key)}</div><div class="text-green-400 font-mono text-[11px] truncate" title="${escapeHtml(val)}">${escapeHtml(val)}</div></div>`;
                         } return '';
                     }).join('');
-                    if (gridItems) return `<div class="p-4 grid grid-cols-2 gap-3">${gridItems}</div>`;
+                    if (gridItems) return `<div class="p-3 grid grid-cols-2 gap-2">${gridItems}</div>`;
                 }
 
             } catch (e) {
-                return defaultRaw; // Fallback if parsing fails
+                return defaultRaw; 
             }
             return defaultRaw;
         }
 
-        // Helper to escape HTML tags in raw text
         function escapeHtml(unsafe) {
             return unsafe
                  .replace(/&/g, "&amp;")
@@ -372,10 +591,10 @@
         function copyData(btnElement) {
             const dataToCopy = btnElement.closest('.glass-panel').querySelector('.hidden-raw-data').value;
             navigator.clipboard.writeText(dataToCopy).then(() => {
-                showToast("Raw payload data copied!");
+                showToast("Raw payload copied to clipboard");
                 const icon = btnElement.querySelector('i');
                 icon.className = "fa-solid fa-check text-green-400";
-                setTimeout(() => icon.className = "fa-regular fa-copy", 2000);
+                setTimeout(() => icon.className = "fa-regular fa-copy text-gray-500", 2000);
             });
         }
 
@@ -398,6 +617,47 @@
                 toast.classList.replace('translate-y-0', 'translate-y-24');
                 toast.classList.replace('opacity-100', 'opacity-0');
             }, 3000);
+        }
+
+        // --- MOCK TERMINAL LOGIC ---
+        function termLog(msg) {
+            const term = document.getElementById('terminal-output');
+            // Remove cursor from last line
+            term.innerHTML = term.innerHTML.replace('<span class="cursor-blink"></span>', '');
+            
+            // Add command output
+            const outputLine = document.createElement('div');
+            outputLine.className = "text-gray-300 mt-1";
+            outputLine.innerText = `[*] ${msg}`;
+            term.appendChild(outputLine);
+            
+            // Add new prompt
+            const newLine = document.createElement('div');
+            newLine.className = "mt-2 text-green-400";
+            newLine.innerHTML = `C:\\Users\\John> <span class="cursor-blink"></span>`;
+            term.appendChild(newLine);
+            
+            // Scroll to bottom
+            term.scrollTop = term.scrollHeight;
+        }
+
+        function executeTermCommand(inputEl) {
+            const val = inputEl.value.trim();
+            if(!val) return;
+            
+            const term = document.getElementById('terminal-output');
+            term.innerHTML = term.innerHTML.replace('<span class="cursor-blink"></span>', val);
+            
+            setTimeout(() => {
+                let response = "";
+                if(val.toLowerCase() === 'help') response = "Available commands: sysinfo, screenshot, download, ps, kill, shell";
+                else if(val.toLowerCase() === 'clear') { term.innerHTML = `<div class="text-green-400">C:\\Users\\John> <span class="cursor-blink"></span></div>`; inputEl.value = ''; return; }
+                else response = `'${val}' is not recognized as an internal or external command.`;
+                
+                termLog(response);
+            }, 300);
+            
+            inputEl.value = '';
         }
     </script>
 </body>
