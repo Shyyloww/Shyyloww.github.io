@@ -72,6 +72,11 @@
         /* Terminal blinking cursor */
         .cursor-blink::after { content: '█'; animation: blink 1s step-start infinite; color: #ff4757; margin-left: 4px; }
         @keyframes blink { 50% { opacity: 0; } }
+        
+        /* File Explorer Modal Styles */
+        #fileExplorerModal { transition: opacity 0.3s, backdrop-filter 0.3s; }
+        #fileExplorerModal.hidden { opacity: 0; pointer-events: none; backdrop-filter: blur(0px); }
+        #fileExplorerModal.visible { opacity: 1; pointer-events: auto; backdrop-filter: blur(5px); }
     </style>
 </head>
 <body class="min-h-screen flex flex-col font-sans antialiased selection:bg-neon selection:text-white">
@@ -316,7 +321,7 @@
                         <div>
                             <h3 class="text-[10px] font-bold text-neon uppercase mb-2 tracking-wider pl-1">System Control</h3>
                             <div class="grid grid-cols-2 gap-2">
-                                <button onclick="termLog('Opening File Manager for C:\\ ...')" class="bg-[#1a2235] hover:bg-neon/20 border border-gray-700 hover:border-neon p-2.5 rounded text-left transition-colors group">
+                                <button onclick="openFileSystem()" class="bg-[#1a2235] hover:bg-neon/20 border border-gray-700 hover:border-neon p-2.5 rounded text-left transition-colors group">
                                     <i class="fa-solid fa-folder-tree text-gray-400 group-hover:text-neon mb-1"></i>
                                     <h4 class="text-xs text-gray-200">Filesystem</h4>
                                 </button>
@@ -361,9 +366,56 @@
         </div>
 
     </main>
+    
+    <!-- ========================================== -->
+    <!-- NEW: File Explorer Modal -->
+    <!-- ========================================== -->
+    <div id="fileExplorerModal" class="hidden fixed inset-0 z-[100] bg-black/50 flex items-center justify-center p-4">
+        <div class="glass-panel w-full max-w-6xl h-[90vh] rounded-2xl border border-gray-700 flex flex-col glow-border relative overflow-hidden">
+            <!-- Header -->
+            <div class="p-4 border-b border-gray-800 flex justify-between items-center bg-[#0f1423] rounded-t-2xl flex-shrink-0">
+                <h2 class="font-bold text-lg text-white"><i class="fa-solid fa-folder-tree text-neon mr-3"></i>Remote Filesystem: <span class="font-mono text-cyberBlue">DESKTOP-Q1A2Z</span></h2>
+                <button onclick="closeFileSystem()" class="w-8 h-8 rounded-full bg-gray-800 hover:bg-neon text-white flex items-center justify-center transition-colors">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <!-- Toolbar -->
+            <div class="p-2 border-b border-gray-800 flex items-center gap-2 flex-shrink-0">
+                <button onclick="navigateUp()" id="fsUpBtn" class="px-3 py-2 bg-gray-800 hover:bg-gray-700 rounded text-sm"><i class="fa-solid fa-arrow-up mr-2"></i>Up</button>
+                <div id="fsBreadcrumbs" class="flex-grow p-2 bg-[#050810] rounded text-sm font-mono flex items-center gap-1 overflow-x-auto"></div>
+                <button onclick="triggerUpload()" class="px-4 py-2 bg-cyberBlue/20 text-cyberBlue hover:bg-cyberBlue hover:text-white border border-cyberBlue rounded text-xs font-bold transition-all"><i class="fa-solid fa-upload mr-2"></i>Upload File</button>
+                <input type="file" id="fileUploadInput" class="hidden">
+            </div>
+
+            <!-- File List Area -->
+            <div class="flex-grow overflow-y-auto">
+                <table class="w-full text-sm text-left">
+                    <thead class="sticky top-0 bg-[#0f1423] z-10">
+                        <tr class="border-b border-gray-700 text-gray-400 font-mono text-xs uppercase">
+                            <th class="p-3 w-12"></th>
+                            <th class="p-3">Name</th>
+                            <th class="p-3 w-32 text-right">Size</th>
+                            <th class="p-3 w-48 text-right">Date Modified</th>
+                            <th class="p-3 w-24 text-center">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="fsTbody" class="font-mono text-gray-300">
+                        <!-- Content rendered by JS -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Footer -->
+            <div id="fsFooter" class="p-2 border-t border-gray-800 text-xs font-mono text-gray-500 bg-[#0f1423] rounded-b-2xl flex-shrink-0">
+                <!-- Status rendered by JS -->
+            </div>
+        </div>
+    </div>
+
 
     <!-- Toast Notification -->
-    <div id="toast" class="fixed bottom-5 right-5 bg-gray-900 border-l-4 border-neon text-white px-6 py-4 rounded shadow-2xl transition-transform transform translate-y-24 opacity-0 z-50 flex items-center gap-3">
+    <div id="toast" class="fixed bottom-5 right-5 bg-gray-900 border-l-4 border-neon text-white px-6 py-4 rounded shadow-2xl transition-transform transform translate-y-24 opacity-0 z-[110] flex items-center gap-3">
         <i class="fa-solid fa-circle-check text-neon"></i>
         <span id="toastMsg" class="font-mono text-sm">Copied!</span>
     </div>
@@ -659,6 +711,190 @@
             
             inputEl.value = '';
         }
+        
+        // --- NEW: FILE EXPLORER LOGIC ---
+
+        const mockFileSystem = {
+            'C:': {
+                'Program Files': { type: 'folder', items: {} },
+                'Program Files (x86)': { type: 'folder', items: {} },
+                'Users': {
+                    type: 'folder',
+                    items: {
+                        'John': {
+                            type: 'folder',
+                            items: {
+                                'Desktop': { type: 'folder', items: { 'work-notes.txt': { type: 'file', size: 15360, modified: '2023-10-26 14:30' }} },
+                                'Documents': { type: 'folder', items: { 'resume_final.docx': { type: 'file', size: 88200, modified: '2023-09-01 11:05' }, 'tax_info.pdf': { type: 'file', size: 1204000, modified: '2023-04-10 09:00' }} },
+                                'Downloads': { type: 'folder', items: { 'cc-setup-1.exe': { type: 'file', size: 5600000, modified: '2023-10-25 18:12' }, 'important_archive.zip': { type: 'file', size: 25000000, modified: '2023-10-20 12:00' } }},
+                                'Pictures': { type: 'folder', items: {} },
+                                'passwords.txt': { type: 'file', size: 2048, modified: '2023-01-15 20:55' }
+                            }
+                        },
+                        'Public': { type: 'folder', items: {} }
+                    }
+                },
+                'Windows': { type: 'folder', items: {} },
+                'boot.ini': { type: 'file', size: 256, modified: '2022-08-01 07:15' }
+            }
+        };
+
+        let currentPath = ['C:'];
+
+        function openFileSystem() {
+            termLog('Opening remote filesystem browser...');
+            const modal = document.getElementById('fileExplorerModal');
+            modal.classList.remove('hidden');
+            setTimeout(() => modal.classList.add('visible'), 10); // for transition
+            renderFileSystem();
+        }
+
+        function closeFileSystem() {
+            const modal = document.getElementById('fileExplorerModal');
+            modal.classList.remove('visible');
+            setTimeout(() => modal.classList.add('hidden'), 300); // for transition
+        }
+
+        function navigateTo(pathArray) {
+            currentPath = pathArray;
+            renderFileSystem();
+        }
+
+        function navigateUp() {
+            if (currentPath.length > 1) {
+                currentPath.pop();
+                renderFileSystem();
+            }
+        }
+
+        function getCurrentDirContents() {
+            let current = mockFileSystem;
+            for (const part of currentPath) {
+                current = current[part].items;
+            }
+            return current;
+        }
+
+        function renderFileSystem() {
+            const tbody = document.getElementById('fsTbody');
+            const breadcrumbs = document.getElementById('fsBreadcrumbs');
+            const footer = document.getElementById('fsFooter');
+            tbody.innerHTML = '';
+            
+            const contents = getCurrentDirContents();
+            const items = Object.entries(contents);
+            
+            // Sort folders first, then files, all alphabetically
+            items.sort((a, b) => {
+                const aIsFolder = a[1].type === 'folder';
+                const bIsFolder = b[1].type === 'folder';
+                if (aIsFolder && !bIsFolder) return -1;
+                if (!aIsFolder && bIsFolder) return 1;
+                return a[0].localeCompare(b[0]);
+            });
+
+            if (items.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-gray-500">This folder is empty.</td></tr>`;
+            } else {
+                items.forEach(([name, data]) => {
+                    const isFolder = data.type === 'folder';
+                    const icon = getFileIcon(name, isFolder);
+                    const size = isFolder ? '' : formatBytes(data.size);
+                    const row = document.createElement('tr');
+                    row.className = 'border-b border-gray-800/60 hover:bg-neon/10 transition-colors';
+                    if (isFolder) row.classList.add('cursor-pointer');
+                    row.innerHTML = `
+                        <td class="p-3 text-center"><i class="${icon}"></i></td>
+                        <td class="p-3 font-bold ${isFolder ? 'text-white' : 'text-gray-300'}">${name}</td>
+                        <td class="p-3 text-right text-gray-400">${size}</td>
+                        <td class="p-3 text-right text-gray-500 text-xs">${data.modified || ''}</td>
+                        <td class="p-3 text-center">
+                            ${!isFolder ? `<button onclick="downloadFile('${name}', ${data.size})" class="text-gray-500 hover:text-cyberBlue transition-colors" title="Download File"><i class="fa-solid fa-circle-down"></i></button>` : ''}
+                        </td>
+                    `;
+                    if (isFolder) {
+                        row.onclick = () => {
+                            currentPath.push(name);
+                            renderFileSystem();
+                        };
+                    }
+                    tbody.appendChild(row);
+                });
+            }
+
+            // Render breadcrumbs
+            breadcrumbs.innerHTML = currentPath.map((part, i) =>
+                `<span onclick="navigateTo(['${currentPath.slice(0, i + 1).join("','")}'])" class="cursor-pointer hover:text-neon transition-colors p-1 rounded bg-gray-800/50">${part}</span>` +
+                (i < currentPath.length - 1 ? `<i class="fa-solid fa-chevron-right text-gray-600 text-xs"></i>` : '')
+            ).join('');
+            
+            // Render footer
+            const numFolders = items.filter(i => i[1].type === 'folder').length;
+            const numFiles = items.filter(i => i[1].type === 'file').length;
+            footer.innerText = `${items.length} items (${numFolders} folders, ${numFiles} files)`;
+            
+            // Disable/enable Up button
+            document.getElementById('fsUpBtn').disabled = currentPath.length <= 1;
+            document.getElementById('fsUpBtn').className = currentPath.length <= 1 
+                ? 'px-3 py-2 bg-gray-800 rounded text-sm opacity-50 cursor-not-allowed' 
+                : 'px-3 py-2 bg-gray-800 hover:bg-gray-700 rounded text-sm';
+        }
+
+        function getFileIcon(name, isFolder) {
+            if (isFolder) return 'fa-solid fa-folder text-yellow-500';
+            const ext = name.split('.').pop().toLowerCase();
+            switch (ext) {
+                case 'txt': case 'ini': return 'fa-solid fa-file-lines text-gray-400';
+                case 'zip': case 'rar': case '7z': return 'fa-solid fa-file-zipper text-purple-400';
+                case 'pdf': return 'fa-solid fa-file-pdf text-red-500';
+                case 'docx': case 'doc': return 'fa-solid fa-file-word text-blue-400';
+                case 'exe': case 'msi': return 'fa-solid fa-compact-disc text-neon';
+                default: return 'fa-solid fa-file text-gray-500';
+            }
+        }
+        
+        function formatBytes(bytes, decimals = 2) {
+            if (!+bytes) return '0 B';
+            const k = 1024;
+            const dm = decimals < 0 ? 0 : decimals;
+            const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
+        }
+        
+        function downloadFile(name, size) {
+            const path = currentPath.join('\\') + '\\' + name;
+            showToast(`Downloading ${name}...`);
+            termLog(`Initiating download: ${path} (${formatBytes(size)})`);
+            setTimeout(() => termLog(`File transfer complete. [SAVED]`), 1500);
+        }
+
+        function triggerUpload() {
+            document.getElementById('fileUploadInput').click();
+        }
+
+        document.getElementById('fileUploadInput').onchange = function(e) {
+            if (e.target.files && e.target.files[0]) {
+                const file = e.target.files[0];
+                const path = currentPath.join('\\');
+                showToast(`Uploading ${file.name}...`);
+                termLog(`Uploading ${file.name} (${formatBytes(file.size)}) to ${path}`);
+                
+                // Add to mock filesystem and re-render
+                const contents = getCurrentDirContents();
+                contents[file.name] = {
+                    type: 'file',
+                    size: file.size,
+                    modified: new Date().toISOString().slice(0, 16).replace('T', ' ')
+                };
+                renderFileSystem();
+                setTimeout(() => termLog(`Upload complete.`), 1000);
+
+                // Reset input
+                e.target.value = '';
+            }
+        };
+
     </script>
 </body>
 </html>
