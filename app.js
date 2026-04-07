@@ -14,10 +14,10 @@ let allNodes = [];
 // INITIALIZATION
 // ==========================================
 document.addEventListener("DOMContentLoaded", () => {
-    switchTab('extraction'); // Lock user to extraction page on load
+    switchTab('extraction'); 
     initDragAndDrop();
     initResizers();
-    renderNodesList(); // Will show "Authenticate to begin"
+    renderNodesList(); 
     renderMap();
 });
 
@@ -53,12 +53,9 @@ async function fetchData() {
     try {
         // --- STEP 1: Fetch Node Profile ---
         const nodeResponse = await fetch(`${C2_LISTENER_URL}/node/${deviceId}`);
-        if (nodeResponse.status === 404) {
-            throw new Error(`Device ID '${deviceId}' not found.`);
-        }
-        if (!nodeResponse.ok) {
-            throw new Error("API Error fetching node details.");
-        }
+        if (nodeResponse.status === 404) throw new Error(`Device ID '${deviceId}' not found.`);
+        if (!nodeResponse.ok) throw new Error("API Error fetching node details.");
+        
         const nodeData = await nodeResponse.json();
         
         // --- STEP 2: Update UI with Authenticated Node ---
@@ -86,7 +83,6 @@ async function fetchData() {
             renderCards(globalData, document.getElementById('output'));
             showToast("Authentication successful! Data loaded.", "success");
             
-            // Switch directly to C2 view after brief delay
             setTimeout(() => switchTab('rat'), 1000); 
         }
 
@@ -322,18 +318,26 @@ function renderNodesList() {
         let activeLine = '<div class="absolute left-0 top-0 bottom-0 w-1 bg-neon"></div>';
         let pulse = node.status === 'green' ? 'animate-pulse' : '';
 
-        // Safely determine OS Icon (Defaults to Windows if assumed or wmic output)
-        let osLower = (node.os || "windows").toLowerCase();
-        let osIcon = 'fa-windows text-cyberBlue'; // Default to Windows
-        if(osLower.includes('mac')) osIcon = 'fa-apple text-gray-300';
-        if(osLower.includes('linux') || osLower.includes('ubuntu')) osIcon = 'fa-linux text-yellow-400';
+        // Explicit, bulletproof OS Icon matching
+        let osLower = (node.os || "").toLowerCase();
+        let osIconClass = 'fa-brands fa-windows text-cyberBlue'; // Default fallback
+        
+        if (osLower.includes('win')) {
+            osIconClass = 'fa-brands fa-windows text-cyberBlue';
+        } else if (osLower.includes('mac') || osLower.includes('darwin')) {
+            osIconClass = 'fa-brands fa-apple text-gray-300';
+        } else if (osLower.includes('linux') || osLower.includes('ubuntu')) {
+            osIconClass = 'fa-brands fa-linux text-yellow-400';
+        } else if (osLower.length > 0) {
+            osIconClass = 'fa-solid fa-desktop text-gray-400';
+        }
 
         container.innerHTML += `
             <div class="p-3 ${activeBorder} rounded-lg relative overflow-hidden group transition-all">
                 ${activeLine}
                 <div class="flex justify-between items-start mb-2 pl-2">
                     <div class="flex items-center gap-2">
-                        <i class="fa-brands ${osIcon} text-lg"></i>
+                        <i class="${osIconClass} text-lg"></i>
                         <div><p class="text-sm font-bold text-white truncate max-w-[120px]">${node.id}</p><p class="text-[10px] text-gray-400 font-mono">${node.ip}</p></div>
                     </div>
                     <span class="w-2.5 h-2.5 rounded-full ${dotColor} ${pulse} shadow-[0_0_8px_currentColor]"></span>
@@ -349,8 +353,10 @@ function renderMap() {
     mapDots.innerHTML = '';
     
     allNodes.forEach(node => {
-        const x = ((node.lng + 180) / 360) * 100;
-        let y = ((90 - node.lat) / 180) * 100 * 0.9 + 5;
+        // Precise Equirectangular math mapping perfectly to the 100% 100% SVG
+        const x = (node.lng + 180) / 3.6;
+        const y = (90 - node.lat) / 1.8;
+        
         let dotColor = node.status === 'green' ? 'text-green-500' : (node.status === 'red' ? 'text-red-500' : 'text-yellow-500');
         mapDots.innerHTML += `
             <div class="map-dot ${dotColor}" style="left: ${x}%; top: ${y}%;">
