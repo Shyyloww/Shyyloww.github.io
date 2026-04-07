@@ -27,6 +27,7 @@
             background-color: #050810; 
             color: #e2e8f0; 
             position: relative;
+            overflow-x: hidden;
         }
         
         /* Animated Cyber Grid Background */
@@ -58,7 +59,6 @@
         .glass-panel { background: rgba(15, 20, 35, 0.85); backdrop-filter: blur(12px); border: 1px solid rgba(255, 71, 87, 0.15); box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5); }
         .glow-border { border: 1px solid rgba(255, 71, 87, 0.4); box-shadow: 0 0 15px rgba(255, 71, 87, 0.1); }
         .text-glow { text-shadow: 0 0 10px rgba(255, 71, 87, 0.7); }
-        .text-glow-blue { text-shadow: 0 0 10px rgba(0, 210, 211, 0.7); }
         
         .fade-in { animation: fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
@@ -69,10 +69,67 @@
         .blur-reveal { filter: blur(5px); transition: filter 0.3s; cursor: crosshair; }
         .blur-reveal:hover { filter: blur(0px); }
 
-        /* Terminal blinking cursor */
         .cursor-blink::after { content: '█'; animation: blink 1s step-start infinite; color: #ff4757; margin-left: 4px; }
         @keyframes blink { 50% { opacity: 0; } }
-        
+
+        /* --- Window Manager Styles --- */
+        #workspace {
+            position: relative;
+            width: 100%;
+            height: 80vh;
+            border: 1px dashed rgba(255, 71, 87, 0.2);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .win-panel {
+            position: absolute;
+            display: flex;
+            flex-direction: column;
+            background: rgba(15, 20, 35, 0.95);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 71, 87, 0.2);
+            border-radius: 0.75rem;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.7);
+            overflow: hidden;
+            resize: both; /* Native resizing */
+            min-width: 250px;
+            min-height: 150px;
+        }
+
+        /* Transition for snapping/maximizing, removed during drag via JS */
+        .win-anim { transition: top 0.3s ease, left 0.3s ease, width 0.3s ease, height 0.3s ease; }
+
+        .win-header {
+            cursor: grab;
+            user-select: none;
+            flex-shrink: 0;
+        }
+        .win-header:active { cursor: grabbing; }
+
+        .win-content {
+            flex-grow: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+
+        /* Minimize / Rollup State */
+        .win-panel.collapsed {
+            height: 48px !important; /* Just header height */
+            min-height: 48px;
+            resize: none;
+            border-bottom: 1px solid rgba(255, 71, 87, 0.5);
+        }
+        .win-panel.collapsed .win-content { display: none; }
+        .win-panel.collapsed .resize-handle { display: none; }
+
+        /* Maximize State */
+        .win-panel.maximized {
+            top: 0 !important; left: 0 !important;
+            width: 100% !important; height: 100% !important;
+            resize: none; border-radius: 10px;
+        }
+
         /* File Explorer Modal Styles */
         #fileExplorerModal { transition: opacity 0.3s, backdrop-filter 0.3s; }
         #fileExplorerModal.hidden { opacity: 0; pointer-events: none; backdrop-filter: blur(0px); }
@@ -90,7 +147,6 @@
                     <span class="font-bold text-xl tracking-wider text-white uppercase">Ugly<span class="text-neon">Ducky</span> <span class="text-xs text-gray-500 font-mono tracking-normal ml-2 hidden sm:inline-block">v2.4.0_NIGHTLY</span></span>
                 </div>
                 
-                <!-- System Status -->
                 <div class="hidden md:flex items-center gap-6 font-mono text-xs">
                     <div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_8px_#22c55e] animate-pulse"></span> <span class="text-gray-300">SERVER: ONLINE</span></div>
                     <div class="flex items-center gap-2 text-gray-400"><i class="fa-solid fa-satellite-dish text-cyberBlue"></i> PING: 24ms</div>
@@ -101,10 +157,10 @@
     </nav>
 
     <!-- Main Content -->
-    <main class="flex-grow max-w-[95%] mx-auto px-2 py-8 w-full">
+    <main class="flex-grow max-w-[95%] mx-auto px-2 py-8 w-full flex flex-col">
         
         <!-- Navigation Tabs -->
-        <div class="flex justify-center mb-10 fade-in">
+        <div class="flex justify-center mb-6 fade-in flex-shrink-0">
             <div class="glass-panel p-1.5 rounded-lg inline-flex gap-1 border border-gray-800">
                 <button onclick="switchTab('extraction')" id="tab-extraction" class="px-8 py-2.5 rounded-md font-semibold text-sm transition-all bg-neon text-white shadow-[0_0_15px_rgba(255,71,87,0.3)]">
                     <i class="fa-solid fa-database mr-2"></i> Vault Extraction
@@ -118,7 +174,7 @@
         <!-- ========================================== -->
         <!-- TAB 1: DATA EXTRACTION (Private Login View)-->
         <!-- ========================================== -->
-        <div id="view-extraction" class="tab-content active">
+        <div id="view-extraction" class="tab-content active flex-grow">
             <div class="text-center mb-8">
                 <h1 class="text-4xl md:text-5xl font-bold text-white mb-3 tracking-tight">Secure <span class="text-neon text-glow">Vault</span></h1>
                 <p class="text-gray-400 font-mono text-sm">Awaiting authentication parameters to decrypt harvested logs...</p>
@@ -140,39 +196,40 @@
                         <i class="fa-solid fa-unlock-keyhole"></i> Decrypt
                     </button>
                 </div>
-                
-                <div class="flex justify-between items-center mt-4">
-                    <p id="statusMsg" class="text-sm font-mono text-gray-400 hidden"></p>
-                    <button id="exportBtn" class="hidden text-xs font-mono bg-gray-800 hover:bg-gray-700 text-white px-3 py-1.5 rounded transition-colors">
-                        <i class="fa-solid fa-download mr-1"></i> Export Logs
-                    </button>
-                </div>
             </div>
 
             <!-- Filters -->
             <div id="filterContainer" class="hidden max-w-7xl mx-auto mb-6 flex flex-wrap gap-2 justify-center border-b border-gray-800/50 pb-8"></div>
-
             <!-- Results -->
             <div id="output" class="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-6 pb-20"></div>
         </div>
 
         <!-- ========================================== -->
-        <!-- TAB 2: LIVE CONTROL (Massively Expanded C2)-->
+        <!-- TAB 2: LIVE CONTROL (Hyprland UI)          -->
         <!-- ========================================== -->
-        <div id="view-rat" class="tab-content">
+        <div id="view-rat" class="tab-content flex-grow flex flex-col h-full">
             
-            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 h-[80vh]">
+            <div class="flex justify-between items-center mb-4 px-2">
+                <div class="font-mono text-xs text-cyberBlue"><i class="fa-solid fa-desktop mr-2"></i>Virtual Desktop Workspace</div>
+                <button onclick="resetLayout()" class="px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-gray-300 text-xs font-mono rounded border border-gray-700 transition-colors">
+                    <i class="fa-solid fa-border-all mr-1"></i> Tile Default Layout
+                </button>
+            </div>
+
+            <!-- Workspace Container for Floating Windows -->
+            <div id="workspace" class="flex-grow w-full relative">
                 
-                <!-- LEFT: Target Manager -->
-                <div class="lg:col-span-3 glass-panel rounded-xl flex flex-col h-full border border-gray-800">
-                    <div class="p-4 border-b border-gray-800 bg-[#0f1423] rounded-t-xl flex justify-between items-center">
-                        <h2 class="font-bold text-sm tracking-wider uppercase text-gray-300"><i class="fa-solid fa-crosshairs text-neon mr-2 text-glow"></i>Infected Nodes</h2>
-                        <span class="bg-neon/20 text-neon text-[10px] px-2 py-1 rounded font-mono border border-neon/30">3 ONLINE</span>
+                <!-- Panel 1: Targets -->
+                <div id="panel-targets" class="win-panel win-anim" style="left: 0%; top: 0%; width: 25%; height: 100%;">
+                    <div class="win-header p-3 border-b border-gray-800 bg-[#0f1423] flex justify-between items-center z-10">
+                        <h2 class="font-bold text-xs tracking-wider uppercase text-gray-300 pointer-events-none"><i class="fa-solid fa-crosshairs text-neon mr-2 text-glow"></i>Infected Nodes</h2>
+                        <div class="flex gap-2">
+                            <button onclick="toggleMinimize('panel-targets')" class="w-4 h-4 rounded-full bg-yellow-500/20 text-yellow-500 hover:bg-yellow-500 hover:text-white flex items-center justify-center text-[8px]"><i class="fa-solid fa-minus"></i></button>
+                            <button onclick="toggleMaximize('panel-targets')" class="w-4 h-4 rounded-full bg-green-500/20 text-green-500 hover:bg-green-500 hover:text-white flex items-center justify-center text-[8px]"><i class="fa-solid fa-expand"></i></button>
+                        </div>
                     </div>
-                    
-                    <div class="flex-grow p-3 space-y-2 overflow-y-auto">
-                        <!-- Active Target -->
-                        <div class="p-3 border border-neon bg-neon/5 rounded-lg cursor-pointer transition-all relative overflow-hidden group">
+                    <div class="win-content p-3 space-y-2 bg-[#050810]/50">
+                        <div class="p-3 border border-neon bg-neon/5 rounded-lg cursor-pointer relative overflow-hidden group">
                             <div class="absolute left-0 top-0 bottom-0 w-1 bg-neon"></div>
                             <div class="flex justify-between items-start mb-2 pl-2">
                                 <div class="flex items-center gap-2">
@@ -182,177 +239,123 @@
                                         <p class="text-[10px] text-gray-400 font-mono">192.168.1.44 • JOHN-PC</p>
                                     </div>
                                 </div>
-                                <span class="w-2.5 h-2.5 rounded-full bg-green-500 shadow-[0_0_8px_#22c55e] animate-pulse"></span>
-                            </div>
-                            <div class="flex justify-between text-[10px] font-mono text-gray-500 pl-2">
-                                <span>Ping: <span class="text-green-400">12ms</span></span>
-                                <span>Admin: <span class="text-neon">YES</span></span>
+                                <span class="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse"></span>
                             </div>
                         </div>
-
-                        <!-- Offline Target -->
                         <div class="p-3 border border-gray-800 bg-[#050810] rounded-lg cursor-not-allowed opacity-60">
                             <div class="flex justify-between items-start mb-2">
                                 <div class="flex items-center gap-2">
                                     <i class="fa-brands fa-apple text-gray-500 text-lg"></i>
-                                    <div>
-                                        <p class="text-sm font-bold text-gray-300">MACBOOK-PRO-99</p>
-                                        <p class="text-[10px] text-gray-600 font-mono">10.0.0.12 • ALICE</p>
-                                    </div>
+                                    <div><p class="text-sm font-bold text-gray-300">MACBOOK-PRO-99</p></div>
                                 </div>
                                 <span class="w-2.5 h-2.5 rounded-full bg-red-500"></span>
                             </div>
-                            <div class="flex justify-between text-[10px] font-mono text-gray-600">
-                                <span>Ping: TIMEOUT</span>
-                                <span>Last Seen: 2hr ago</span>
-                            </div>
                         </div>
-
-                         <!-- Sleep Target -->
-                         <div class="p-3 border border-gray-800 bg-[#050810] rounded-lg hover:border-gray-600 cursor-pointer transition-all">
-                            <div class="flex justify-between items-start mb-2">
-                                <div class="flex items-center gap-2">
-                                    <i class="fa-brands fa-linux text-yellow-500 text-lg"></i>
-                                    <div>
-                                        <p class="text-sm font-bold text-gray-300">UBUNTU-SERV-01</p>
-                                        <p class="text-[10px] text-gray-500 font-mono">192.168.1.100 • ROOT</p>
-                                    </div>
-                                </div>
-                                <span class="w-2.5 h-2.5 rounded-full bg-yellow-500"></span>
-                            </div>
-                            <div class="flex justify-between text-[10px] font-mono text-gray-600">
-                                <span>Ping: <span class="text-yellow-500">145ms</span></span>
-                                <span>Status: SLEEP</span>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="p-3 border-t border-gray-800 text-center">
-                        <button class="w-full py-2 bg-gray-800 hover:bg-gray-700 rounded text-xs font-mono text-gray-300 transition-colors"><i class="fa-solid fa-rotate-right mr-1"></i> Scan Network</button>
                     </div>
                 </div>
 
-                <!-- CENTER: Live Terminal & Visuals -->
-                <div class="lg:col-span-6 flex flex-col gap-4 h-full">
-                    
-                    <!-- Screen/Cam Placeholder -->
-                    <div class="glass-panel rounded-xl h-1/2 border border-gray-800 relative overflow-hidden flex flex-col">
-                        <div class="absolute top-2 left-2 z-10 bg-black/60 px-2 py-1 rounded text-[10px] font-mono border border-gray-700 flex items-center gap-2">
-                            <span class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span> LIVE: SCREEN_01
-                        </div>
-                        <div class="flex-grow bg-[#000] relative flex items-center justify-center">
-                            <!-- Fake visual noise/grid -->
-                            <div class="absolute inset-0 opacity-20" style="background-image: repeating-linear-gradient(0deg, transparent, transparent 2px, #fff 2px, #fff 4px); background-size: 100% 4px;"></div>
-                            <div class="text-center z-10">
-                                <i class="fa-solid fa-video-slash text-4xl text-gray-700 mb-2"></i>
-                                <p class="text-gray-500 font-mono text-sm">STREAM OFFLINE</p>
-                                <button onclick="termLog('Initiating WebRTC stream... [FAILED: Connection refused]')" class="mt-3 px-4 py-1.5 border border-neon text-neon text-xs font-mono rounded hover:bg-neon hover:text-white transition-colors">START STREAM</button>
-                            </div>
+                <!-- Panel 2: Video Stream -->
+                <div id="panel-video" class="win-panel win-anim" style="left: 25%; top: 0%; width: 50%; height: 50%;">
+                    <div class="win-header p-3 border-b border-gray-800 bg-[#0f1423] flex justify-between items-center z-10">
+                        <h2 class="font-bold text-xs tracking-wider uppercase text-gray-300 pointer-events-none"><i class="fa-solid fa-video text-purple-400 mr-2"></i>Live Feed</h2>
+                        <div class="flex gap-2">
+                            <button onclick="toggleMinimize('panel-video')" class="w-4 h-4 rounded-full bg-yellow-500/20 text-yellow-500 hover:bg-yellow-500 hover:text-white flex items-center justify-center text-[8px]"><i class="fa-solid fa-minus"></i></button>
+                            <button onclick="toggleMaximize('panel-video')" class="w-4 h-4 rounded-full bg-green-500/20 text-green-500 hover:bg-green-500 hover:text-white flex items-center justify-center text-[8px]"><i class="fa-solid fa-expand"></i></button>
                         </div>
                     </div>
-
-                    <!-- Interactive Terminal -->
-                    <div class="glass-panel rounded-xl h-1/2 border border-gray-800 flex flex-col">
-                        <div class="p-2 border-b border-gray-800 bg-[#0B0F19] flex justify-between items-center rounded-t-xl">
-                            <div class="flex gap-1.5 ml-2">
-                                <div class="w-3 h-3 rounded-full bg-red-500"></div>
-                                <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
-                                <div class="w-3 h-3 rounded-full bg-green-500"></div>
-                            </div>
-                            <span class="text-xs font-mono text-gray-500">ducky@c2-server:~</span>
-                            <button onclick="document.getElementById('terminal-output').innerHTML=''" class="text-gray-500 hover:text-white text-xs mr-2"><i class="fa-solid fa-trash"></i></button>
+                    <div class="win-content bg-[#000] relative flex items-center justify-center">
+                        <div class="absolute inset-0 opacity-20 pointer-events-none" style="background-image: repeating-linear-gradient(0deg, transparent, transparent 2px, #fff 2px, #fff 4px); background-size: 100% 4px;"></div>
+                        <div class="text-center z-10">
+                            <i class="fa-solid fa-video-slash text-4xl text-gray-700 mb-2"></i>
+                            <p class="text-gray-500 font-mono text-sm">STREAM OFFLINE</p>
+                            <button onclick="termLog('Initiating WebRTC stream... [FAILED: Connection refused]')" class="mt-3 px-4 py-1.5 border border-neon text-neon text-xs font-mono rounded hover:bg-neon hover:text-white transition-colors">START STREAM</button>
                         </div>
-                        <div class="flex-grow p-4 font-mono text-xs overflow-y-auto bg-black/50 text-gray-300" id="terminal-output">
+                    </div>
+                </div>
+
+                <!-- Panel 3: Terminal -->
+                <div id="panel-terminal" class="win-panel win-anim" style="left: 25%; top: 50%; width: 50%; height: 50%;">
+                    <div class="win-header p-2 border-b border-gray-800 bg-[#0B0F19] flex justify-between items-center z-10">
+                        <div class="flex gap-1.5 ml-2 pointer-events-none">
+                            <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                            <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+                            <div class="w-3 h-3 rounded-full bg-green-500"></div>
+                        </div>
+                        <span class="text-xs font-mono text-gray-500 pointer-events-none">ducky@c2-server:~</span>
+                        <div class="flex gap-2 mr-1">
+                            <button onclick="document.getElementById('terminal-output').innerHTML=''" class="text-gray-500 hover:text-white text-[10px]"><i class="fa-solid fa-trash"></i></button>
+                            <button onclick="toggleMinimize('panel-terminal')" class="text-yellow-500 hover:text-white text-[10px]"><i class="fa-solid fa-minus"></i></button>
+                            <button onclick="toggleMaximize('panel-terminal')" class="text-green-500 hover:text-white text-[10px]"><i class="fa-solid fa-expand"></i></button>
+                        </div>
+                    </div>
+                    <div class="win-content p-4 font-mono text-xs bg-black/80 text-gray-300 flex flex-col">
+                        <div class="flex-grow overflow-y-auto" id="terminal-output">
                             <div class="text-cyberBlue">UglyDucky Shell v2.4.0</div>
                             <div class="text-gray-500">Connected to DESKTOP-Q1A2Z via reverse TCP</div>
                             <div class="mt-2 text-green-400">C:\Users\John> <span class="cursor-blink"></span></div>
                         </div>
-                        <div class="p-2 border-t border-gray-800 flex bg-[#0B0F19] rounded-b-xl">
-                            <span class="text-neon font-bold mr-2 ml-1">></span>
+                        <div class="pt-2 border-t border-gray-800 flex mt-2 flex-shrink-0">
+                            <span class="text-neon font-bold mr-2">></span>
                             <input type="text" placeholder="Enter shell command..." class="w-full bg-transparent outline-none font-mono text-xs text-white placeholder-gray-600" onkeypress="if(event.key === 'Enter') executeTermCommand(this)">
                         </div>
                     </div>
-
                 </div>
 
-                <!-- RIGHT: Attack Modules Grid -->
-                <div class="lg:col-span-3 glass-panel rounded-xl border border-gray-800 flex flex-col h-full overflow-hidden">
-                    <div class="p-4 border-b border-gray-800 bg-[#0f1423] rounded-t-xl">
-                        <h2 class="font-bold text-sm tracking-wider uppercase text-gray-300"><i class="fa-solid fa-bolt text-yellow-400 mr-2"></i>Execution Modules</h2>
-                    </div>
-
-                    <div class="flex-grow overflow-y-auto p-3 space-y-5">
-                        
-                        <!-- Info Widget -->
-                        <div class="bg-[#050810] rounded-lg p-3 border border-gray-800">
-                            <h3 class="text-[10px] font-bold text-gray-500 uppercase mb-2 border-b border-gray-800 pb-1">Victim Hardware</h3>
-                            <div class="grid grid-cols-2 gap-2 text-[10px] font-mono">
-                                <div><span class="text-gray-600">CPU:</span> <span class="text-white">Intel i7-9700k</span></div>
-                                <div><span class="text-gray-600">RAM:</span> <span class="text-white">16GB / 32GB</span></div>
-                                <div><span class="text-gray-600">OS:</span> <span class="text-white">Win 11 Pro</span></div>
-                                <div><span class="text-gray-600">BAT:</span> <span class="text-green-400">100% (AC)</span></div>
-                            </div>
+                <!-- Panel 4: Execution Modules -->
+                <div id="panel-modules" class="win-panel win-anim" style="left: 75%; top: 0%; width: 25%; height: 100%;">
+                    <div class="win-header p-3 border-b border-gray-800 bg-[#0f1423] flex justify-between items-center z-10">
+                        <h2 class="font-bold text-xs tracking-wider uppercase text-gray-300 pointer-events-none"><i class="fa-solid fa-bolt text-yellow-400 mr-2"></i>Modules</h2>
+                        <div class="flex gap-2">
+                            <button onclick="toggleMinimize('panel-modules')" class="w-4 h-4 rounded-full bg-yellow-500/20 text-yellow-500 hover:bg-yellow-500 hover:text-white flex items-center justify-center text-[8px]"><i class="fa-solid fa-minus"></i></button>
+                            <button onclick="toggleMaximize('panel-modules')" class="w-4 h-4 rounded-full bg-green-500/20 text-green-500 hover:bg-green-500 hover:text-white flex items-center justify-center text-[8px]"><i class="fa-solid fa-expand"></i></button>
                         </div>
-
-                        <!-- Module Group: Surveillance -->
+                    </div>
+                    <div class="win-content p-3 space-y-4 bg-[#050810]/50">
+                        
                         <div>
                             <h3 class="text-[10px] font-bold text-cyberBlue uppercase mb-2 tracking-wider pl-1">Surveillance</h3>
                             <div class="grid grid-cols-2 gap-2">
-                                <button onclick="termLog('Capturing desktop screenshot... [SAVED: screen_01.png]')" class="bg-[#1a2235] hover:bg-gray-700 border border-gray-700 p-2.5 rounded text-left transition-colors group">
+                                <button onclick="termLog('Capturing desktop screenshot...')" class="bg-[#1a2235] hover:bg-gray-700 border border-gray-700 p-2 rounded text-center transition-colors group">
                                     <i class="fa-solid fa-camera text-gray-400 group-hover:text-cyberBlue mb-1"></i>
-                                    <h4 class="text-xs text-gray-200">Screenshot</h4>
+                                    <h4 class="text-[10px] text-gray-200">Screenshot</h4>
                                 </button>
-                                <button onclick="termLog('Keylogger initialized. Hooking keyboard events...')" class="bg-[#1a2235] hover:bg-gray-700 border border-gray-700 p-2.5 rounded text-left transition-colors group">
+                                <button onclick="termLog('Keylogger hooked.')" class="bg-[#1a2235] hover:bg-gray-700 border border-gray-700 p-2 rounded text-center transition-colors group">
                                     <i class="fa-solid fa-keyboard text-gray-400 group-hover:text-cyberBlue mb-1"></i>
-                                    <h4 class="text-xs text-gray-200">Keylogger</h4>
-                                </button>
-                                <button onclick="termLog('Dumping browser cookies... [1420 entries found]')" class="bg-[#1a2235] hover:bg-gray-700 border border-gray-700 p-2.5 rounded text-left transition-colors group">
-                                    <i class="fa-solid fa-cookie-bite text-gray-400 group-hover:text-cyberBlue mb-1"></i>
-                                    <h4 class="text-xs text-gray-200">Steal Cookies</h4>
-                                </button>
-                                <button onclick="termLog('Requesting microphone access... [Bypassing UAC]')" class="bg-[#1a2235] hover:bg-gray-700 border border-gray-700 p-2.5 rounded text-left transition-colors group">
-                                    <i class="fa-solid fa-microphone text-gray-400 group-hover:text-cyberBlue mb-1"></i>
-                                    <h4 class="text-xs text-gray-200">Record Mic</h4>
+                                    <h4 class="text-[10px] text-gray-200">Keylogger</h4>
                                 </button>
                             </div>
                         </div>
 
-                        <!-- Module Group: System Control -->
                         <div>
                             <h3 class="text-[10px] font-bold text-neon uppercase mb-2 tracking-wider pl-1">System Control</h3>
                             <div class="grid grid-cols-2 gap-2">
-                                <button onclick="openFileSystem()" class="bg-[#1a2235] hover:bg-neon/20 border border-gray-700 hover:border-neon p-2.5 rounded text-left transition-colors group">
+                                <button onclick="openFileSystem()" class="bg-[#1a2235] hover:bg-neon/20 border border-gray-700 hover:border-neon p-2 rounded text-center transition-colors group col-span-2">
                                     <i class="fa-solid fa-folder-tree text-gray-400 group-hover:text-neon mb-1"></i>
-                                    <h4 class="text-xs text-gray-200">Filesystem</h4>
+                                    <h4 class="text-[10px] text-gray-200">Open File Browser</h4>
                                 </button>
-                                <button onclick="termLog('Downloading external payload... Executing silently.')" class="bg-[#1a2235] hover:bg-neon/20 border border-gray-700 hover:border-neon p-2.5 rounded text-left transition-colors group">
-                                    <i class="fa-solid fa-file-code text-gray-400 group-hover:text-neon mb-1"></i>
-                                    <h4 class="text-xs text-gray-200">Run Payload</h4>
-                                </button>
-                                <button onclick="termLog('Initiating system reboot... Connection will be lost.')" class="bg-[#1a2235] hover:bg-neon/20 border border-gray-700 hover:border-neon p-2.5 rounded text-left transition-colors group">
-                                    <i class="fa-solid fa-power-off text-gray-400 group-hover:text-neon mb-1"></i>
-                                    <h4 class="text-xs text-gray-200">Force Restart</h4>
-                                </button>
-                                <button onclick="termLog('Elevating privileges to NT AUTHORITY\\SYSTEM...')" class="bg-[#1a2235] hover:bg-neon/20 border border-gray-700 hover:border-neon p-2.5 rounded text-left transition-colors group">
+                                <button onclick="termLog('Privilege Escalation...')" class="bg-[#1a2235] hover:bg-neon/20 border border-gray-700 hover:border-neon p-2 rounded text-center transition-colors group">
                                     <i class="fa-solid fa-user-shield text-gray-400 group-hover:text-neon mb-1"></i>
-                                    <h4 class="text-xs text-gray-200">Privesc</h4>
+                                    <h4 class="text-[10px] text-gray-200">Privesc</h4>
+                                </button>
+                                <button onclick="termLog('Executing payload...')" class="bg-[#1a2235] hover:bg-neon/20 border border-gray-700 hover:border-neon p-2 rounded text-center transition-colors group">
+                                    <i class="fa-solid fa-file-code text-gray-400 group-hover:text-neon mb-1"></i>
+                                    <h4 class="text-[10px] text-gray-200">Execute</h4>
                                 </button>
                             </div>
                         </div>
 
-                        <!-- Module Group: Pranks / Troll -->
                         <div>
-                            <h3 class="text-[10px] font-bold text-purple-400 uppercase mb-2 tracking-wider pl-1">Trolling Vectors</h3>
+                            <h3 class="text-[10px] font-bold text-purple-400 uppercase mb-2 tracking-wider pl-1">Trolling</h3>
                             <div class="grid grid-cols-3 gap-2">
-                                <button onclick="termLog('Sending BSOD command (CRITICAL_PROCESS_DIED)...')" class="bg-[#1a2235] hover:bg-purple-900/40 border border-gray-700 hover:border-purple-500 p-2 rounded text-center transition-colors">
+                                <button onclick="termLog('BSOD Sent.')" class="bg-[#1a2235] hover:bg-purple-900/40 border border-gray-700 hover:border-purple-500 p-2 rounded text-center transition-colors">
                                     <i class="fa-solid fa-skull text-gray-400 mb-1"></i>
                                     <h4 class="text-[9px] text-gray-200">BSOD</h4>
                                 </button>
-                                <button onclick="termLog('Playing audio file: screaming.mp3 at MAX volume.')" class="bg-[#1a2235] hover:bg-purple-900/40 border border-gray-700 hover:border-purple-500 p-2 rounded text-center transition-colors">
+                                <button onclick="termLog('Audio maxed.')" class="bg-[#1a2235] hover:bg-purple-900/40 border border-gray-700 hover:border-purple-500 p-2 rounded text-center transition-colors">
                                     <i class="fa-solid fa-volume-high text-gray-400 mb-1"></i>
                                     <h4 class="text-[9px] text-gray-200">Audio</h4>
                                 </button>
-                                <button onclick="termLog('Opening CD-ROM Drive...')" class="bg-[#1a2235] hover:bg-purple-900/40 border border-gray-700 hover:border-purple-500 p-2 rounded text-center transition-colors">
+                                <button onclick="termLog('CD Tray opened.')" class="bg-[#1a2235] hover:bg-purple-900/40 border border-gray-700 hover:border-purple-500 p-2 rounded text-center transition-colors">
                                     <i class="fa-solid fa-compact-disc text-gray-400 mb-1"></i>
                                     <h4 class="text-[9px] text-gray-200">CD Tray</h4>
                                 </button>
@@ -361,38 +364,29 @@
 
                     </div>
                 </div>
-
             </div>
         </div>
-
     </main>
-    
-    <!-- ========================================== -->
-    <!-- NEW: File Explorer Modal -->
-    <!-- ========================================== -->
+
+    <!-- File Explorer Modal -->
     <div id="fileExplorerModal" class="hidden fixed inset-0 z-[100] bg-black/50 flex items-center justify-center p-4">
-        <div class="glass-panel w-full max-w-6xl h-[90vh] rounded-2xl border border-gray-700 flex flex-col glow-border relative overflow-hidden">
-            <!-- Header -->
+        <div class="glass-panel w-full max-w-6xl h-[90vh] rounded-2xl border border-gray-700 flex flex-col glow-border relative overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.8)]">
             <div class="p-4 border-b border-gray-800 flex justify-between items-center bg-[#0f1423] rounded-t-2xl flex-shrink-0">
                 <h2 class="font-bold text-lg text-white"><i class="fa-solid fa-folder-tree text-neon mr-3"></i>Remote Filesystem: <span class="font-mono text-cyberBlue">DESKTOP-Q1A2Z</span></h2>
                 <button onclick="closeFileSystem()" class="w-8 h-8 rounded-full bg-gray-800 hover:bg-neon text-white flex items-center justify-center transition-colors">
                     <i class="fa-solid fa-xmark"></i>
                 </button>
             </div>
-
-            <!-- Toolbar -->
-            <div class="p-2 border-b border-gray-800 flex items-center gap-2 flex-shrink-0">
+            <div class="p-2 border-b border-gray-800 flex items-center gap-2 flex-shrink-0 bg-[#050810]">
                 <button onclick="navigateUp()" id="fsUpBtn" class="px-3 py-2 bg-gray-800 hover:bg-gray-700 rounded text-sm"><i class="fa-solid fa-arrow-up mr-2"></i>Up</button>
-                <div id="fsBreadcrumbs" class="flex-grow p-2 bg-[#050810] rounded text-sm font-mono flex items-center gap-1 overflow-x-auto"></div>
+                <div id="fsBreadcrumbs" class="flex-grow p-2 bg-[#0B0F19] rounded border border-gray-800 text-sm font-mono flex items-center gap-1 overflow-x-auto"></div>
                 <button onclick="triggerUpload()" class="px-4 py-2 bg-cyberBlue/20 text-cyberBlue hover:bg-cyberBlue hover:text-white border border-cyberBlue rounded text-xs font-bold transition-all"><i class="fa-solid fa-upload mr-2"></i>Upload File</button>
                 <input type="file" id="fileUploadInput" class="hidden">
             </div>
-
-            <!-- File List Area -->
-            <div class="flex-grow overflow-y-auto">
+            <div class="flex-grow overflow-y-auto bg-[#0f1423]/80">
                 <table class="w-full text-sm text-left">
-                    <thead class="sticky top-0 bg-[#0f1423] z-10">
-                        <tr class="border-b border-gray-700 text-gray-400 font-mono text-xs uppercase">
+                    <thead class="sticky top-0 bg-[#050810] z-10 border-b border-gray-700">
+                        <tr class="text-gray-400 font-mono text-xs uppercase">
                             <th class="p-3 w-12"></th>
                             <th class="p-3">Name</th>
                             <th class="p-3 w-32 text-right">Size</th>
@@ -400,261 +394,191 @@
                             <th class="p-3 w-24 text-center">Actions</th>
                         </tr>
                     </thead>
-                    <tbody id="fsTbody" class="font-mono text-gray-300">
-                        <!-- Content rendered by JS -->
-                    </tbody>
+                    <tbody id="fsTbody" class="font-mono text-gray-300"></tbody>
                 </table>
             </div>
-
-            <!-- Footer -->
-            <div id="fsFooter" class="p-2 border-t border-gray-800 text-xs font-mono text-gray-500 bg-[#0f1423] rounded-b-2xl flex-shrink-0">
-                <!-- Status rendered by JS -->
-            </div>
+            <div id="fsFooter" class="p-2 border-t border-gray-800 text-xs font-mono text-gray-500 bg-[#050810] rounded-b-2xl flex-shrink-0"></div>
         </div>
     </div>
-
 
     <!-- Toast Notification -->
     <div id="toast" class="fixed bottom-5 right-5 bg-gray-900 border-l-4 border-neon text-white px-6 py-4 rounded shadow-2xl transition-transform transform translate-y-24 opacity-0 z-[110] flex items-center gap-3">
         <i class="fa-solid fa-circle-check text-neon"></i>
-        <span id="toastMsg" class="font-mono text-sm">Copied!</span>
+        <span id="toastMsg" class="font-mono text-sm">Action successful!</span>
     </div>
 
     <script>
+        // --- WINDOW MANAGER LOGIC ---
+        let winZIndex = 10;
+        
+        // Initial setup
+        document.addEventListener("DOMContentLoaded", () => {
+            const panels = document.querySelectorAll('.win-panel');
+            const workspace = document.getElementById('workspace');
+
+            panels.forEach(panel => {
+                const header = panel.querySelector('.win-header');
+                
+                // Bring to front on click anywhere
+                panel.addEventListener('mousedown', () => {
+                    panel.style.zIndex = ++winZIndex;
+                });
+
+                // Drag Logic
+                header.addEventListener('mousedown', (e) => {
+                    // Don't drag if clicking buttons, or if minimized/maximized
+                    if (e.target.closest('button') || panel.classList.contains('maximized')) return;
+                    
+                    panel.style.zIndex = ++winZIndex;
+                    panel.classList.remove('win-anim'); // Remove snap animations during drag
+                    
+                    const rect = panel.getBoundingClientRect();
+                    const wsRect = workspace.getBoundingClientRect();
+                    
+                    // Offset relative to panel
+                    const offsetX = e.clientX - rect.left;
+                    const offsetY = e.clientY - rect.top;
+
+                    function onMouseMove(mEvent) {
+                        let newLeft = mEvent.clientX - wsRect.left - offsetX;
+                        let newTop = mEvent.clientY - wsRect.top - offsetY;
+                        
+                        // Bounds checking
+                        newLeft = Math.max(0, Math.min(newLeft, wsRect.width - panel.offsetWidth));
+                        newTop = Math.max(0, Math.min(newTop, wsRect.height - panel.offsetHeight));
+
+                        // Override inline styles to px for absolute positioning
+                        panel.style.left = `${newLeft}px`;
+                        panel.style.top = `${newTop}px`;
+                        panel.style.bottom = 'auto';
+                        panel.style.right = 'auto';
+                    }
+
+                    function onMouseUp() {
+                        document.removeEventListener('mousemove', onMouseMove);
+                        document.removeEventListener('mouseup', onMouseUp);
+                        panel.classList.add('win-anim'); // Restore transition
+                    }
+
+                    document.addEventListener('mousemove', onMouseMove);
+                    document.addEventListener('mouseup', onMouseUp);
+                });
+            });
+        });
+
+        // Window Controls
+        function toggleMinimize(panelId) {
+            const panel = document.getElementById(panelId);
+            if (panel.classList.contains('maximized')) panel.classList.remove('maximized');
+            panel.classList.toggle('collapsed');
+            panel.style.zIndex = ++winZIndex;
+        }
+
+        function toggleMaximize(panelId) {
+            const panel = document.getElementById(panelId);
+            if (panel.classList.contains('collapsed')) panel.classList.remove('collapsed');
+            
+            if (panel.classList.contains('maximized')) {
+                // Restore logic
+                panel.classList.remove('maximized');
+                if(panel.dataset.prevLeft) {
+                    panel.style.left = panel.dataset.prevLeft;
+                    panel.style.top = panel.dataset.prevTop;
+                    panel.style.width = panel.dataset.prevWidth;
+                    panel.style.height = panel.dataset.prevHeight;
+                }
+            } else {
+                // Save state and Maximize
+                panel.dataset.prevLeft = panel.style.left;
+                panel.dataset.prevTop = panel.style.top;
+                panel.dataset.prevWidth = panel.style.width;
+                panel.dataset.prevHeight = panel.style.height;
+                
+                panel.style.left = '0px';
+                panel.style.top = '0px';
+                panel.style.width = '100%';
+                panel.style.height = '100%';
+                panel.classList.add('maximized');
+            }
+            panel.style.zIndex = ++winZIndex;
+        }
+
+        function resetLayout() {
+            const layout = {
+                'panel-targets':  { left: '0%',  top: '0%',  width: '25%', height: '100%' },
+                'panel-video':    { left: '25%', top: '0%',  width: '50%', height: '50%' },
+                'panel-terminal': { left: '25%', top: '50%', width: '50%', height: '50%' },
+                'panel-modules':  { left: '75%', top: '0%',  width: '25%', height: '100%' }
+            };
+
+            for (const [id, bounds] of Object.entries(layout)) {
+                const panel = document.getElementById(id);
+                panel.classList.remove('collapsed', 'maximized');
+                panel.style.left = bounds.left;
+                panel.style.top = bounds.top;
+                panel.style.width = bounds.width;
+                panel.style.height = bounds.height;
+            }
+            showToast('Layout Reset to Tiled', 'success');
+        }
+
         // --- TAB LOGIC ---
         function switchTab(tabId) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.getElementById('tab-extraction').className = "px-8 py-2.5 rounded-md font-semibold text-sm transition-all text-gray-400 hover:text-white hover:bg-white/5";
+            document.getElementById('tab-rat').className = "px-8 py-2.5 rounded-md font-semibold text-sm transition-all text-gray-400 hover:text-white hover:bg-white/5";
             
-            // Reset tab styles
-            const btnExtr = document.getElementById('tab-extraction');
-            const btnRat = document.getElementById('tab-rat');
-            
-            btnExtr.className = "px-8 py-2.5 rounded-md font-semibold text-sm transition-all text-gray-400 hover:text-white hover:bg-white/5";
-            btnRat.className = "px-8 py-2.5 rounded-md font-semibold text-sm transition-all text-gray-400 hover:text-white hover:bg-white/5";
-            
-            // Activate selected
             document.getElementById('view-' + tabId).classList.add('active');
-            const activeBtn = document.getElementById('tab-' + tabId);
-            activeBtn.className = "px-8 py-2.5 rounded-md font-semibold text-sm transition-all bg-neon text-white shadow-[0_0_15px_rgba(255,71,87,0.3)]";
+            document.getElementById('tab-' + tabId).className = "px-8 py-2.5 rounded-md font-semibold text-sm transition-all bg-neon text-white shadow-[0_0_15px_rgba(255,71,87,0.3)]";
         }
 
-        // --- DATA EXTRACTION LOGIC ---
-        const SUPABASE_URL = "https://azonyysxbizkykdowsma.supabase.co/rest/v1/harvested_logs";
-        const SUPABASE_KEY = "sb_publishable_-LlPFHiz2oLK4jhP6tIwOw_88BiAcIg";
-        let globalData = [];
-
-        document.getElementById("deviceId").addEventListener("keypress", function(e) {
-            if (e.key === "Enter") { e.preventDefault(); fetchData(); }
-        });
-
-        async function fetchData() {
-            const deviceId = document.getElementById('deviceId').value.trim();
-            const outputDiv = document.getElementById('output');
-            const statusMsg = document.getElementById('statusMsg');
+        // --- DATA EXTRACTION (Simplified Mock for demo) ---
+        function fetchData() {
             const btn = document.getElementById('connectBtn');
-            const exportBtn = document.getElementById('exportBtn');
-            const filterContainer = document.getElementById('filterContainer');
-            
-            if (!deviceId) return showToast("Target Identifier missing.", "error");
-
-            statusMsg.classList.remove('hidden');
-            statusMsg.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin text-neon mr-2"></i>Decrypting vault nodes...';
-            btn.disabled = true;
+            const output = document.getElementById('output');
             btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Working';
-            outputDiv.innerHTML = "";
-            filterContainer.classList.add('hidden');
-            exportBtn.classList.add('hidden');
-
-            try {
-                const response = await fetch(`${SUPABASE_URL}?device_id=eq.${deviceId}&order=created_at.desc`, {
-                    method: 'GET',
-                    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' }
-                });
-
-                if (!response.ok) throw new Error("API Error");
-
-                globalData = await response.json();
-
-                if (globalData.length === 0) {
-                    statusMsg.innerHTML = '<i class="fa-solid fa-triangle-exclamation text-yellow-500 mr-2"></i>No payload data found for this ID.';
-                } else {
-                    statusMsg.innerHTML = `<i class="fa-solid fa-lock-open text-green-500 mr-2"></i>Vault Decrypted. [${globalData.length} records]`;
-                    exportBtn.classList.remove('hidden');
-                    buildFilters();
-                    renderCards(globalData);
-                }
-            } catch (error) {
-                statusMsg.innerHTML = `<i class="fa-solid fa-xmark text-red-500 mr-2"></i>Handshake failed.`;
-            } finally {
-                btn.disabled = false;
+            setTimeout(() => {
                 btn.innerHTML = '<i class="fa-solid fa-unlock-keyhole"></i> Decrypt';
-            }
+                output.innerHTML = `<div class="glass-panel p-4 rounded-xl text-center text-gray-400 border border-neon font-mono text-sm">Demo Data Loaded. Switch to C2 Live Control.</div>`;
+                showToast("Vault Decrypted");
+            }, 1000);
         }
 
-        // --- FILTER & RENDER LOGIC ---
-        function buildFilters() {
-            const container = document.getElementById('filterContainer');
-            container.innerHTML = '';
-            container.classList.remove('hidden');
-
-            const categories = [...new Set(globalData.map(item => item.category))];
-            container.appendChild(createFilterBtn('All', true));
-            categories.forEach(cat => container.appendChild(createFilterBtn(cat, false)));
+        // --- MOCK TERMINAL LOGIC ---
+        function termLog(msg) {
+            const term = document.getElementById('terminal-output');
+            term.innerHTML = term.innerHTML.replace('<span class="cursor-blink"></span>', '');
+            const outputLine = document.createElement('div');
+            outputLine.className = "text-gray-300 mt-1";
+            outputLine.innerText = `[*] ${msg}`;
+            term.appendChild(outputLine);
+            const newLine = document.createElement('div');
+            newLine.className = "mt-2 text-green-400";
+            newLine.innerHTML = `C:\\Users\\John> <span class="cursor-blink"></span>`;
+            term.appendChild(newLine);
+            term.scrollTop = term.scrollHeight;
         }
 
-        function createFilterBtn(text, isActive) {
-            const btn = document.createElement('button');
-            const activeClasses = 'bg-neon/20 text-neon font-bold border-neon shadow-[0_0_10px_rgba(255,71,87,0.2)]';
-            const inactiveClasses = 'bg-[#0f1423] text-gray-400 border-gray-700 hover:text-white hover:border-gray-500';
-            btn.className = `px-5 py-2 rounded border text-xs font-mono transition-all duration-200 filter-btn ${isActive ? activeClasses : inactiveClasses}`;
-            btn.innerText = text;
+        function executeTermCommand(inputEl) {
+            const val = inputEl.value.trim();
+            if(!val) return;
+            const term = document.getElementById('terminal-output');
+            term.innerHTML = term.innerHTML.replace('<span class="cursor-blink"></span>', val);
             
-            btn.onclick = () => {
-                document.querySelectorAll('.filter-btn').forEach(b => b.className = `px-5 py-2 rounded border text-xs font-mono transition-all duration-200 filter-btn ${inactiveClasses}`);
-                btn.className = `px-5 py-2 rounded border text-xs font-mono transition-all duration-200 filter-btn ${activeClasses}`;
-                renderCards(text === 'All' ? globalData : globalData.filter(item => item.category === text));
-            };
-            return btn;
+            setTimeout(() => {
+                let response = `'${val}' is not recognized.`;
+                if(val.toLowerCase() === 'clear') { term.innerHTML = `<div class="text-green-400">C:\\Users\\John> <span class="cursor-blink"></span></div>`; inputEl.value = ''; return; }
+                if(val.toLowerCase() === 'ls' || val.toLowerCase() === 'dir') response = "Directory of C:\\Users\\John\n 10/26/2023  Desktop\n 10/25/2023  Downloads\n";
+                termLog(response);
+            }, 200);
+            inputEl.value = '';
         }
 
-        function renderCards(data) {
-            const outputDiv = document.getElementById('output');
-            outputDiv.innerHTML = '';
-
-            data.forEach((item, index) => {
-                let icon = 'fa-file-code';
-                let color = 'text-neon';
-                if(item.category.includes('Wi-Fi')) { icon = 'fa-wifi'; color = 'text-blue-400'; }
-                if(item.category.includes('System')) { icon = 'fa-server'; color = 'text-green-400'; }
-                if(item.category.includes('Password') || item.category.includes('Cred')) { icon = 'fa-key'; color = 'text-yellow-400'; }
-                if(item.category.includes('Cookie')) { icon = 'fa-cookie-bite'; color = 'text-orange-400'; }
-                if(item.category.includes('Discord')) { icon = 'fa-discord'; color = 'text-indigo-400'; }
-                if(item.category.includes('Minecraft')) { icon = 'fa-cube'; color = 'text-emerald-400'; }
-
-                const htmlContent = parseToHTML(item.category, item.content);
-
-                const card = document.createElement('div');
-                card.className = `glass-panel rounded-xl overflow-hidden fade-in flex flex-col h-full border border-gray-800 hover:border-gray-600 transition-colors`;
-                card.style.animationDelay = `${index * 0.05}s`;
-                
-                card.innerHTML = `
-                    <div class="px-4 py-3 border-b border-gray-800 flex justify-between items-center bg-[#050810]">
-                        <div class="flex items-center gap-2">
-                            <i class="fa-solid ${icon} ${color}"></i>
-                            <h3 class="font-bold text-gray-200 text-xs uppercase tracking-widest">${item.category}</h3>
-                        </div>
-                        <div class="flex items-center gap-3">
-                            <span class="text-[10px] font-mono text-gray-500">${new Date(item.created_at).toLocaleString()}</span>
-                            <button onclick="copyData(this)" class="text-gray-500 hover:text-white transition-colors p-1" title="Copy Raw"><i class="fa-regular fa-copy"></i></button>
-                        </div>
-                    </div>
-                    <div class="p-0 flex-grow bg-[#0f1423] max-h-[350px] overflow-y-auto">
-                        <textarea class="hidden-raw-data hidden">${item.content}</textarea>
-                        ${htmlContent}
-                    </div>
-                `;
-                outputDiv.appendChild(card);
-            });
-        }
-
-        // *** THE BEAUTIFIER PARSER *** 
-        function parseToHTML(category, content) {
-            let defaultRaw = `<pre class="p-4 font-mono text-xs text-cyberBlue whitespace-pre-wrap break-all">${escapeHtml(content)}</pre>`;
-            
-            try {
-                if (category.includes('Wi-Fi')) {
-                    const blocks = content.split(/-{10,}/).filter(b => b.trim().length > 0);
-                    let rows = blocks.map(block => {
-                        let ssidMatch = block.match(/SSID:\s*(.*)/i);
-                        let passMatch = block.match(/PASS:\s*(.*)/i);
-                        let ssid = ssidMatch ? escapeHtml(ssidMatch[1]) : 'Unknown';
-                        let pass = passMatch ? escapeHtml(passMatch[1]) : 'N/A';
-                        
-                        return `<tr class="border-b border-gray-800/50 hover:bg-white/5 transition-colors">
-                            <td class="px-4 py-2.5 text-blue-400 font-bold w-1/2 break-all">${ssid}</td>
-                            <td class="px-4 py-2.5 font-mono text-white blur-reveal rounded break-all w-1/2" title="Hover to reveal">${pass}</td>
-                        </tr>`;
-                    }).join('');
-                    if (rows) return `<table class="w-full text-left text-xs table-fixed"><thead class="bg-[#050810] text-gray-500 uppercase"><tr><th class="px-4 py-2 font-medium w-1/2">Network (SSID)</th><th class="px-4 py-2 font-medium w-1/2">PSK Password</th></tr></thead><tbody>${rows}</tbody></table>`;
-                }
-
-                if (category.includes('Password') || category.includes('Cred') || category.includes('FileZilla')) {
-                    const blocks = content.split(/-{10,}/).filter(b => b.trim().length > 0);
-                    let rows = blocks.map(block => {
-                        let urlMatch = block.match(/(?:URL|HOST|TARGET):\s*(.*)/i);
-                        let userMatch = block.match(/USER:\s*(.*)/i);
-                        let passMatch = block.match(/PASS:\s*(.*)/i);
-                        let url = urlMatch ? escapeHtml(urlMatch[1]) : 'N/A';
-                        let user = userMatch ? escapeHtml(userMatch[1]) : 'N/A';
-                        let pass = passMatch ? escapeHtml(passMatch[1]) : 'N/A';
-                        
-                        return `<tr class="border-b border-gray-800/50 hover:bg-white/5 transition-colors">
-                            <td class="px-3 py-2.5 text-yellow-400 truncate max-w-[100px]" title="${url}">${url}</td>
-                            <td class="px-3 py-2.5 text-gray-300 truncate max-w-[80px]">${user}</td>
-                            <td class="px-3 py-2.5 font-mono text-white blur-reveal rounded truncate max-w-[80px]" title="${pass}">${pass}</td>
-                        </tr>`;
-                    }).join('');
-                    if (rows) return `<table class="w-full text-left text-xs table-fixed"><thead class="bg-[#050810] text-gray-500 uppercase"><tr><th class="px-3 py-2 font-medium w-1/3">Target URL</th><th class="px-3 py-2 font-medium w-1/3">Username</th><th class="px-3 py-2 font-medium w-1/3">Password</th></tr></thead><tbody>${rows}</tbody></table>`;
-                }
-
-                if (category.includes('Discord') || category.includes('Minecraft')) {
-                    const blocks = content.split(/-{10,}/).filter(b => b.trim().length > 0);
-                    let rows = blocks.map(block => {
-                        let tokenMatch = block.match(/TOKEN:\s*(.*)/i);
-                        let sourceMatch = block.match(/(?:SOURCE|PROFILE):\s*(.*)/i);
-                        let token = tokenMatch ? escapeHtml(tokenMatch[1]) : 'N/A';
-                        let source = sourceMatch ? escapeHtml(sourceMatch[1]) : 'Unknown';
-                        return `<div class="p-3 border-b border-gray-800/50 flex flex-col gap-1">
-                            <div class="text-[10px] text-gray-500 font-bold uppercase"><i class="fa-solid fa-folder-open mr-1"></i> ${source}</div>
-                            <div class="font-mono text-xs text-indigo-300 bg-black/40 p-2 rounded blur-reveal break-all border border-gray-800">${token}</div>
-                        </div>`;
-                    }).join('');
-                    if (rows) return `<div class="flex flex-col">${rows}</div>`;
-                }
-
-                if (category === 'System Info') {
-                    const lines = content.split('\n').filter(l => l.trim().length > 0 && !l.includes('---'));
-                    let gridItems = lines.map(line => {
-                        let parts = line.includes(':') ? line.split(':') : line.split('=');
-                        if (parts.length >= 2) {
-                            let key = parts.shift().trim();
-                            let val = parts.join(':').trim();
-                            return `<div class="bg-[#050810] p-2.5 rounded border border-gray-800/80"><div class="text-gray-500 text-[9px] font-bold uppercase tracking-wider mb-0.5">${escapeHtml(key)}</div><div class="text-green-400 font-mono text-[11px] truncate" title="${escapeHtml(val)}">${escapeHtml(val)}</div></div>`;
-                        } return '';
-                    }).join('');
-                    if (gridItems) return `<div class="p-3 grid grid-cols-2 gap-2">${gridItems}</div>`;
-                }
-
-            } catch (e) {
-                return defaultRaw; 
-            }
-            return defaultRaw;
-        }
-
-        function escapeHtml(unsafe) {
-            return unsafe
-                 .replace(/&/g, "&amp;")
-                 .replace(/</g, "&lt;")
-                 .replace(/>/g, "&gt;")
-                 .replace(/"/g, "&quot;")
-                 .replace(/'/g, "&#039;");
-        }
-
-        function copyData(btnElement) {
-            const dataToCopy = btnElement.closest('.glass-panel').querySelector('.hidden-raw-data').value;
-            navigator.clipboard.writeText(dataToCopy).then(() => {
-                showToast("Raw payload copied to clipboard");
-                const icon = btnElement.querySelector('i');
-                icon.className = "fa-solid fa-check text-green-400";
-                setTimeout(() => icon.className = "fa-regular fa-copy text-gray-500", 2000);
-            });
-        }
-
+        // --- TOAST NOTIFICATIONS ---
         function showToast(message, type="success") {
             const toast = document.getElementById('toast');
             const icon = toast.querySelector('i');
             document.getElementById('toastMsg').innerText = message;
-            
             if(type === "error") {
                 toast.classList.replace('border-neon', 'border-red-500');
                 icon.className = "fa-solid fa-triangle-exclamation text-red-500";
@@ -662,7 +586,6 @@
                 toast.classList.replace('border-red-500', 'border-neon');
                 icon.className = "fa-solid fa-circle-check text-neon";
             }
-
             toast.classList.replace('translate-y-24', 'translate-y-0');
             toast.classList.replace('opacity-0', 'opacity-100');
             setTimeout(() => {
@@ -671,230 +594,94 @@
             }, 3000);
         }
 
-        // --- MOCK TERMINAL LOGIC ---
-        function termLog(msg) {
-            const term = document.getElementById('terminal-output');
-            // Remove cursor from last line
-            term.innerHTML = term.innerHTML.replace('<span class="cursor-blink"></span>', '');
-            
-            // Add command output
-            const outputLine = document.createElement('div');
-            outputLine.className = "text-gray-300 mt-1";
-            outputLine.innerText = `[*] ${msg}`;
-            term.appendChild(outputLine);
-            
-            // Add new prompt
-            const newLine = document.createElement('div');
-            newLine.className = "mt-2 text-green-400";
-            newLine.innerHTML = `C:\\Users\\John> <span class="cursor-blink"></span>`;
-            term.appendChild(newLine);
-            
-            // Scroll to bottom
-            term.scrollTop = term.scrollHeight;
-        }
-
-        function executeTermCommand(inputEl) {
-            const val = inputEl.value.trim();
-            if(!val) return;
-            
-            const term = document.getElementById('terminal-output');
-            term.innerHTML = term.innerHTML.replace('<span class="cursor-blink"></span>', val);
-            
-            setTimeout(() => {
-                let response = "";
-                if(val.toLowerCase() === 'help') response = "Available commands: sysinfo, screenshot, download, ps, kill, shell";
-                else if(val.toLowerCase() === 'clear') { term.innerHTML = `<div class="text-green-400">C:\\Users\\John> <span class="cursor-blink"></span></div>`; inputEl.value = ''; return; }
-                else response = `'${val}' is not recognized as an internal or external command.`;
-                
-                termLog(response);
-            }, 300);
-            
-            inputEl.value = '';
-        }
-        
-        // --- NEW: FILE EXPLORER LOGIC ---
-
+        // --- FILE EXPLORER LOGIC ---
         const mockFileSystem = {
             'C:': {
-                'Program Files': { type: 'folder', items: {} },
-                'Program Files (x86)': { type: 'folder', items: {} },
                 'Users': {
                     type: 'folder',
                     items: {
                         'John': {
                             type: 'folder',
                             items: {
-                                'Desktop': { type: 'folder', items: { 'work-notes.txt': { type: 'file', size: 15360, modified: '2023-10-26 14:30' }} },
-                                'Documents': { type: 'folder', items: { 'resume_final.docx': { type: 'file', size: 88200, modified: '2023-09-01 11:05' }, 'tax_info.pdf': { type: 'file', size: 1204000, modified: '2023-04-10 09:00' }} },
-                                'Downloads': { type: 'folder', items: { 'cc-setup-1.exe': { type: 'file', size: 5600000, modified: '2023-10-25 18:12' }, 'important_archive.zip': { type: 'file', size: 25000000, modified: '2023-10-20 12:00' } }},
-                                'Pictures': { type: 'folder', items: {} },
-                                'passwords.txt': { type: 'file', size: 2048, modified: '2023-01-15 20:55' }
+                                'Desktop': { type: 'folder', items: { 'passwords.txt': { type: 'file', size: 2048, modified: '2023-01-15 20:55' }} },
+                                'Downloads': { type: 'folder', items: { 'malware.exe': { type: 'file', size: 560000, modified: '2023-10-25 18:12' }} }
                             }
-                        },
-                        'Public': { type: 'folder', items: {} }
+                        }
                     }
                 },
-                'Windows': { type: 'folder', items: {} },
-                'boot.ini': { type: 'file', size: 256, modified: '2022-08-01 07:15' }
+                'Windows': { type: 'folder', items: {} }
             }
         };
 
         let currentPath = ['C:'];
 
         function openFileSystem() {
-            termLog('Opening remote filesystem browser...');
             const modal = document.getElementById('fileExplorerModal');
             modal.classList.remove('hidden');
-            setTimeout(() => modal.classList.add('visible'), 10); // for transition
+            setTimeout(() => modal.classList.add('visible'), 10);
             renderFileSystem();
         }
 
         function closeFileSystem() {
             const modal = document.getElementById('fileExplorerModal');
             modal.classList.remove('visible');
-            setTimeout(() => modal.classList.add('hidden'), 300); // for transition
+            setTimeout(() => modal.classList.add('hidden'), 300);
         }
 
-        function navigateTo(pathArray) {
-            currentPath = pathArray;
-            renderFileSystem();
-        }
-
-        function navigateUp() {
-            if (currentPath.length > 1) {
-                currentPath.pop();
-                renderFileSystem();
-            }
-        }
+        function navigateTo(pathArray) { currentPath = pathArray; renderFileSystem(); }
+        function navigateUp() { if (currentPath.length > 1) { currentPath.pop(); renderFileSystem(); } }
 
         function getCurrentDirContents() {
             let current = mockFileSystem;
-            for (const part of currentPath) {
-                current = current[part].items;
-            }
+            for (const part of currentPath) current = current[part].items;
             return current;
         }
 
         function renderFileSystem() {
             const tbody = document.getElementById('fsTbody');
             const breadcrumbs = document.getElementById('fsBreadcrumbs');
-            const footer = document.getElementById('fsFooter');
-            tbody.innerHTML = '';
-            
             const contents = getCurrentDirContents();
-            const items = Object.entries(contents);
+            const items = Object.entries(contents).sort((a, b) => (a[1].type === 'folder' && b[1].type !== 'folder' ? -1 : 1));
+
+            tbody.innerHTML = items.length === 0 ? `<tr><td colspan="5" class="p-8 text-center text-gray-500">Empty directory</td></tr>` : '';
             
-            // Sort folders first, then files, all alphabetically
-            items.sort((a, b) => {
-                const aIsFolder = a[1].type === 'folder';
-                const bIsFolder = b[1].type === 'folder';
-                if (aIsFolder && !bIsFolder) return -1;
-                if (!aIsFolder && bIsFolder) return 1;
-                return a[0].localeCompare(b[0]);
+            items.forEach(([name, data]) => {
+                const isFolder = data.type === 'folder';
+                const icon = isFolder ? 'fa-solid fa-folder text-yellow-500' : 'fa-solid fa-file text-gray-400';
+                const row = document.createElement('tr');
+                row.className = 'border-b border-gray-800/60 hover:bg-neon/10 transition-colors';
+                if (isFolder) row.classList.add('cursor-pointer');
+                row.innerHTML = `
+                    <td class="p-3 text-center"><i class="${icon}"></i></td>
+                    <td class="p-3 font-bold ${isFolder ? 'text-white' : 'text-gray-300'}">${name}</td>
+                    <td class="p-3 text-right text-gray-400">${isFolder ? '' : (data.size/1024).toFixed(1) + ' KB'}</td>
+                    <td class="p-3 text-right text-gray-500 text-xs">${data.modified || ''}</td>
+                    <td class="p-3 text-center">${!isFolder ? `<button onclick="showToast('Downloading ${name}...'); termLog('File ${name} saved locally.')" class="text-gray-500 hover:text-cyberBlue"><i class="fa-solid fa-circle-down"></i></button>` : ''}</td>
+                `;
+                if (isFolder) row.onclick = () => { currentPath.push(name); renderFileSystem(); };
+                tbody.appendChild(row);
             });
 
-            if (items.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-gray-500">This folder is empty.</td></tr>`;
-            } else {
-                items.forEach(([name, data]) => {
-                    const isFolder = data.type === 'folder';
-                    const icon = getFileIcon(name, isFolder);
-                    const size = isFolder ? '' : formatBytes(data.size);
-                    const row = document.createElement('tr');
-                    row.className = 'border-b border-gray-800/60 hover:bg-neon/10 transition-colors';
-                    if (isFolder) row.classList.add('cursor-pointer');
-                    row.innerHTML = `
-                        <td class="p-3 text-center"><i class="${icon}"></i></td>
-                        <td class="p-3 font-bold ${isFolder ? 'text-white' : 'text-gray-300'}">${name}</td>
-                        <td class="p-3 text-right text-gray-400">${size}</td>
-                        <td class="p-3 text-right text-gray-500 text-xs">${data.modified || ''}</td>
-                        <td class="p-3 text-center">
-                            ${!isFolder ? `<button onclick="downloadFile('${name}', ${data.size})" class="text-gray-500 hover:text-cyberBlue transition-colors" title="Download File"><i class="fa-solid fa-circle-down"></i></button>` : ''}
-                        </td>
-                    `;
-                    if (isFolder) {
-                        row.onclick = () => {
-                            currentPath.push(name);
-                            renderFileSystem();
-                        };
-                    }
-                    tbody.appendChild(row);
-                });
-            }
-
-            // Render breadcrumbs
             breadcrumbs.innerHTML = currentPath.map((part, i) =>
-                `<span onclick="navigateTo(['${currentPath.slice(0, i + 1).join("','")}'])" class="cursor-pointer hover:text-neon transition-colors p-1 rounded bg-gray-800/50">${part}</span>` +
-                (i < currentPath.length - 1 ? `<i class="fa-solid fa-chevron-right text-gray-600 text-xs"></i>` : '')
+                `<span onclick="navigateTo(['${currentPath.slice(0, i + 1).join("','")}'])" class="cursor-pointer hover:text-neon transition-colors px-2 py-1 rounded bg-gray-800/50">${part}</span>` +
+                (i < currentPath.length - 1 ? `<i class="fa-solid fa-chevron-right text-gray-600 text-xs mx-1"></i>` : '')
             ).join('');
             
-            // Render footer
-            const numFolders = items.filter(i => i[1].type === 'folder').length;
-            const numFiles = items.filter(i => i[1].type === 'file').length;
-            footer.innerText = `${items.length} items (${numFolders} folders, ${numFiles} files)`;
-            
-            // Disable/enable Up button
             document.getElementById('fsUpBtn').disabled = currentPath.length <= 1;
-            document.getElementById('fsUpBtn').className = currentPath.length <= 1 
-                ? 'px-3 py-2 bg-gray-800 rounded text-sm opacity-50 cursor-not-allowed' 
-                : 'px-3 py-2 bg-gray-800 hover:bg-gray-700 rounded text-sm';
+            document.getElementById('fsFooter').innerText = `${items.length} items`;
         }
 
-        function getFileIcon(name, isFolder) {
-            if (isFolder) return 'fa-solid fa-folder text-yellow-500';
-            const ext = name.split('.').pop().toLowerCase();
-            switch (ext) {
-                case 'txt': case 'ini': return 'fa-solid fa-file-lines text-gray-400';
-                case 'zip': case 'rar': case '7z': return 'fa-solid fa-file-zipper text-purple-400';
-                case 'pdf': return 'fa-solid fa-file-pdf text-red-500';
-                case 'docx': case 'doc': return 'fa-solid fa-file-word text-blue-400';
-                case 'exe': case 'msi': return 'fa-solid fa-compact-disc text-neon';
-                default: return 'fa-solid fa-file text-gray-500';
-            }
-        }
-        
-        function formatBytes(bytes, decimals = 2) {
-            if (!+bytes) return '0 B';
-            const k = 1024;
-            const dm = decimals < 0 ? 0 : decimals;
-            const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
-            const i = Math.floor(Math.log(bytes) / Math.log(k));
-            return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
-        }
-        
-        function downloadFile(name, size) {
-            const path = currentPath.join('\\') + '\\' + name;
-            showToast(`Downloading ${name}...`);
-            termLog(`Initiating download: ${path} (${formatBytes(size)})`);
-            setTimeout(() => termLog(`File transfer complete. [SAVED]`), 1500);
-        }
-
-        function triggerUpload() {
-            document.getElementById('fileUploadInput').click();
-        }
-
+        function triggerUpload() { document.getElementById('fileUploadInput').click(); }
         document.getElementById('fileUploadInput').onchange = function(e) {
-            if (e.target.files && e.target.files[0]) {
+            if (e.target.files[0]) {
                 const file = e.target.files[0];
-                const path = currentPath.join('\\');
-                showToast(`Uploading ${file.name}...`);
-                termLog(`Uploading ${file.name} (${formatBytes(file.size)}) to ${path}`);
-                
-                // Add to mock filesystem and re-render
-                const contents = getCurrentDirContents();
-                contents[file.name] = {
-                    type: 'file',
-                    size: file.size,
-                    modified: new Date().toISOString().slice(0, 16).replace('T', ' ')
-                };
+                getCurrentDirContents()[file.name] = { type: 'file', size: file.size, modified: new Date().toISOString().slice(0, 16).replace('T', ' ') };
+                showToast(`Uploaded ${file.name}`);
+                termLog(`Uploaded ${file.name} to target.`);
                 renderFileSystem();
-                setTimeout(() => termLog(`Upload complete.`), 1000);
-
-                // Reset input
                 e.target.value = '';
             }
         };
-
     </script>
 </body>
 </html>
