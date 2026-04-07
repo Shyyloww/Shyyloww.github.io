@@ -9,168 +9,52 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- Tailwind CSS -->
+    <!-- Tailwind CSS (Keep CDN for utility classes) -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
             theme: {
-                extend: { fontFamily: { sans: ['Inter', 'sans-serif'], mono: ['JetBrains Mono', 'monospace'], } }
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'], mono: ['JetBrains Mono', 'monospace'], },
+                    colors: { dark: '#050810', panel: '#0f1423', neon: '#ff4757', neonHover: '#ff6b81', cyberBlue: '#00d2d3' }
+                }
             }
         }
     </script>
 
-    <style>
-        /* --- THEME VARIABLES --- */
-        :root {
-            --c-bg: #050810;
-            --c-panel: #0f1423;
-            --c-main: #ff4757;
-            --c-main-hover: #ff6b81;
-            --c-sec: #00d2d3;
-            --c-text: #e2e8f0;
-            --c-border: rgba(255, 71, 87, 0.2);
-            --c-grid: rgba(255, 71, 87, 0.03);
-        }
-
-        [data-theme="matrix"] {
-            --c-bg: #010a04;
-            --c-panel: #031407;
-            --c-main: #00ff41;
-            --c-main-hover: #33ff66;
-            --c-sec: #008f11;
-            --c-text: #aaffbb;
-            --c-border: rgba(0, 255, 65, 0.2);
-            --c-grid: rgba(0, 255, 65, 0.03);
-        }
-
-        [data-theme="synthwave"] {
-            --c-bg: #090214;
-            --c-panel: #17042e;
-            --c-main: #ff00ff;
-            --c-main-hover: #ff66ff;
-            --c-sec: #00ffff;
-            --c-text: #f0d8ff;
-            --c-border: rgba(255, 0, 255, 0.2);
-            --c-grid: rgba(255, 0, 255, 0.03);
-        }
-
-        body { 
-            background-color: var(--c-bg); 
-            color: var(--c-text); 
-            position: relative;
-            overflow-x: hidden;
-            transition: background-color 0.5s ease, color 0.5s ease;
-        }
-        
-        /* Animated Cyber Grid Background */
-        body::before {
-            content: ""; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-            background-image: linear-gradient(var(--c-grid) 1px, transparent 1px), linear-gradient(90deg, var(--c-grid) 1px, transparent 1px);
-            background-size: 30px 30px; z-index: -2; animation: gridMove 20s linear infinite;
-            transition: background-image 0.5s ease;
-        }
-        @keyframes gridMove { 0% { transform: translateY(0); } 100% { transform: translateY(30px); } }
-
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: var(--c-bg); }
-        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: var(--c-main); }
-
-        .glass-panel { background: var(--c-panel); backdrop-filter: blur(12px); box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5); border: 1px solid rgba(255,255,255,0.05); }
-        .text-glow-main { text-shadow: 0 0 10px var(--c-main); }
-        .text-glow-sec { text-shadow: 0 0 10px var(--c-sec); }
-        .glow-border { border: 1px solid var(--c-border); box-shadow: 0 0 15px var(--c-border); }
-        
-        .fade-in { animation: fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
-        
-        .tab-content { display: none !important; }
-        .tab-content.active { display: flex !important; flex-direction: column; flex-grow: 1; animation: fadeIn 0.3s ease-in-out; }
-        
-        .cursor-blink::after { content: '█'; animation: blink 1s step-start infinite; color: var(--c-main); margin-left: 4px; }
-        @keyframes blink { 50% { opacity: 0; } }
-
-        /* --- Tiling Window Manager Styles --- */
-        #workspace { position: relative; width: calc(100% + 1.5rem); height: 80vh; display: flex; margin: -0.75rem; }
-        .tiling-col { display: flex; flex-direction: column; transition: flex-basis 0.2s ease; min-width: 200px; }
-        .drag-slot { position: relative; flex: 1 1 auto; display: flex; flex-direction: column; transition: flex-basis 0.2s ease; min-height: 48px; padding: 0.75rem; }
-
-        .drag-slot.drag-over::before {
-            content: ''; position: absolute; inset: 0.75rem; z-index: 50;
-            background: rgba(255,255,255,0.05); border: 2px dashed var(--c-sec);
-            border-radius: 0.75rem; pointer-events: none;
-        }
-
-        .drag-panel {
-            width: 100%; height: 100%; display: flex; flex-direction: column;
-            background: var(--c-panel); backdrop-filter: blur(12px); 
-            border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 0.75rem; box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5); transition: opacity 0.2s ease;
-        }
-        .drag-panel:hover { border-color: var(--c-border); }
-        .drag-panel.dragging { opacity: 0.4; }
-        .draggable-header { cursor: grab; user-select: none; flex-shrink: 0; }
-        .draggable-header:active { cursor: grabbing; }
-        .win-content { flex-grow: 1; overflow-y: auto; overflow-x: hidden; }
-
-        .drag-panel.collapsed { height: 48px !important; flex: 0 0 48px !important; border-bottom: 1px solid var(--c-sec); }
-        .drag-panel.collapsed .win-content { display: none; }
-        .drag-panel.maximized { position: fixed !important; inset: 2rem !important; width: calc(100% - 4rem) !important; height: calc(100% - 4rem) !important; z-index: 900 !important; border-radius: 10px; border: 1px solid var(--c-sec); box-shadow: 0 0 50px rgba(0, 0, 0, 0.9); }
-
-        .resizer-v { cursor: col-resize; width: 1.5rem; margin: 0 -0.75rem; z-index: 10; position: relative; flex-shrink: 0; }
-        .resizer-v::after { content: ''; position: absolute; left: 50%; transform: translateX(-50%); top: 0; bottom: 0; width: 2px; background: transparent; transition: 0.2s; }
-        .resizer-v:hover::after, .resizer-v.active::after { background: var(--c-sec); box-shadow: 0 0 8px var(--c-sec); }
-
-        .resizer-h { cursor: row-resize; height: 1.5rem; margin: -0.75rem 0; z-index: 10; position: relative; flex-shrink: 0; }
-        .resizer-h::after { content: ''; position: absolute; top: 50%; transform: translateY(-50%); left: 0; right: 0; height: 2px; background: transparent; transition: 0.2s; }
-        .resizer-h:hover::after, .resizer-h.active::after { background: var(--c-sec); box-shadow: 0 0 8px var(--c-sec); }
-
-        /* RADAR ANIMATION */
-        .radar-box { position: relative; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; overflow: hidden; }
-        .radar-grid { position: absolute; inset: 0; background-image: radial-gradient(rgba(255,255,255,0.1) 1px, transparent 1px); background-size: 20px 20px; border-radius: 50%; width: 150px; height: 150px; border: 1px solid var(--c-sec); margin: auto; }
-        .radar-sweep { position: absolute; width: 75px; height: 75px; background: conic-gradient(from 0deg, transparent 70%, var(--c-sec) 100%); border-radius: 100% 0 0 0; transform-origin: bottom right; top: 50%; left: 50%; transform: translate(-100%, -100%); animation: sweep 3s linear infinite; }
-        @keyframes sweep { 100% { transform: translate(-100%, -100%) rotate(360deg); } }
-        .blip { position: absolute; width: 4px; height: 4px; background: var(--c-main); border-radius: 50%; box-shadow: 0 0 8px var(--c-main); animation: blipFade 3s infinite; }
-        @keyframes blipFade { 0% { opacity: 1; transform: scale(1); } 50% { opacity: 0; transform: scale(2); } 100% { opacity: 0; } }
-
-        /* MODALS */
-        #fileExplorerModal, #scorchedEarthModal { transition: opacity 0.3s, backdrop-filter 0.3s; }
-        #fileExplorerModal.hidden, #scorchedEarthModal.hidden { opacity: 0; pointer-events: none; backdrop-filter: blur(0px); }
-        #fileExplorerModal.visible, #scorchedEarthModal.visible { opacity: 1; pointer-events: auto; backdrop-filter: blur(5px); }
-    </style>
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="style.css">
 </head>
-<body class="min-h-screen flex flex-col font-sans antialiased selection:bg-[var(--c-main)] selection:text-white">
+<body class="min-h-screen flex flex-col font-sans antialiased selection:bg-neon selection:text-white">
 
     <!-- Navbar -->
-    <nav class="glass-panel border-b border-[rgba(255,255,255,0.05)] sticky top-0 z-50">
+    <nav class="glass-panel border-b border-gray-800/80 sticky top-0 z-50">
         <div class="max-w-[95%] mx-auto px-4">
             <div class="flex items-center justify-between h-16">
-                
                 <!-- Left: Logo -->
                 <div class="flex items-center gap-3 flex-1">
-                    <i class="fa-solid fa-duck text-[var(--c-main)] text-2xl text-glow-main"></i>
-                    <span class="font-bold text-xl tracking-wider uppercase">Ugly<span class="text-[var(--c-main)]">Ducky</span></span>
+                    <i class="fa-solid fa-duck text-neon text-2xl text-glow"></i>
+                    <span class="font-bold text-xl tracking-wider text-white uppercase">Ugly<span class="text-neon">Ducky</span> <span class="text-xs text-gray-500 font-mono tracking-normal ml-2 hidden sm:inline-block">v2.5.0_MAPS</span></span>
                 </div>
 
                 <!-- Center: Navigation Tabs -->
                 <div class="flex-none flex justify-center">
-                    <div class="p-1.5 rounded-lg inline-flex gap-1 border border-gray-800 bg-[rgba(0,0,0,0.3)]">
+                    <div class="p-1.5 rounded-lg inline-flex gap-1 border border-gray-800 bg-[#050810]">
                         <button onclick="switchTab('extraction')" id="tab-extraction" class="px-6 py-1.5 rounded-md font-semibold text-sm transition-all text-gray-400 hover:text-white hover:bg-white/5">
                             <i class="fa-solid fa-database mr-2"></i> Vault Extraction
                         </button>
-                        <button onclick="switchTab('rat')" id="tab-rat" class="px-6 py-1.5 rounded-md font-semibold text-sm transition-all bg-[var(--c-main)] text-white shadow-[0_0_15px_var(--c-border)]">
+                        <button onclick="switchTab('rat')" id="tab-rat" class="px-6 py-1.5 rounded-md font-semibold text-sm transition-all bg-neon text-white shadow-[0_0_15px_rgba(255,71,87,0.3)]">
                             <i class="fa-solid fa-network-wired mr-2"></i> C2 Live Control
                         </button>
                     </div>
                 </div>
                 
-                <!-- Right: Status & Theme -->
-                <div class="flex items-center gap-6 font-mono text-xs flex-1 justify-end">
-                    <div class="hidden md:flex items-center gap-2 text-gray-400"><i class="fa-solid fa-shield-halved text-[var(--c-main)]"></i> SEC: ENCRYPTED</div>
-                    <button onclick="cycleTheme()" class="w-8 h-8 rounded bg-gray-800 hover:bg-gray-700 flex items-center justify-center text-[var(--c-sec)] transition-colors" title="Change Theme">
-                        <i class="fa-solid fa-palette"></i>
-                    </button>
+                <!-- Right: Status -->
+                <div class="hidden md:flex items-center gap-6 font-mono text-xs flex-1 justify-end">
+                    <div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_8px_#22c55e] animate-pulse"></span> <span class="text-gray-300">SERVER: ONLINE</span></div>
+                    <div class="flex items-center gap-2 text-gray-400"><i class="fa-solid fa-satellite-dish text-cyberBlue"></i> PING: 24ms</div>
+                    <div class="flex items-center gap-2 text-gray-400"><i class="fa-solid fa-shield-halved text-neon"></i> SEC: ENCRYPTED</div>
                 </div>
-
             </div>
         </div>
     </nav>
@@ -179,30 +63,35 @@
     <main class="flex-grow max-w-[95%] mx-auto px-2 py-8 w-full flex flex-col">
         
         <!-- ========================================== -->
-        <!-- TAB 1: DATA EXTRACTION                     -->
+        <!-- TAB 1: DATA EXTRACTION -->
         <!-- ========================================== -->
         <div id="view-extraction" class="tab-content">
             <div class="text-center mb-6">
-                <h1 class="text-4xl md:text-5xl font-bold mb-3 tracking-tight">Secure <span class="text-[var(--c-main)] text-glow-main">Vault</span></h1>
+                <h1 class="text-4xl md:text-5xl font-bold text-white mb-3 tracking-tight">Secure <span class="text-neon text-glow">Vault</span></h1>
                 <p class="text-gray-400 font-mono text-sm">Awaiting authentication parameters to decrypt harvested logs...</p>
             </div>
-
-            <!-- Input Section -->
-            <div class="max-w-2xl mx-auto glass-panel p-8 rounded-2xl mb-6 relative overflow-hidden">
-                <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[var(--c-sec)] to-transparent opacity-50"></div>
+            <div class="max-w-2xl mx-auto glass-panel p-8 rounded-2xl border border-gray-800 mb-6 relative overflow-hidden">
+                <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-cyberBlue to-transparent opacity-50"></div>
+                <label class="block text-xs font-bold text-cyberBlue mb-3 uppercase tracking-widest"><i class="fa-solid fa-microchip mr-2"></i>Target Identifier</label>
                 <div class="flex flex-col sm:flex-row gap-3">
                     <div class="relative flex-grow">
-                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none"><i class="fa-solid fa-fingerprint text-gray-500"></i></div>
+                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                            <i class="fa-solid fa-fingerprint text-gray-500"></i>
+                        </div>
                         <input type="text" id="deviceId" placeholder="Enter Ducky ID (e.g. TEST_ID)" autocomplete="off" 
-                            class="block w-full pl-12 pr-4 py-4 bg-[rgba(0,0,0,0.5)] border border-gray-700 rounded-lg text-white placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-[var(--c-sec)] transition-all font-mono text-lg">
+                            class="block w-full pl-12 pr-4 py-4 bg-[#050810] border border-gray-700 rounded-lg text-white placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-cyberBlue transition-all font-mono text-lg shadow-inner">
                     </div>
-                    <button onclick="fetchData()" id="connectBtn" class="bg-[var(--c-sec)] hover:opacity-80 text-black font-bold py-4 px-8 rounded-lg transition-all flex items-center justify-center gap-2">
+                    <button onclick="fetchData()" id="connectBtn" class="bg-cyberBlue hover:bg-teal-400 text-dark font-bold py-4 px-8 rounded-lg transition-all flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(0,210,211,0.4)]">
                         <i class="fa-solid fa-unlock-keyhole"></i> Decrypt
                     </button>
                 </div>
-                <p id="statusMsg" class="text-sm font-mono text-gray-400 mt-4 hidden"></p>
+                <div class="flex justify-between items-center mt-4">
+                    <p id="statusMsg" class="text-sm font-mono text-gray-400 hidden"></p>
+                    <button id="exportBtn" class="hidden text-xs font-mono bg-gray-800 hover:bg-gray-700 text-white px-3 py-1.5 rounded transition-colors">
+                        <i class="fa-solid fa-download mr-1"></i> Export Logs
+                    </button>
+                </div>
             </div>
-            
             <div id="filterContainer" class="hidden max-w-7xl mx-auto mb-4 flex flex-wrap gap-2 justify-center pb-4"></div>
             <div id="output" class="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 w-full" style="margin: -0.75rem; width: calc(100% + 1.5rem);"></div>
         </div>
@@ -212,7 +101,7 @@
         <!-- ========================================== -->
         <div id="view-rat" class="tab-content active">
             <div class="flex justify-between items-center mb-4 px-2">
-                <div class="font-mono text-xs text-[var(--c-sec)]"><i class="fa-solid fa-border-all mr-2"></i>Hypr-Tiling Active <span class="text-gray-500 ml-2">(Drag headers to swap. Drag gaps to resize.)</span></div>
+                <div class="font-mono text-xs text-cyberBlue"><i class="fa-solid fa-border-all mr-2"></i>Hypr-Tiling Active</div>
                 <button onclick="resetLayout()" class="px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-gray-300 text-xs font-mono rounded border border-gray-700 transition-colors">
                     <i class="fa-solid fa-rotate-left mr-1"></i> Reset Grid
                 </button>
@@ -220,119 +109,73 @@
 
             <!-- Tiling Workspace -->
             <div id="workspace">
-                
-                <!-- COL 1 (20%) -->
-                <div id="col-left" class="tiling-col" style="flex-basis: 20%;">
-                    
-                    <!-- Nodes -->
-                    <div class="drag-slot" id="slot-1" style="flex-basis: 60%;">
+                <!-- LEFT COLUMN -->
+                <div id="col-left" class="tiling-col" style="flex-basis: 25%;">
+                    <div class="drag-slot" id="slot-1">
                         <div id="panel-targets" class="drag-panel" data-minimized="false">
-                            <div class="draggable-header p-3 border-b border-[rgba(255,255,255,0.05)] bg-[rgba(0,0,0,0.3)] flex justify-between items-center rounded-t-[0.75rem]" draggable="true">
-                                <h2 class="font-bold text-xs tracking-wider uppercase text-gray-300 pointer-events-none"><i class="fa-solid fa-crosshairs text-[var(--c-main)] mr-2"></i>Infected Nodes</h2>
+                            <div class="draggable-header p-3 border-b border-gray-800 bg-[#0f1423] flex justify-between items-center rounded-t-[0.75rem]" draggable="true">
+                                <h2 class="font-bold text-xs tracking-wider uppercase text-gray-300 pointer-events-none"><i class="fa-solid fa-crosshairs text-neon mr-2 text-glow"></i>Infected Nodes</h2>
                                 <div class="flex gap-2">
-                                    <button onclick="toggleMinimize(this, 'panel-targets')" class="w-4 h-4 rounded-full bg-yellow-500/20 text-yellow-500 flex items-center justify-center text-[8px]"><i class="fa-solid fa-minus"></i></button>
+                                    <button onclick="toggleMinimize(this, 'panel-targets')" class="w-4 h-4 rounded-full bg-yellow-500/20 text-yellow-500 hover:bg-yellow-500 hover:text-white flex items-center justify-center text-[8px]"><i class="fa-solid fa-minus"></i></button>
+                                    <button onclick="toggleMaximize(this, 'panel-targets')" class="w-4 h-4 rounded-full bg-green-500/20 text-green-500 hover:bg-green-500 hover:text-white flex items-center justify-center text-[8px]"><i class="fa-solid fa-expand"></i></button>
                                 </div>
                             </div>
-                            <div class="win-content p-3 space-y-2 bg-[rgba(0,0,0,0.2)] rounded-b-[0.75rem]" id="node-list">
-                                <!-- Active Node -->
-                                <div class="p-3 border border-[var(--c-main)] bg-[rgba(255,255,255,0.02)] rounded-lg relative overflow-hidden group">
-                                    <div class="absolute left-0 top-0 bottom-0 w-1 bg-[var(--c-main)]"></div>
-                                    <div class="flex justify-between items-start mb-2 pl-2">
-                                        <div class="flex items-center gap-2">
-                                            <i class="fa-brands fa-windows text-[var(--c-sec)] text-lg"></i>
-                                            <div><p class="text-sm font-bold">DESKTOP-Q1A2Z</p><p class="text-[10px] text-gray-400 font-mono">192.168.1.44</p></div>
-                                        </div>
-                                        <span class="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse"></span>
-                                    </div>
-                                    <div class="flex justify-between mt-2 pl-2 border-t border-[rgba(255,255,255,0.05)] pt-2">
-                                        <span class="text-[9px] font-mono text-[var(--c-main)]">ADMIN: YES</span>
-                                        <button onclick="triggerScorchedEarth(this)" class="text-[9px] font-bold bg-red-900/50 text-red-400 hover:bg-red-600 hover:text-white px-2 py-0.5 rounded transition border border-red-800"><i class="fa-solid fa-skull mr-1"></i>BURN</button>
-                                    </div>
-                                </div>
+                            <div class="win-content p-3 space-y-2 bg-[#050810]/50 rounded-b-[0.75rem]" id="nodes-list">
+                                <!-- Nodes rendered by JS -->
                             </div>
                         </div>
                     </div>
-                    
-                    <!-- Resizer Horizontal -->
-                    <div class="resizer-h" id="rz-h1"></div>
-
-                    <!-- Radar Map -->
-                    <div class="drag-slot" id="slot-2" style="flex-basis: 40%;">
-                        <div id="panel-radar" class="drag-panel" data-minimized="false">
-                            <div class="draggable-header p-3 border-b border-[rgba(255,255,255,0.05)] bg-[rgba(0,0,0,0.3)] flex justify-between items-center rounded-t-[0.75rem]" draggable="true">
-                                <h2 class="font-bold text-xs tracking-wider uppercase text-gray-300 pointer-events-none"><i class="fa-solid fa-satellite-dish text-[var(--c-sec)] mr-2"></i>Global Radar</h2>
-                            </div>
-                            <div class="win-content bg-[rgba(0,0,0,0.5)] rounded-b-[0.75rem]">
-                                <div class="radar-box">
-                                    <div class="radar-grid"></div>
-                                    <div class="radar-sweep"></div>
-                                    <div class="blip" style="top: 30%; left: 40%;"></div>
-                                    <div class="blip" style="top: 60%; left: 70%; animation-delay: 1s;"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
                 </div>
 
-                <!-- Resizer Vertical 1 -->
                 <div class="resizer-v" id="rz-v1"></div>
 
-                <!-- COL 2 (55%) -->
-                <div id="col-mid" class="tiling-col" style="flex-basis: 55%;">
+                <!-- MIDDLE COLUMN -->
+                <div id="col-mid" class="tiling-col" style="flex-basis: 50%;">
                     
-                    <!-- Row 1: Keylogger & Network -->
-                    <div class="flex flex-row flex-1 min-h-[48px]" style="flex-basis: 50%;">
-                        
-                        <!-- Keylogger -->
-                        <div class="drag-slot" id="slot-3" style="flex-basis: 60%;">
-                            <div id="panel-keys" class="drag-panel" data-minimized="false">
-                                <div class="draggable-header p-3 border-b border-[rgba(255,255,255,0.05)] bg-[rgba(0,0,0,0.3)] flex justify-between items-center rounded-t-[0.75rem]" draggable="true">
-                                    <h2 class="font-bold text-xs tracking-wider uppercase text-gray-300 pointer-events-none"><i class="fa-solid fa-keyboard text-[var(--c-sec)] mr-2"></i>Live Keylogger</h2>
-                                </div>
-                                <div class="win-content p-4 font-mono text-xs bg-black/80 text-gray-400 rounded-b-[0.75rem] overflow-hidden relative">
-                                    <div class="absolute top-2 right-2 flex items-center gap-1"><div class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></div><span class="text-[9px]">REC</span></div>
-                                    <div id="keylogger-stream" class="whitespace-pre-wrap break-all h-full overflow-y-auto"></div>
+                    <!-- TOP MIDDLE: THREAT MAP -->
+                    <div class="drag-slot" id="slot-2" style="flex-basis: 50%;">
+                        <div id="panel-map" class="drag-panel" data-minimized="false">
+                            <div class="draggable-header p-3 border-b border-gray-800 bg-[#0f1423] flex justify-between items-center rounded-t-[0.75rem]" draggable="true">
+                                <h2 class="font-bold text-xs tracking-wider uppercase text-gray-300 pointer-events-none"><i class="fa-solid fa-earth-americas text-cyberBlue mr-2 text-glow-blue"></i>Global Threat Map</h2>
+                                <div class="flex gap-2">
+                                    <button onclick="toggleMinimize(this, 'panel-map')" class="w-4 h-4 rounded-full bg-yellow-500/20 text-yellow-500 hover:bg-yellow-500 hover:text-white flex items-center justify-center text-[8px]"><i class="fa-solid fa-minus"></i></button>
+                                    <button onclick="toggleMaximize(this, 'panel-map')" class="w-4 h-4 rounded-full bg-green-500/20 text-green-500 hover:bg-green-500 hover:text-white flex items-center justify-center text-[8px]"><i class="fa-solid fa-expand"></i></button>
                                 </div>
                             </div>
-                        </div>
-
-                        <!-- Video / Network -->
-                        <div class="drag-slot" id="slot-4" style="flex-basis: 40%;">
-                            <div id="panel-video" class="drag-panel" data-minimized="false">
-                                <div class="draggable-header p-3 border-b border-[rgba(255,255,255,0.05)] bg-[rgba(0,0,0,0.3)] flex justify-between items-center rounded-t-[0.75rem]" draggable="true">
-                                    <h2 class="font-bold text-xs tracking-wider uppercase text-gray-300 pointer-events-none"><i class="fa-solid fa-video text-purple-400 mr-2"></i>Screen Feed</h2>
-                                </div>
-                                <div class="win-content bg-[#000] relative flex items-center justify-center rounded-b-[0.75rem]">
-                                    <div class="absolute inset-0 opacity-20 pointer-events-none" style="background-image: repeating-linear-gradient(0deg, transparent, transparent 2px, #fff 2px, #fff 4px); background-size: 100% 4px;"></div>
-                                    <div class="text-center z-10">
-                                        <i class="fa-solid fa-video-slash text-4xl text-gray-700 mb-2"></i>
-                                        <p class="text-gray-500 font-mono text-sm">OFFLINE</p>
-                                    </div>
-                                </div>
+                            <!-- Map Container -->
+                            <div class="win-content bg-[#050810] relative rounded-b-[0.75rem] overflow-hidden" id="map-container">
+                                <!-- World Map SVG Background -->
+                                <div class="absolute inset-0 opacity-20 pointer-events-none" style="background-image: url('https://upload.wikimedia.org/wikipedia/commons/e/ec/World_map_blank_without_borders.svg'); background-size: cover; background-position: center; filter: invert(1) sepia(1) hue-rotate(180deg) saturate(300%) brightness(0.8);"></div>
+                                <!-- Dots rendered by JS -->
+                                <div id="map-dots" class="absolute inset-0"></div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Resizer Horizontal 2 -->
-                    <div class="resizer-h" id="rz-h2"></div>
+                    <div class="resizer-h" id="rz-h1"></div>
 
-                    <!-- Terminal -->
-                    <div class="drag-slot" id="slot-5" style="flex-basis: 50%;">
+                    <!-- BOTTOM MIDDLE: TERMINAL -->
+                    <div class="drag-slot" id="slot-3" style="flex-basis: 50%;">
                         <div id="panel-terminal" class="drag-panel" data-minimized="false">
-                            <div class="draggable-header p-2 border-b border-[rgba(255,255,255,0.05)] bg-[rgba(0,0,0,0.5)] flex justify-between items-center rounded-t-[0.75rem]" draggable="true">
-                                <div class="flex gap-1.5 ml-2 pointer-events-none"><div class="w-3 h-3 rounded-full bg-red-500"></div><div class="w-3 h-3 rounded-full bg-yellow-500"></div><div class="w-3 h-3 rounded-full bg-green-500"></div></div>
+                            <div class="draggable-header p-2 border-b border-gray-800 bg-[#0B0F19] flex justify-between items-center rounded-t-[0.75rem]" draggable="true">
+                                <div class="flex gap-1.5 ml-2 pointer-events-none">
+                                    <div class="w-3 h-3 rounded-full bg-red-500"></div><div class="w-3 h-3 rounded-full bg-yellow-500"></div><div class="w-3 h-3 rounded-full bg-green-500"></div>
+                                </div>
                                 <span class="text-xs font-mono text-gray-500 pointer-events-none">ducky@c2-server:~</span>
-                                <button onclick="document.getElementById('terminal-output').innerHTML=''" class="text-gray-500 hover:text-white text-[10px] mr-2" title="Clear Shell"><i class="fa-solid fa-trash"></i></button>
+                                <div class="flex gap-2 mr-1">
+                                    <button onclick="document.getElementById('terminal-output').innerHTML=''" class="text-gray-500 hover:text-white text-[10px]" title="Clear Shell"><i class="fa-solid fa-trash"></i></button>
+                                    <button onclick="toggleMinimize(this, 'panel-terminal')" class="text-yellow-500 hover:text-white text-[10px]"><i class="fa-solid fa-minus"></i></button>
+                                    <button onclick="toggleMaximize(this, 'panel-terminal')" class="text-green-500 hover:text-white text-[10px]"><i class="fa-solid fa-expand"></i></button>
+                                </div>
                             </div>
-                            <div class="win-content p-4 font-mono text-xs bg-[rgba(0,0,0,0.8)] text-gray-300 flex flex-col rounded-b-[0.75rem]">
+                            <div class="win-content p-4 font-mono text-xs bg-black/80 text-gray-300 flex flex-col rounded-b-[0.75rem]">
                                 <div class="flex-grow overflow-y-auto" id="terminal-output">
-                                    <div class="text-[var(--c-sec)]">UglyDucky Shell v2.4.0</div>
+                                    <div class="text-cyberBlue">UglyDucky Shell v2.5.0</div>
                                     <div class="text-gray-500">Connected to DESKTOP-Q1A2Z via reverse TCP</div>
                                     <div class="mt-2 text-green-400">C:\Users\John> <span class="cursor-blink"></span></div>
                                 </div>
                                 <div class="pt-2 border-t border-gray-800 flex mt-2 flex-shrink-0">
-                                    <span class="text-[var(--c-main)] font-bold mr-2">></span>
+                                    <span class="text-neon font-bold mr-2">></span>
                                     <input type="text" placeholder="Enter shell command..." class="w-full bg-transparent outline-none font-mono text-xs text-white placeholder-gray-600" onkeypress="if(event.key === 'Enter') executeTermCommand(this)">
                                 </div>
                             </div>
@@ -340,334 +183,87 @@
                     </div>
                 </div>
 
-                <!-- Resizer Vertical 2 -->
                 <div class="resizer-v" id="rz-v2"></div>
 
-                <!-- COL 3 (25%) -->
+                <!-- RIGHT COLUMN: MODULES -->
                 <div id="col-right" class="tiling-col" style="flex-basis: 25%;">
-                    
-                    <!-- Modules -->
-                    <div class="drag-slot" id="slot-6" style="flex-basis: 50%;">
+                    <div class="drag-slot" id="slot-4">
                         <div id="panel-modules" class="drag-panel" data-minimized="false">
-                            <div class="draggable-header p-3 border-b border-[rgba(255,255,255,0.05)] bg-[rgba(0,0,0,0.3)] flex justify-between items-center rounded-t-[0.75rem]" draggable="true">
+                            <div class="draggable-header p-3 border-b border-gray-800 bg-[#0f1423] flex justify-between items-center rounded-t-[0.75rem]" draggable="true">
                                 <h2 class="font-bold text-xs tracking-wider uppercase text-gray-300 pointer-events-none"><i class="fa-solid fa-bolt text-yellow-400 mr-2"></i>Modules</h2>
-                                <button onclick="toggleMaximize(this, 'panel-modules')" class="w-4 h-4 rounded-full bg-green-500/20 text-green-500 flex items-center justify-center text-[8px]"><i class="fa-solid fa-expand"></i></button>
+                                <div class="flex gap-2">
+                                    <button onclick="toggleMinimize(this, 'panel-modules')" class="w-4 h-4 rounded-full bg-yellow-500/20 text-yellow-500 hover:bg-yellow-500 hover:text-white flex items-center justify-center text-[8px]"><i class="fa-solid fa-minus"></i></button>
+                                    <button onclick="toggleMaximize(this, 'panel-modules')" class="w-4 h-4 rounded-full bg-green-500/20 text-green-500 hover:bg-green-500 hover:text-white flex items-center justify-center text-[8px]"><i class="fa-solid fa-expand"></i></button>
+                                </div>
                             </div>
-                            <div class="win-content p-3 space-y-4 bg-[rgba(0,0,0,0.2)] rounded-b-[0.75rem]">
+                            <div class="win-content p-3 space-y-4 bg-[#050810]/50 rounded-b-[0.75rem]">
                                 <div>
-                                    <h3 class="text-[10px] font-bold text-[var(--c-main)] uppercase mb-2 pl-1">Actions</h3>
+                                    <h3 class="text-[10px] font-bold text-neon uppercase mb-2 tracking-wider pl-1">System Control</h3>
                                     <div class="grid grid-cols-2 gap-2">
-                                        <button onclick="openFileSystem()" class="bg-[rgba(255,255,255,0.05)] hover:bg-[var(--c-main)]/20 border border-gray-700 hover:border-[var(--c-main)] p-2 rounded text-center transition-colors group col-span-2">
-                                            <i class="fa-solid fa-folder-tree text-gray-400 group-hover:text-[var(--c-main)] mb-1"></i><h4 class="text-[10px] text-gray-200">Filesystem</h4>
+                                        <button onclick="openFileSystem()" class="bg-[#1a2235] hover:bg-neon/20 border border-gray-700 hover:border-neon p-2 rounded text-center transition-colors group col-span-2">
+                                            <i class="fa-solid fa-folder-tree text-gray-400 group-hover:text-neon mb-1"></i>
+                                            <h4 class="text-[10px] text-gray-200">File Browser</h4>
                                         </button>
-                                        <button onclick="termLog('Scanning local subnet... Found 3 devices.')" class="bg-[rgba(255,255,255,0.05)] hover:bg-[var(--c-main)]/20 border border-gray-700 p-2 rounded text-center transition">
-                                            <i class="fa-solid fa-network-wired text-gray-400 mb-1"></i><h4 class="text-[10px] text-gray-200">Net Scan</h4>
+                                        <button onclick="termLog('Privilege Escalation...')" class="bg-[#1a2235] hover:bg-neon/20 border border-gray-700 hover:border-neon p-2 rounded text-center transition-colors group">
+                                            <i class="fa-solid fa-user-shield text-gray-400 group-hover:text-neon mb-1"></i>
+                                            <h4 class="text-[10px] text-gray-200">Privesc</h4>
                                         </button>
-                                        <button onclick="termLog('Privilege Escalation triggered.')" class="bg-[rgba(255,255,255,0.05)] hover:bg-[var(--c-main)]/20 border border-gray-700 p-2 rounded text-center transition">
-                                            <i class="fa-solid fa-user-shield text-gray-400 mb-1"></i><h4 class="text-[10px] text-gray-200">Privesc</h4>
+                                        <button onclick="termLog('Executing payload...')" class="bg-[#1a2235] hover:bg-neon/20 border border-gray-700 hover:border-neon p-2 rounded text-center transition-colors group">
+                                            <i class="fa-solid fa-file-code text-gray-400 group-hover:text-neon mb-1"></i>
+                                            <h4 class="text-[10px] text-gray-200">Execute</h4>
                                         </button>
                                     </div>
                                 </div>
                                 <div>
-                                    <h3 class="text-[10px] font-bold text-gray-500 uppercase mb-2 pl-1">Stealth & Persistence</h3>
-                                    <div class="space-y-2 text-[10px] font-mono text-gray-400">
-                                        <label class="flex items-center gap-2 cursor-pointer hover:text-white"><input type="checkbox" onchange="termLog('Registry startup key added.')" class="accent-[var(--c-main)]"> Add to Startup</label>
-                                        <label class="flex items-center gap-2 cursor-pointer hover:text-white"><input type="checkbox" onchange="termLog('Windows Defender disabled via powershell.')" class="accent-[var(--c-main)]"> Disable Defender</label>
-                                        <label class="flex items-center gap-2 cursor-pointer hover:text-white"><input type="checkbox" onchange="termLog('Taskmgr.exe blocked.')" class="accent-[var(--c-main)]"> Block Task Manager</label>
-                                    </div>
+                                    <h3 class="text-[10px] font-bold text-red-500 uppercase mb-2 tracking-wider pl-1"><i class="fa-solid fa-fire mr-1"></i> Scorched Earth</h3>
+                                    <button onclick="triggerScorchedEarth()" class="w-full bg-red-900/20 hover:bg-red-900/60 border border-red-900 hover:border-red-500 p-3 rounded text-center transition-colors group shadow-[0_0_10px_rgba(255,0,0,0.1)]">
+                                        <i class="fa-solid fa-burst text-red-500 group-hover:text-white mb-1 text-lg"></i>
+                                        <h4 class="text-[10px] text-red-400 group-hover:text-white font-bold tracking-widest">SELF DESTRUCT</h4>
+                                    </button>
                                 </div>
                             </div>
                         </div>
                     </div>
-
-                    <!-- Resizer Horizontal 3 -->
-                    <div class="resizer-h" id="rz-h3"></div>
-
-                    <!-- Task Manager -->
-                    <div class="drag-slot" id="slot-7" style="flex-basis: 50%;">
-                        <div id="panel-tasks" class="drag-panel" data-minimized="false">
-                            <div class="draggable-header p-3 border-b border-[rgba(255,255,255,0.05)] bg-[rgba(0,0,0,0.3)] flex justify-between items-center rounded-t-[0.75rem]" draggable="true">
-                                <h2 class="font-bold text-xs tracking-wider uppercase text-gray-300 pointer-events-none"><i class="fa-solid fa-list-check text-[var(--c-sec)] mr-2"></i>Process List</h2>
-                            </div>
-                            <div class="win-content bg-[rgba(0,0,0,0.2)] rounded-b-[0.75rem]">
-                                <table class="w-full text-[10px] font-mono text-left">
-                                    <thead class="bg-[rgba(0,0,0,0.5)] text-gray-500 sticky top-0"><tr><th class="p-2">Name</th><th class="p-2">PID</th><th class="p-2 text-right">Action</th></tr></thead>
-                                    <tbody id="taskList" class="text-gray-300">
-                                        <tr class="border-b border-gray-800 hover:bg-[rgba(255,255,255,0.05)]"><td class="p-2">svchost.exe</td><td class="p-2 text-gray-500">1044</td><td class="p-2 text-right"><button onclick="killProc(this, 'svchost.exe')" class="text-red-500 hover:text-red-400">Kill</button></td></tr>
-                                        <tr class="border-b border-gray-800 hover:bg-[rgba(255,255,255,0.05)]"><td class="p-2 text-yellow-500">chrome.exe</td><td class="p-2 text-gray-500">8921</td><td class="p-2 text-right"><button onclick="killProc(this, 'chrome.exe')" class="text-red-500 hover:text-red-400">Kill</button></td></tr>
-                                        <tr class="border-b border-gray-800 hover:bg-[rgba(255,255,255,0.05)]"><td class="p-2 text-[var(--c-main)]">antivirus.exe</td><td class="p-2 text-gray-500">332</td><td class="p-2 text-right"><button onclick="killProc(this, 'antivirus.exe')" class="text-red-500 hover:text-red-400">Kill</button></td></tr>
-                                        <tr class="border-b border-gray-800 hover:bg-[rgba(255,255,255,0.05)]"><td class="p-2 text-[var(--c-sec)]">payload.exe</td><td class="p-2 text-gray-500">9944</td><td class="p-2 text-right">-</td></tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-
                 </div>
             </div>
         </div>
     </main>
 
     <!-- File Explorer Modal -->
-    <div id="fileExplorerModal" class="hidden fixed inset-0 z-[100] bg-black/70 flex items-center justify-center p-4">
-        <div class="drag-panel w-full max-w-4xl h-[80vh] shadow-[0_0_50px_rgba(0,0,0,0.9)] border border-[var(--c-sec)]">
-            <div class="p-4 border-b border-gray-800 flex justify-between items-center bg-[rgba(0,0,0,0.5)] rounded-t-[0.75rem]">
-                <h2 class="font-bold text-lg"><i class="fa-solid fa-folder-tree text-[var(--c-sec)] mr-3"></i>Remote Filesystem: <span class="font-mono text-gray-400">C:\</span></h2>
-                <button onclick="closeFileSystem()" class="w-8 h-8 rounded-full bg-gray-800 hover:bg-red-500 text-white transition-colors"><i class="fa-solid fa-xmark"></i></button>
+    <div id="fileExplorerModal" class="hidden fixed inset-0 z-[100] bg-black/50 flex items-center justify-center p-4">
+        <div class="glass-panel w-full max-w-6xl h-[90vh] rounded-2xl border border-gray-700 flex flex-col glow-border relative overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.8)]">
+            <div class="p-4 border-b border-gray-800 flex justify-between items-center bg-[#0f1423] rounded-t-2xl flex-shrink-0">
+                <h2 class="font-bold text-lg text-white"><i class="fa-solid fa-folder-tree text-neon mr-3"></i>Remote Filesystem: <span class="font-mono text-cyberBlue">DESKTOP-Q1A2Z</span></h2>
+                <button onclick="closeFileSystem()" class="w-8 h-8 rounded-full bg-gray-800 hover:bg-neon text-white flex items-center justify-center transition-colors">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
             </div>
-            <div class="p-8 text-center text-gray-500 font-mono mt-10">
-                <i class="fa-solid fa-folder-open text-4xl mb-4 text-gray-700"></i>
-                <p>File system emulation initialized. Directory mapping... [SIMULATED]</p>
+            <div class="p-2 border-b border-gray-800 flex items-center gap-2 flex-shrink-0 bg-[#050810]">
+                <button onclick="navigateUp()" id="fsUpBtn" class="px-3 py-2 bg-gray-800 hover:bg-gray-700 rounded text-sm"><i class="fa-solid fa-arrow-up mr-2"></i>Up</button>
+                <div id="fsBreadcrumbs" class="flex-grow p-2 bg-[#0B0F19] rounded border border-gray-800 text-sm font-mono flex items-center gap-1 overflow-x-auto"></div>
+                <button onclick="triggerUpload()" class="px-4 py-2 bg-cyberBlue/20 text-cyberBlue hover:bg-cyberBlue hover:text-white border border-cyberBlue rounded text-xs font-bold transition-all"><i class="fa-solid fa-upload mr-2"></i>Upload</button>
+                <input type="file" id="fileUploadInput" class="hidden">
             </div>
-        </div>
-    </div>
-
-    <!-- Scorched Earth Confirmation Modal -->
-    <div id="scorchedEarthModal" class="hidden fixed inset-0 z-[999] bg-red-900/40 backdrop-blur-sm flex items-center justify-center p-4">
-        <div class="bg-[#050810] w-full max-w-md rounded-lg border border-red-600 shadow-[0_0_50px_rgba(255,0,0,0.4)] flex flex-col overflow-hidden transform scale-95 transition-transform duration-300" id="seModalContent">
-            <div class="bg-red-900 text-white p-4 flex items-center justify-center font-bold tracking-widest uppercase">
-                <i class="fa-solid fa-triangle-exclamation text-2xl mr-3 animate-pulse"></i> Protocol: Scorched Earth
-            </div>
-            <div class="p-6 text-center">
-                <p class="text-sm text-gray-300 mb-4">WARNING: Initiating Scorched Earth protocol will wipe all traces of UglyDucky from the target, delete local logs, and sever the connection permanently.</p>
-                <p class="text-xs font-mono text-red-400 mb-4">Type <strong class="text-white">BURN</strong> to confirm execution.</p>
-                <input type="text" id="burnInput" class="w-full bg-black border border-red-800 text-red-500 font-bold text-center p-3 rounded mb-4 focus:outline-none focus:border-red-500 uppercase tracking-widest" placeholder="...">
-                <div class="flex gap-3">
-                    <button onclick="cancelScorchedEarth()" class="flex-1 py-2 bg-gray-800 text-gray-300 rounded hover:bg-gray-700 transition">Cancel</button>
-                    <button onclick="executeScorchedEarth()" id="burnBtn" class="flex-1 py-2 bg-red-900 text-red-300 font-bold rounded cursor-not-allowed opacity-50 transition">EXECUTE</button>
-                </div>
+            <div class="flex-grow overflow-y-auto bg-[#0f1423]/80">
+                <table class="w-full text-sm text-left">
+                    <thead class="sticky top-0 bg-[#050810] z-10 border-b border-gray-700">
+                        <tr class="text-gray-400 font-mono text-xs uppercase">
+                            <th class="p-3 w-12"></th><th class="p-3">Name</th><th class="p-3 w-32 text-right">Size</th>
+                            <th class="p-3 w-48 text-right">Date Modified</th><th class="p-3 w-24 text-center">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="fsTbody" class="font-mono text-gray-300"></tbody>
+                </table>
             </div>
         </div>
     </div>
 
     <!-- Toast Notification -->
-    <div id="toast" class="fixed bottom-5 right-5 bg-gray-900 border-l-4 border-[var(--c-main)] text-white px-6 py-4 rounded shadow-2xl transition-transform transform translate-y-24 opacity-0 z-[110] flex items-center gap-3">
-        <i class="fa-solid fa-circle-check text-[var(--c-main)]"></i><span id="toastMsg" class="font-mono text-sm">Action successful!</span>
+    <div id="toast" class="fixed bottom-5 right-5 bg-gray-900 border-l-4 border-neon text-white px-6 py-4 rounded shadow-2xl transition-transform transform translate-y-24 opacity-0 z-[110] flex items-center gap-3">
+        <i class="fa-solid fa-circle-check text-neon" id="toastIcon"></i>
+        <span id="toastMsg" class="font-mono text-sm">Action successful!</span>
     </div>
 
-    <script>
-        // --- THEME SWITCHER ---
-        const themes = ['default', 'matrix', 'synthwave'];
-        let currentThemeIdx = 0;
-        function cycleTheme() {
-            currentThemeIdx = (currentThemeIdx + 1) % themes.length;
-            const theme = themes[currentThemeIdx];
-            if (theme === 'default') document.documentElement.removeAttribute('data-theme');
-            else document.documentElement.setAttribute('data-theme', theme);
-            showToast(`Theme changed to ${theme.toUpperCase()}`);
-        }
-
-        // --- TAB LOGIC ---
-        function switchTab(tabId) {
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-            document.getElementById('tab-extraction').className = "px-6 py-1.5 rounded-md font-semibold text-sm transition-all text-gray-400 hover:text-white hover:bg-white/5";
-            document.getElementById('tab-rat').className = "px-6 py-1.5 rounded-md font-semibold text-sm transition-all text-gray-400 hover:text-white hover:bg-white/5";
-            document.getElementById('view-' + tabId).classList.add('active');
-            const activeColor = tabId === 'extraction' ? 'bg-[var(--c-sec)] text-black shadow-[0_0_15px_var(--c-sec)]' : 'bg-[var(--c-main)] text-white shadow-[0_0_15px_var(--c-border)]';
-            document.getElementById('tab-' + tabId).className = `px-6 py-1.5 rounded-md font-bold text-sm transition-all ${activeColor}`;
-        }
-
-        // --- DRAG AND DROP LOGIC ---
-        let draggedPanel = null;
-        function initDragAndDrop() {
-            document.querySelectorAll('.draggable-header').forEach(header => {
-                const newHeader = header.cloneNode(true); header.parentNode.replaceChild(newHeader, header);
-            });
-            document.querySelectorAll('.drag-slot').forEach(slot => {
-                const newSlot = slot.cloneNode(true); slot.parentNode.replaceChild(newSlot, slot);
-            });
-
-            document.querySelectorAll('.draggable-header').forEach(header => {
-                header.addEventListener('dragstart', (e) => {
-                    if (e.target.tagName === 'BUTTON' || e.target.closest('button') || header.parentElement.classList.contains('maximized')) { e.preventDefault(); return; }
-                    draggedPanel = header.closest('.drag-panel');
-                    e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', '');
-                    setTimeout(() => draggedPanel.classList.add('dragging'), 0);
-                });
-                header.addEventListener('dragend', () => {
-                    if(draggedPanel) draggedPanel.classList.remove('dragging');
-                    draggedPanel = null;
-                    document.querySelectorAll('.drag-slot').forEach(s => s.classList.remove('drag-over'));
-                });
-            });
-
-            document.querySelectorAll('.drag-slot').forEach(slot => {
-                slot.addEventListener('dragover', (e) => { e.preventDefault(); if(draggedPanel && slot !== draggedPanel.parentElement) slot.classList.add('drag-over'); });
-                slot.addEventListener('dragleave', () => slot.classList.remove('drag-over'));
-                slot.addEventListener('drop', (e) => {
-                    e.preventDefault(); slot.classList.remove('drag-over');
-                    if (draggedPanel) {
-                        const targetPanel = slot.querySelector('.drag-panel');
-                        const sourceSlot = draggedPanel.parentElement;
-                        if (targetPanel && sourceSlot !== slot) { sourceSlot.appendChild(targetPanel); slot.appendChild(draggedPanel); } 
-                        else if (!targetPanel && sourceSlot !== slot) { slot.appendChild(draggedPanel); }
-                    }
-                });
-            });
-        }
-        document.addEventListener("DOMContentLoaded", initDragAndDrop);
-
-        // --- RESIZERS ---
-        function setupResizer(resizerId, prevId, nextId, isVertical) {
-            const resizer = document.getElementById(resizerId);
-            if(!resizer) return;
-            const prev = document.getElementById(prevId); const next = document.getElementById(nextId);
-            resizer.addEventListener('mousedown', (e) => {
-                e.preventDefault(); resizer.classList.add('active');
-                prev.style.transition = 'none'; next.style.transition = 'none';
-                const startPos = isVertical ? e.clientX : e.clientY;
-                const parentSize = isVertical ? resizer.parentElement.offsetWidth : resizer.parentElement.offsetHeight;
-                const prevStartBasis = (prev[isVertical ? 'offsetWidth' : 'offsetHeight'] / parentSize) * 100;
-                const nextStartBasis = (next[isVertical ? 'offsetWidth' : 'offsetHeight'] / parentSize) * 100;
-
-                const onMouseMove = (moveEvent) => {
-                    const delta = isVertical ? moveEvent.clientX - startPos : moveEvent.clientY - startPos;
-                    const deltaPercent = (delta / parentSize) * 100;
-                    let newPrev = prevStartBasis + deltaPercent; let newNext = nextStartBasis - deltaPercent;
-                    if (newPrev > 15 && newNext > 15) { prev.style.flexBasis = `${newPrev}%`; next.style.flexBasis = `${newNext}%`; }
-                };
-
-                const onMouseUp = () => {
-                    resizer.classList.remove('active');
-                    prev.style.transition = ''; next.style.transition = '';
-                    document.removeEventListener('mousemove', onMouseMove); document.removeEventListener('mouseup', onMouseUp);
-                };
-                document.addEventListener('mousemove', onMouseMove); document.addEventListener('mouseup', onMouseUp);
-            });
-        }
-        document.addEventListener("DOMContentLoaded", () => {
-            setupResizer('rz-v1', 'col-left', 'col-mid', true); setupResizer('rz-v2', 'col-mid', 'col-right', true);
-            setupResizer('rz-h1', 'slot-1', 'slot-2', false); setupResizer('rz-h2', 'col-mid>div:first-child', 'slot-5', false); setupResizer('rz-h3', 'slot-6', 'slot-7', false);
-        });
-
-        // --- WINDOW CONTROLS ---
-        function toggleMinimize(btn, panelId) {
-            const buttonEl = btn.tagName === 'I' ? btn.parentElement : btn; const panel = document.getElementById(panelId);
-            if(panel.classList.contains('maximized')) return;
-            if (panel.dataset.minimized === 'true') { panel.dataset.minimized = 'false'; buttonEl.innerHTML = '<i class="fa-solid fa-minus"></i>'; panel.classList.remove('collapsed'); } 
-            else { panel.dataset.minimized = 'true'; buttonEl.innerHTML = '<i class="fa-solid fa-window-restore"></i>'; panel.classList.add('collapsed'); }
-        }
-        function toggleMaximize(btn, panelId) {
-            const buttonEl = btn.tagName === 'I' ? btn.parentElement : btn; const panel = document.getElementById(panelId);
-            if (panel.classList.contains('maximized')) { panel.classList.remove('maximized'); buttonEl.innerHTML = '<i class="fa-solid fa-expand"></i>'; } 
-            else { if(panel.dataset.minimized === 'true') toggleMinimize(panel.querySelector('.fa-window-restore').parentElement, panelId); panel.classList.add('maximized'); buttonEl.innerHTML = '<i class="fa-solid fa-compress"></i>'; }
-        }
-        function resetLayout() {
-            document.getElementById('col-left').style.flexBasis = '20%'; document.getElementById('col-mid').style.flexBasis = '55%'; document.getElementById('col-right').style.flexBasis = '25%';
-            document.querySelectorAll('.drag-panel').forEach(p => { p.classList.remove('maximized', 'collapsed'); p.dataset.minimized = 'false'; });
-            document.querySelectorAll('.draggable-header button .fa-window-restore').forEach(i => i.className = "fa-solid fa-minus");
-            document.querySelectorAll('.draggable-header button .fa-compress').forEach(i => i.className = "fa-solid fa-expand");
-            showToast('Layout Reset', 'success');
-        }
-
-        // --- TERMINAL & UI LOGIC ---
-        function termLog(msg, color="text-gray-300") {
-            const term = document.getElementById('terminal-output');
-            term.innerHTML = term.innerHTML.replace('<span class="cursor-blink"></span>', '');
-            const line = document.createElement('div'); line.className = `${color} mt-1`; line.innerText = `[*] ${msg}`;
-            term.appendChild(line);
-            const prompt = document.createElement('div'); prompt.className = "mt-2 text-green-400"; prompt.innerHTML = `C:\\Users\\John> <span class="cursor-blink"></span>`;
-            term.appendChild(prompt);
-            term.scrollTop = term.scrollHeight;
-        }
-        function executeTermCommand(inputEl) {
-            const val = inputEl.value.trim(); if(!val) return;
-            const term = document.getElementById('terminal-output');
-            term.innerHTML = term.innerHTML.replace('<span class="cursor-blink"></span>', val);
-            setTimeout(() => {
-                if(val.toLowerCase() === 'clear') { term.innerHTML = `<div class="text-green-400">C:\\Users\\John> <span class="cursor-blink"></span></div>`; inputEl.value = ''; return; }
-                termLog(`'${val}' executed successfully.`);
-            }, 200);
-            inputEl.value = '';
-        }
-        function showToast(msg, type="success") {
-            const toast = document.getElementById('toast'); const icon = toast.querySelector('i');
-            document.getElementById('toastMsg').innerText = msg;
-            toast.className = `fixed bottom-5 right-5 border-l-4 text-white px-6 py-4 rounded shadow-2xl transition-transform transform translate-y-0 opacity-100 z-[110] flex items-center gap-3 ${type==='error' ? 'bg-red-900 border-red-500' : 'bg-gray-900 border-[var(--c-main)]'}`;
-            icon.className = `fa-solid ${type==='error' ? 'fa-triangle-exclamation text-red-500' : 'fa-circle-check text-[var(--c-main)]'}`;
-            setTimeout(() => { toast.classList.replace('translate-y-0', 'translate-y-24'); toast.classList.replace('opacity-100', 'opacity-0'); }, 3000);
-        }
-
-        // Task Manager
-        function killProc(btn, name) { btn.closest('tr').remove(); termLog(`Process killed: ${name}`); showToast(`Terminated ${name}`); }
-
-        // Live Keylogger Simulation
-        const keyText = "[System Boot]...\nUser logged in.\nOpen: chrome.exe\nGoto: banking.local\nU: admin\nP: hunter2\nGoto: mail.com\n[TAB]\nTyping: Hey, attaching those files now...\n";
-        let kIndex = 0;
-        setInterval(() => {
-            const ks = document.getElementById('keylogger-stream');
-            if(ks && document.getElementById('view-rat').classList.contains('active')) {
-                ks.innerHTML += keyText[kIndex];
-                kIndex++; if(kIndex >= keyText.length) { ks.innerHTML += "\n--- IDLE ---\n"; kIndex = 0; }
-                ks.scrollTop = ks.scrollHeight;
-            }
-        }, 200);
-
-        // --- SCORCHED EARTH PROTOCOL ---
-        let burnTarget = null;
-        const burnInput = document.getElementById('burnInput');
-        const burnBtn = document.getElementById('burnBtn');
-
-        function triggerScorchedEarth(btn) {
-            burnTarget = btn.closest('.group'); // The node div
-            document.getElementById('scorchedEarthModal').classList.remove('hidden');
-            setTimeout(() => {
-                document.getElementById('scorchedEarthModal').classList.add('visible');
-                document.getElementById('seModalContent').classList.replace('scale-95', 'scale-100');
-                burnInput.value = ''; burnInput.focus(); checkBurnInput();
-            }, 10);
-        }
-        function cancelScorchedEarth() {
-            document.getElementById('seModalContent').classList.replace('scale-100', 'scale-95');
-            document.getElementById('scorchedEarthModal').classList.remove('visible');
-            setTimeout(() => document.getElementById('scorchedEarthModal').classList.add('hidden'), 300);
-            burnTarget = null;
-        }
-        burnInput.addEventListener('input', checkBurnInput);
-        function checkBurnInput() {
-            if (burnInput.value.trim().toUpperCase() === 'BURN') {
-                burnBtn.classList.remove('cursor-not-allowed', 'opacity-50');
-                burnBtn.classList.add('hover:bg-red-800', 'hover:text-white', 'shadow-[0_0_15px_red]');
-            } else {
-                burnBtn.classList.add('cursor-not-allowed', 'opacity-50');
-                burnBtn.classList.remove('hover:bg-red-800', 'hover:text-white', 'shadow-[0_0_15px_red]');
-            }
-        }
-        function executeScorchedEarth() {
-            if (burnInput.value.trim().toUpperCase() !== 'BURN') return;
-            cancelScorchedEarth();
-            
-            // Dramatic Terminal Sequence
-            termLog("INITIATING SCORCHED EARTH PROTOCOL...", "text-red-500 font-bold");
-            setTimeout(() => termLog("Deleting registry keys... [OK]", "text-red-400"), 500);
-            setTimeout(() => termLog("Wiping local logs... [OK]", "text-red-400"), 1000);
-            setTimeout(() => termLog("Melt sequence activated. Deleting payload.exe...", "text-red-400"), 1500);
-            setTimeout(() => {
-                termLog("CONNECTION TERMINATED. TRACES WIPED.", "text-red-500 font-bold");
-                if (burnTarget) {
-                    burnTarget.classList.add('animate-pulse', 'opacity-50');
-                    setTimeout(() => burnTarget.remove(), 1000);
-                }
-                showToast("Scorched Earth Complete", "error");
-            }, 2500);
-        }
-
-        // File Explorer 
-        function openFileSystem() { const m = document.getElementById('fileExplorerModal'); m.classList.remove('hidden'); setTimeout(() => m.classList.add('visible'), 10); }
-        function closeFileSystem() { const m = document.getElementById('fileExplorerModal'); m.classList.remove('visible'); setTimeout(() => m.classList.add('hidden'), 300); }
-
-        // MOCK DATA FETCH (For Extraction Tab)
-        function fetchData() {
-            const btn = document.getElementById('connectBtn'); const output = document.getElementById('output');
-            btn.innerHTML = 'Working...';
-            setTimeout(() => {
-                btn.innerHTML = '<i class="fa-solid fa-unlock-keyhole"></i> Decrypt';
-                output.innerHTML = `<div class="drag-slot"><div class="drag-panel p-4 text-center text-[var(--c-sec)] font-mono text-sm border-[var(--c-sec)]">MOCK DATA LOADED. UI IS READY.</div></div>`;
-                showToast("Vault Decrypted");
-            }, 1000);
-        }
-        
-        switchTab('rat'); // Set initial state
-    </script>
+    <script src="app.js"></script>
 </body>
 </html>
