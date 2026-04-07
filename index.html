@@ -9,7 +9,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- Tailwind CSS (Keep CDN for utility classes) -->
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -52,7 +52,6 @@
                 <!-- Right: Status -->
                 <div class="hidden md:flex items-center gap-6 font-mono text-xs flex-1 justify-end">
                     <div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_8px_#22c55e] animate-pulse"></span> <span class="text-gray-300">SERVER: ONLINE</span></div>
-                    <div class="flex items-center gap-2 text-gray-400"><i class="fa-solid fa-satellite-dish text-cyberBlue"></i> PING: 24ms</div>
                     <div class="flex items-center gap-2 text-gray-400"><i class="fa-solid fa-shield-halved text-neon"></i> SEC: ENCRYPTED</div>
                 </div>
             </div>
@@ -172,7 +171,7 @@
                                 <div class="flex-grow overflow-y-auto" id="terminal-output">
                                     <div class="text-cyberBlue">UglyDucky Shell v2.5.0</div>
                                     <div class="text-gray-500" id="terminal-connection-msg">Connecting...</div>
-                                    <div class="mt-2 text-green-400">C:\Users\John> <span class="cursor-blink"></span></div>
+                                    <div class="mt-2 text-green-400">C:\Users\System> <span class="cursor-blink"></span></div>
                                 </div>
                                 <div class="pt-2 border-t border-gray-800 flex mt-2 flex-shrink-0">
                                     <span class="text-neon font-bold mr-2">></span>
@@ -197,25 +196,42 @@
                                 </div>
                             </div>
                             <div class="win-content p-3 space-y-4 bg-[#050810]/50 rounded-b-[0.75rem]">
+                                
+                                <!-- Live Control Section -->
                                 <div>
-                                    <h3 class="text-[10px] font-bold text-neon uppercase mb-2 tracking-wider pl-1">System Control</h3>
+                                    <h3 class="text-[10px] font-bold text-cyberBlue uppercase mb-2 tracking-wider pl-1 border-b border-gray-800 pb-1">Live Control</h3>
                                     <div class="grid grid-cols-2 gap-2">
-                                        <button onclick="openFileSystem()" class="bg-[#1a2235] hover:bg-neon/20 border border-gray-700 hover:border-neon p-2 rounded text-center transition-colors group col-span-2">
-                                            <i class="fa-solid fa-folder-tree text-gray-400 group-hover:text-neon mb-1"></i>
-                                            <h4 class="text-[10px] text-gray-200">File Browser</h4>
+                                        <button onclick="termLog('Establishing Live Cam feed...')" class="bg-[#1a2235] hover:bg-cyberBlue/10 border border-gray-700 hover:border-cyberBlue p-2 rounded text-center transition-colors group">
+                                            <i class="fa-solid fa-desktop text-gray-400 group-hover:text-cyberBlue mb-1"></i>
+                                            <h4 class="text-[10px] text-gray-200">Live Screen</h4>
                                         </button>
-                                        <button onclick="termLog('Privilege Escalation...')" class="bg-[#1a2235] hover:bg-neon/20 border border-gray-700 hover:border-neon p-2 rounded text-center transition-colors group">
-                                            <i class="fa-solid fa-user-shield text-gray-400 group-hover:text-neon mb-1"></i>
-                                            <h4 class="text-[10px] text-gray-200">Privesc</h4>
+                                        <button onclick="termLog('User inputs locked.')" class="bg-[#1a2235] hover:bg-cyberBlue/10 border border-gray-700 hover:border-cyberBlue p-2 rounded text-center transition-colors group">
+                                            <i class="fa-solid fa-keyboard text-gray-400 group-hover:text-cyberBlue mb-1"></i>
+                                            <h4 class="text-[10px] text-gray-200">Block Input</h4>
                                         </button>
-                                        <button onclick="termLog('Executing payload...')" class="bg-[#1a2235] hover:bg-neon/20 border border-gray-700 hover:border-neon p-2 rounded text-center transition-colors group">
-                                            <i class="fa-solid fa-file-code text-gray-400 group-hover:text-neon mb-1"></i>
-                                            <h4 class="text-[10px] text-gray-200">Execute</h4>
+                                        <button onclick="termLog('Hidden shell spawned.')" class="bg-[#1a2235] hover:bg-cyberBlue/10 border border-gray-700 hover:border-cyberBlue p-2 rounded text-center transition-colors group">
+                                            <i class="fa-solid fa-terminal text-gray-400 group-hover:text-cyberBlue mb-1"></i>
+                                            <h4 class="text-[10px] text-gray-200">Rev Shell</h4>
+                                        </button>
+                                        <button onclick="termLog('Sending power-off ACPI signal...')" class="bg-[#1a2235] hover:bg-cyberBlue/10 border border-gray-700 hover:border-cyberBlue p-2 rounded text-center transition-colors group">
+                                            <i class="fa-solid fa-power-off text-gray-400 group-hover:text-cyberBlue mb-1"></i>
+                                            <h4 class="text-[10px] text-gray-200">Power Options</h4>
                                         </button>
                                     </div>
                                 </div>
+
+                                <!-- System Section -->
                                 <div>
-                                    <h3 class="text-[10px] font-bold text-red-500 uppercase mb-2 tracking-wider pl-1"><i class="fa-solid fa-fire mr-1"></i> Scorched Earth</h3>
+                                    <h3 class="text-[10px] font-bold text-neon uppercase mb-2 tracking-wider pl-1 border-b border-gray-800 pb-1">System</h3>
+                                    <button onclick="openFileSystem()" class="w-full bg-[#1a2235] hover:bg-neon/10 border border-gray-700 hover:border-neon p-2 rounded text-center transition-colors group">
+                                        <i class="fa-solid fa-folder-tree text-gray-400 group-hover:text-neon mr-2"></i>
+                                        <span class="text-[10px] text-gray-200 font-bold">Open File Explorer</span>
+                                    </button>
+                                </div>
+
+                                <!-- Scorched Earth Section -->
+                                <div>
+                                    <h3 class="text-[10px] font-bold text-red-500 uppercase mb-2 tracking-wider pl-1 border-b border-red-900/50 pb-1"><i class="fa-solid fa-fire mr-1"></i> Scorched Earth</h3>
                                     <div class="grid grid-cols-2 gap-2">
                                         <button onclick="triggerBSOD()" class="bg-orange-900/30 hover:bg-orange-900/60 border border-orange-900 hover:border-orange-500 p-2 rounded text-center transition-colors group">
                                             <i class="fa-solid fa-biohazard text-orange-500 group-hover:text-white mb-1"></i>
@@ -227,6 +243,7 @@
                                         </button>
                                     </div>
                                 </div>
+
                             </div>
                         </div>
                     </div>
