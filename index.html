@@ -99,12 +99,15 @@
                                 </div>
                             </div>
                             
-                            <!-- UPDATED MAP CONTAINER WITH DRAG SUPPORT -->
+                            <!-- UPDATED MAP CONTAINER WITH DRAG SUPPORT & BULLETPROOF ASPECT RATIO -->
                             <div class="win-content bg-[#050810] relative rounded-b-[0.75rem] overflow-auto no-scrollbar cursor-grab" id="map-container">
-                                <!-- The wrapper forces the aspect ratio and sets a minimum width so it overflows instead of squishing -->
-                                <div id="map-wrapper" class="relative" style="width: max(100%, 800px); aspect-ratio: 2/1; margin: auto;">
-                                    <!-- High-Res Vector SVG map with inverted Cyberpunk styling -->
-                                    <div class="absolute inset-0 pointer-events-none" style="background-image: url('https://upload.wikimedia.org/wikipedia/commons/0/03/BlankMap-World6.svg'); background-size: 100% 100%; filter: invert(1) brightness(0.7) contrast(1.5) sepia(1) hue-rotate(180deg) saturate(200%); opacity: 0.6;"></div>
+                                <!-- Wrapper enforces a minimum width of 1000px. If the panel is smaller, it triggers the drag/scroll effect -->
+                                <div id="map-wrapper" class="relative" style="width: max(100%, 1000px);">
+                                    <!-- Bulletproof 2:1 Aspect Ratio Hack -->
+                                    <div style="padding-bottom: 50%;"></div>
+                                    
+                                    <!-- 2560px wide PNG of the World Map (Bypasses SVG blocking, prevents pixelation, includes borders) -->
+                                    <div class="absolute inset-0 pointer-events-none" style="background-image: url('https://upload.wikimedia.org/wikipedia/commons/thumb/0/03/BlankMap-World6.svg/2560px-BlankMap-World6.svg.png'); background-size: 100% 100%; background-position: center; filter: invert(1) brightness(0.75) contrast(1.5) opacity(0.6);"></div>
                                     <div id="map-dots" class="absolute inset-0 pointer-events-none"></div>
                                 </div>
                             </div>

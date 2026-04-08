@@ -24,7 +24,7 @@ body::before {
 ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
 ::-webkit-scrollbar-thumb:hover { background: #00d2d3; }
 
-/* Hide scrollbar for the map container but keep functionality */
+/* Hide scrollbar for the map container but keep dragging functionality */
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
