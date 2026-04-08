@@ -115,23 +115,24 @@ body::before {
 
 .map-dot {
     position: relative;
-    width: 8px; height: 8px;
+    width: 14px; height: 14px; /* Made bigger */
+    background-color: currentColor; /* Forces it to be a solid filled circle */
     border-radius: 50%;
     cursor: pointer;
-    box-shadow: 0 0 8px currentColor;
+    box-shadow: 0 0 12px currentColor, 0 0 24px currentColor; /* Stronger glow */
     z-index: 20;
 }
 .map-dot::before {
-    content: ''; position: absolute; inset: -4px;
-    border-radius: 50%; border: 1px solid currentColor;
-    animation: pulseMap 2s infinite; opacity: 0;
+    content: ''; position: absolute; inset: -6px;
+    border-radius: 50%; border: 2px solid currentColor; /* Thicker ring */
+    animation: pulseMap 1.5s ease-out infinite; opacity: 0;
 }
 @keyframes pulseMap {
     0% { transform: scale(0.5); opacity: 1; }
-    100% { transform: scale(2.5); opacity: 0; }
+    100% { transform: scale(3.5); opacity: 0; }
 }
 .map-tooltip {
-    position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%);
+    position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
     background: rgba(15, 20, 35, 0.95); border: 1px solid rgba(0, 210, 211, 0.4);
     padding: 8px; border-radius: 4px; pointer-events: none; opacity: 0;
     transition: opacity 0.2s; white-space: nowrap; z-index: 9999;
