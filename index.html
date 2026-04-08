@@ -98,11 +98,17 @@
                                     <button onclick="toggleMaximize(this, 'panel-map')" class="w-4 h-4 rounded-full bg-green-500/20 text-green-500 hover:bg-green-500 hover:text-white flex items-center justify-center text-[8px]"><i class="fa-solid fa-expand"></i></button>
                                 </div>
                             </div>
-                            <div class="win-content bg-[#050810] relative rounded-b-[0.75rem] overflow-hidden" id="map-container">
-                                <!-- Developer Tile Map (CartoCDN) - 100% Reliable, natively dark themed, stretches to any aspect ratio -->
-                                <div class="absolute inset-0 opacity-80 pointer-events-none" style="background-image: url('https://a.basemaps.cartocdn.com/dark_nolabels/0/0/0.png'); background-size: 100% 100%; background-position: center;"></div>
-                                <div id="map-dots" class="absolute inset-0"></div>
+                            
+                            <!-- UPDATED MAP CONTAINER WITH DRAG SUPPORT -->
+                            <div class="win-content bg-[#050810] relative rounded-b-[0.75rem] overflow-auto no-scrollbar cursor-grab" id="map-container">
+                                <!-- The wrapper forces the aspect ratio and sets a minimum width so it overflows instead of squishing -->
+                                <div id="map-wrapper" class="relative" style="width: max(100%, 800px); aspect-ratio: 2/1; margin: auto;">
+                                    <!-- High-Res Vector SVG map with inverted Cyberpunk styling -->
+                                    <div class="absolute inset-0 pointer-events-none" style="background-image: url('https://upload.wikimedia.org/wikipedia/commons/0/03/BlankMap-World6.svg'); background-size: 100% 100%; filter: invert(1) brightness(0.7) contrast(1.5) sepia(1) hue-rotate(180deg) saturate(200%); opacity: 0.6;"></div>
+                                    <div id="map-dots" class="absolute inset-0 pointer-events-none"></div>
+                                </div>
                             </div>
+                            
                         </div>
                     </div>
 

