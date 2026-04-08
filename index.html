@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- THIS IS THE MAGIC FIX FOR WIKIPEDIA IMAGES: -->
+    <meta name="referrer" content="no-referrer">
+    
     <title>Ugly Ducky | C2 Command Center</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -99,15 +102,16 @@
                                 </div>
                             </div>
                             
-                            <!-- UPDATED MAP CONTAINER WITH DRAG SUPPORT & BULLETPROOF ASPECT RATIO -->
-                            <div class="win-content bg-[#050810] relative rounded-b-[0.75rem] overflow-auto no-scrollbar cursor-grab" id="map-container">
-                                <!-- Wrapper enforces a minimum width of 1000px. If the panel is smaller, it triggers the drag/scroll effect -->
-                                <div id="map-wrapper" class="relative" style="width: max(100%, 1000px);">
-                                    <!-- Bulletproof 2:1 Aspect Ratio Hack -->
-                                    <div style="padding-bottom: 50%;"></div>
+                            <!-- DRAG TO PAN CONTAINER -->
+                            <div class="win-content bg-[#0B0F19] relative rounded-b-[0.75rem] overflow-auto no-scrollbar cursor-grab" id="map-container">
+                                
+                                <!-- MIN-WIDTH locks the map size so it doesn't squish. 
+                                     ASPECT-RATIO forces it to stay exactly 2:1 for perfect coordinates. -->
+                                <div id="map-wrapper" class="relative" style="min-width: 1000px; width: 100%; aspect-ratio: 2/1; margin: 0 auto;">
                                     
-                                    <!-- 2560px wide PNG of the World Map (Bypasses SVG blocking, prevents pixelation, includes borders) -->
-                                    <div class="absolute inset-0 pointer-events-none" style="background-image: url('https://upload.wikimedia.org/wikipedia/commons/thumb/0/03/BlankMap-World6.svg/2560px-BlankMap-World6.svg.png'); background-size: 100% 100%; background-position: center; filter: invert(1) brightness(0.75) contrast(1.5) opacity(0.6);"></div>
+                                    <!-- High-Res Equirectangular Map with Borders (Bypasses Wikipedia Blocking via Meta Tag) -->
+                                    <div class="absolute inset-0 pointer-events-none" style="background-image: url('https://upload.wikimedia.org/wikipedia/commons/thumb/a/a4/BlankMap-World-Equirectangular.svg/2560px-BlankMap-World-Equirectangular.svg.png'); background-size: 100% 100%; filter: invert(1) brightness(1.2) contrast(1.5);"></div>
+                                    
                                     <div id="map-dots" class="absolute inset-0 pointer-events-none"></div>
                                 </div>
                             </div>
