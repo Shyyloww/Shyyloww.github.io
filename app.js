@@ -152,17 +152,23 @@ async function fetchData() {
         
         const nodeData = await nodeResponse.json();
         
-        if (Array.isArray(nodeData) || typeof nodeData.lat === 'undefined') {
-            throw new Error("Target data malformed. Is the new Render backend fully deployed?");
+        // --- IMPROVED DATA VALIDATION FOR MAP FIX ---
+        if (!nodeData || typeof nodeData !== 'object' || Array.isArray(nodeData)) {
+            throw new Error("Target data malformed. Ensure Render backend is running properly.");
         }
         
-        nodeData.lat = parseFloat(nodeData.lat);
-        nodeData.lng = parseFloat(nodeData.lng);
+        // Safely parse floats, falling back to default coordinates if missing or invalid
+        const parsedLat = parseFloat(nodeData.lat);
+        const parsedLng = parseFloat(nodeData.lng);
         
-        if (isNaN(nodeData.lat) || isNaN(nodeData.lng)) {
+        if (isNaN(parsedLat) || isNaN(parsedLng)) {
             nodeData.lat = 28.5383; 
             nodeData.lng = -81.3792;
+        } else {
+            nodeData.lat = parsedLat;
+            nodeData.lng = parsedLng;
         }
+        // ---------------------------------------------
         
         activeNodeId = nodeData.id;
         allNodes = [nodeData]; 
@@ -203,9 +209,6 @@ async function fetchData() {
         }
 
     } catch (error) {
-        // --- TRANSPARENT ERROR HANDLING ---
-        // We removed the mask that says "Server Unreachable". 
-        // It will now print the raw error provided by the browser directly.
         console.error("RAW FETCH ERROR:", error);
         statusMsg.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-red-500 mr-2"></i>Error: ${error.message}`;
         showToast("Backend Connection Failed", "error");
