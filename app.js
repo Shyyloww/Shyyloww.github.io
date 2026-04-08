@@ -827,11 +827,16 @@ window.switchTab = function(tabId) {
         
     document.getElementById('tab-' + tabId).className = `px-6 py-1.5 rounded-md font-bold text-sm transition-all ${activeColor}`;
 
-    // Force map to recalculate size when tab becomes visible
+    // --- LEAFLET RESIZE FIX ---
+    // When switching to the RAT tab, force the map to recalculate its size 
+    // multiple times while the CSS animation finishes opening the tab.
     if (tabId === 'rat' && leafletMap) {
-        setTimeout(() => {
+        let resizeCount = 0;
+        let resizeInterval = setInterval(() => {
             leafletMap.invalidateSize();
-        }, 100); 
+            resizeCount++;
+            if (resizeCount > 5) clearInterval(resizeInterval); // Stop after 500ms
+        }, 100);
     }
 };
 
