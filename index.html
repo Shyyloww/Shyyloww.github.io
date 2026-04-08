@@ -92,14 +92,15 @@
                     <div class="drag-slot" id="slot-2" style="flex-basis: 50%;">
                         <div id="panel-map" class="drag-panel" data-minimized="false">
                             <div class="draggable-header p-3 border-b border-gray-800 bg-[#0f1423] flex justify-between items-center rounded-t-[0.75rem]" draggable="true">
-                                <h2 class="font-bold text-xs tracking-wider uppercase text-gray-300 pointer-events-none"><i class="fa-solid fa-earth-americas text-cyberBlue mr-2 text-glow-blue"></i>Global Threat Map</h2>
+                                <h2 class="font-bold text-xs tracking-wider uppercase text-gray-300 pointer-events-none"><i class="fa-solid fa-earth-americas text-cyberBlue mr-2 text-glow-blue"></i>Geo Map</h2>
                                 <div class="flex gap-2">
                                     <button onclick="toggleMinimize(this, 'panel-map')" class="w-4 h-4 rounded-full bg-yellow-500/20 text-yellow-500 hover:bg-yellow-500 hover:text-white flex items-center justify-center text-[8px]"><i class="fa-solid fa-minus"></i></button>
                                     <button onclick="toggleMaximize(this, 'panel-map')" class="w-4 h-4 rounded-full bg-green-500/20 text-green-500 hover:bg-green-500 hover:text-white flex items-center justify-center text-[8px]"><i class="fa-solid fa-expand"></i></button>
                                 </div>
                             </div>
                             <div class="win-content bg-[#050810] relative rounded-b-[0.75rem] overflow-hidden" id="map-container">
-                                <div class="absolute inset-0 opacity-20 pointer-events-none" style="background-image: url('https://upload.wikimedia.org/wikipedia/commons/8/80/World_map_-_low_resolution.svg'); background-size: 100% 100%; background-position: center; filter: invert(1) sepia(1) hue-rotate(180deg) saturate(300%) brightness(0.8);"></div>
+                                <!-- Replaced SVG with an exact Equirectangular JPG. JPG natively stretches 100% 100% without letterboxing! -->
+                                <div class="absolute inset-0 opacity-30 pointer-events-none" style="background-image: url('https://upload.wikimedia.org/wikipedia/commons/e/ea/Equirectangular_projection_SW.jpg'); background-size: 100% 100%; background-position: center; filter: invert(1) sepia(1) hue-rotate(180deg) saturate(300%) brightness(0.7) contrast(1.2);"></div>
                                 <div id="map-dots" class="absolute inset-0"></div>
                             </div>
                         </div>
