@@ -27,6 +27,18 @@ const FS_POLL_RATE = 2000;
 const FS_POLL_TIMEOUT = 20000; 
 
 // ==========================================
+// UTILITIES
+// ==========================================
+// Bulletproof coordinate parser to prevent Leaflet NaN crashes
+function getSafeCoord(val, isLat) {
+    const defaultCoord = isLat ? 28.5383 : -81.3792;
+    if (val === undefined || val === null || val === '') return defaultCoord;
+    const parsed = parseFloat(val);
+    if (isNaN(parsed)) return defaultCoord;
+    return parsed;
+}
+
+// ==========================================
 // INITIALIZATION
 // ==========================================
 document.addEventListener("DOMContentLoaded", () => {
@@ -79,8 +91,11 @@ function renderMap() {
     allNodes.forEach(node => {
         let dotColor = node.status === 'green' ? 'text-green-500' : (node.status === 'red' ? 'text-red-500' : 'text-yellow-500');
         
+        let safeLat = getSafeCoord(node.lat, true);
+        let safeLng = getSafeCoord(node.lng, false);
+        
         const customHtml = `
-            <div class="map-dot ${dotColor}">
+            <div class="map-dot ${dotColor}" onclick="leafletMap.flyTo([${safeLat}, ${safeLng}], 5)">
                 <div class="map-tooltip text-[10px] text-left pointer-events-none">
                     <div class="font-bold text-white border-b border-gray-700 pb-1 mb-1">${node.id}</div>
                     <div class="text-gray-400">IP: <span class="text-cyberBlue">${node.ip}</span></div>
@@ -96,7 +111,7 @@ function renderMap() {
             html: customHtml
         });
 
-        const marker = L.marker([node.lat, node.lng], { icon: customIcon }).addTo(leafletMap);
+        const marker = L.marker([safeLat, safeLng], { icon: customIcon }).addTo(leafletMap);
         leafletMarkers.push(marker);
     });
 }
@@ -126,11 +141,11 @@ async function fetchData() {
     document.getElementById('output').innerHTML = "";
     document.getElementById('filterContainer').classList.add('hidden');
     document.getElementById('exportBtn').classList.add('hidden');
-    renderNodesList();
-    renderMap();
+    renderMap(); // Clear map
+    renderNodesList(); // Clear list
 
     statusMsg.classList.remove('hidden');
-    statusMsg.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin text-cyberBlue mr-2"></i>Contacting Render Server (May take 50s to wake up)...';
+    statusMsg.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin text-cyberBlue mr-2"></i>Contacting Render Server...';
     btn.disabled = true;
     btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Working';
 
@@ -152,23 +167,13 @@ async function fetchData() {
         
         const nodeData = await nodeResponse.json();
         
-        // --- IMPROVED DATA VALIDATION FOR MAP FIX ---
         if (!nodeData || typeof nodeData !== 'object' || Array.isArray(nodeData)) {
-            throw new Error("Target data malformed. Ensure Render backend is running properly.");
+            throw new Error("Target data malformed. Backend returned invalid format.");
         }
         
-        // Safely parse floats, falling back to default coordinates if missing or invalid
-        const parsedLat = parseFloat(nodeData.lat);
-        const parsedLng = parseFloat(nodeData.lng);
-        
-        if (isNaN(parsedLat) || isNaN(parsedLng)) {
-            nodeData.lat = 28.5383; 
-            nodeData.lng = -81.3792;
-        } else {
-            nodeData.lat = parsedLat;
-            nodeData.lng = parsedLng;
-        }
-        // ---------------------------------------------
+        // --- BULLETPROOF COORDINATE PARSING ---
+        nodeData.lat = getSafeCoord(nodeData.lat, true);
+        nodeData.lng = getSafeCoord(nodeData.lng, false);
         
         activeNodeId = nodeData.id;
         allNodes = [nodeData]; 
@@ -196,15 +201,15 @@ async function fetchData() {
         globalData = logsData;
 
         if (globalData.length === 0) {
-            statusMsg.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-yellow-500 mr-2"></i>Node found, but no vault logs available.`;
+            statusMsg.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-yellow-500 mr-2"></i>Node active, but no vault data exists yet.`;
             showToast("Node is active but has no vault data.", "error");
+            setTimeout(() => switchTab('rat'), 1000); // Allow RAT usage even if vault is empty
         } else {
             statusMsg.innerHTML = `<i class="fa-solid fa-lock-open text-green-500 mr-2"></i>Vault Decrypted. [${globalData.length} records]`;
             document.getElementById('exportBtn').classList.remove('hidden');
             buildFilters();
             renderCards(globalData, document.getElementById('output'));
             showToast("Authentication successful! Data loaded.", "success");
-            
             setTimeout(() => switchTab('rat'), 1000); 
         }
 
@@ -249,9 +254,12 @@ function renderNodesList() {
         } else if (osLower.length > 0) {
             osIconClass = 'fa-solid fa-desktop text-gray-400';
         }
+        
+        let safeLat = getSafeCoord(node.lat, true);
+        let safeLng = getSafeCoord(node.lng, false);
 
         container.innerHTML += `
-            <div class="p-3 ${activeBorder} rounded-lg relative overflow-hidden group transition-all cursor-pointer" onclick="leafletMap.flyTo([${node.lat}, ${node.lng}], 5)">
+            <div class="p-3 ${activeBorder} rounded-lg relative overflow-hidden group transition-all cursor-pointer" onclick="if(leafletMap) leafletMap.flyTo([${safeLat}, ${safeLng}], 5)">
                 ${activeLine}
                 <div class="flex justify-between items-start mb-2 pl-2">
                     <div class="flex items-center gap-2">
