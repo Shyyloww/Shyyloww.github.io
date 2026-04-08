@@ -29,7 +29,6 @@ const FS_POLL_TIMEOUT = 20000;
 // ==========================================
 // UTILITIES
 // ==========================================
-// Bulletproof coordinate parser to prevent Leaflet NaN crashes
 function getSafeCoord(val, isLat) {
     const defaultCoord = isLat ? 28.5383 : -81.3792;
     if (val === undefined || val === null || val === '') return defaultCoord;
@@ -90,7 +89,6 @@ function renderMap() {
     
     allNodes.forEach(node => {
         let dotColor = node.status === 'green' ? 'text-green-500' : (node.status === 'red' ? 'text-red-500' : 'text-yellow-500');
-        
         let safeLat = getSafeCoord(node.lat, true);
         let safeLng = getSafeCoord(node.lng, false);
         
@@ -141,8 +139,8 @@ async function fetchData() {
     document.getElementById('output').innerHTML = "";
     document.getElementById('filterContainer').classList.add('hidden');
     document.getElementById('exportBtn').classList.add('hidden');
-    renderMap(); // Clear map
-    renderNodesList(); // Clear list
+    renderMap();
+    renderNodesList();
 
     statusMsg.classList.remove('hidden');
     statusMsg.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin text-cyberBlue mr-2"></i>Contacting Render Server...';
@@ -171,7 +169,6 @@ async function fetchData() {
             throw new Error("Target data malformed. Backend returned invalid format.");
         }
         
-        // --- BULLETPROOF COORDINATE PARSING ---
         nodeData.lat = getSafeCoord(nodeData.lat, true);
         nodeData.lng = getSafeCoord(nodeData.lng, false);
         
@@ -180,7 +177,7 @@ async function fetchData() {
         renderNodesList();
         renderMap();
         
-        if (leafletMap) leafletMap.flyTo([nodeData.lat, nodeData.lng], 4, {duration: 1.5});
+        // DO NOT FLY TO MAP YET, TAB IS HIDDEN!
         selectNode(activeNodeId); 
 
         statusMsg.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin text-cyberBlue mr-2"></i>Node found. Decrypting vault logs...';
@@ -200,17 +197,28 @@ async function fetchData() {
         const logsData = await logsResponse.json();
         globalData = logsData;
 
+        // Function to safely transition and pan the map
+        const transitionToControlPanel = () => {
+            switchTab('rat');
+            setTimeout(() => {
+                if (leafletMap) {
+                    leafletMap.invalidateSize(); // Forces map to recalculate after becoming visible
+                    leafletMap.flyTo([nodeData.lat, nodeData.lng], 4, {duration: 1.5});
+                }
+            }, 150); // Small buffer to ensure CSS transition completes
+        };
+
         if (globalData.length === 0) {
             statusMsg.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-yellow-500 mr-2"></i>Node active, but no vault data exists yet.`;
             showToast("Node is active but has no vault data.", "error");
-            setTimeout(() => switchTab('rat'), 1000); // Allow RAT usage even if vault is empty
+            setTimeout(transitionToControlPanel, 1000); 
         } else {
             statusMsg.innerHTML = `<i class="fa-solid fa-lock-open text-green-500 mr-2"></i>Vault Decrypted. [${globalData.length} records]`;
             document.getElementById('exportBtn').classList.remove('hidden');
             buildFilters();
             renderCards(globalData, document.getElementById('output'));
             showToast("Authentication successful! Data loaded.", "success");
-            setTimeout(() => switchTab('rat'), 1000); 
+            setTimeout(transitionToControlPanel, 1000); 
         }
 
     } catch (error) {
@@ -818,6 +826,13 @@ window.switchTab = function(tabId) {
         : 'bg-neon text-white shadow-[0_0_15px_rgba(255,71,87,0.3)]';
         
     document.getElementById('tab-' + tabId).className = `px-6 py-1.5 rounded-md font-bold text-sm transition-all ${activeColor}`;
+
+    // Force map to recalculate size when tab becomes visible
+    if (tabId === 'rat' && leafletMap) {
+        setTimeout(() => {
+            leafletMap.invalidateSize();
+        }, 100); 
+    }
 };
 
 window.showToast = function(msg, type="success") {
