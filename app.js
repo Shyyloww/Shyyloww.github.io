@@ -186,8 +186,17 @@ function renderMap() {
     mapDots.innerHTML = '';
     
     allNodes.forEach(node => {
-        const x = (node.lng + 180) / 3.6;
-        const y = (90 - node.lat) / 1.8;
+        // --- Web Mercator Projection Math ---
+        // This math matches the exact coordinate projection of the CartoDB base map tile.
+        // Even when the container stretches, the percentages stretch perfectly with it.
+        const x = ((node.lng + 180) / 360) * 100;
+        
+        // Web Mercator only goes up to ~85 degrees lat before tearing, we clamp it to prevent infinity
+        const latClamped = Math.max(-85.0511, Math.min(85.0511, node.lat));
+        const latRad = latClamped * (Math.PI / 180);
+        
+        const mercatorY = Math.log(Math.tan((Math.PI / 4) + (latRad / 2)));
+        const y = (0.5 - (mercatorY / (2 * Math.PI))) * 100;
         
         let dotColor = node.status === 'green' ? 'text-green-500' : (node.status === 'red' ? 'text-red-500' : 'text-yellow-500');
         mapDots.innerHTML += `
