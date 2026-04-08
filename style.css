@@ -139,3 +139,19 @@ body::before {
     box-shadow: 0 4px 12px rgba(0,0,0,0.5); font-family: monospace;
 }
 .map-dot:hover .map-tooltip { opacity: 1; }
+
+/* --- LEAFLET MAP FIXES --- */
+#map-container {
+    height: 100% !important;
+    width: 100% !important;
+    min-height: 250px;
+    overflow: hidden !important; /* Prevents scrollbar conflicts with Leaflet */
+}
+
+/* Ensure the parent panel allows the map to stretch */
+#panel-map .win-content {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    height: 100%;
+}
