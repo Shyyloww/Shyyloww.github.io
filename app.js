@@ -46,18 +46,28 @@ function initMap() {
     const mapContainer = document.getElementById('map-container');
     if (!mapContainer) return;
 
+    // Set absolute borders for the world to prevent scrolling into the void
+    const worldBounds = [
+        [-90, -180], // South-West edge
+        [90, 180]    // North-East edge
+    ];
+
     // Create the map engine, centered on the Atlantic
     leafletMap = L.map('map-container', {
         zoomControl: false, // Clean look
         attributionControl: false, // Clean look
-        maxBoundsViscosity: 1.0
+        maxBounds: worldBounds,       // Locks the camera inside the world
+        maxBoundsViscosity: 1.0,      // Makes the edge a hard wall
+        minZoom: 2                    // Prevents zooming out too far
     }).setView([20, 0], 2);
 
     // Load CartoDB Dark Matter map (Borders, no labels, high quality)
     L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
         subdomains: 'abcd',
         maxZoom: 19,
-        minZoom: 1
+        minZoom: 2,
+        noWrap: true,                 // Stops the map from duplicating infinitely horizontally
+        bounds: worldBounds
     }).addTo(leafletMap);
 
     // Forces Leaflet to re-calculate its size if you resize the panel
@@ -90,8 +100,8 @@ function renderMap() {
         // Inject the HTML directly onto the Leaflet map engine
         const customIcon = L.divIcon({
             className: 'bg-transparent border-none', // Removes default leaflet white square
-            iconSize: [8, 8],
-            iconAnchor: [4, 4], // Centers the dot perfectly on the GPS coordinate
+            iconSize: [14, 14], // Updated size to match new CSS
+            iconAnchor: [7, 7], // Centers the larger dot perfectly on the GPS coordinate
             html: customHtml
         });
 
@@ -152,11 +162,16 @@ async function fetchData() {
         
         const nodeData = await nodeResponse.json();
         
-        // --- FIXED SAFETY CHECK ---
-        // If the backend failed to deploy previously, the old API might return an array or missing coordinates.
-        // This explicitly blocks the "Invalid LatLng object: (NaN, NaN)" Leaflet crash and tells you what's wrong.
-        if (Array.isArray(nodeData) || typeof nodeData.lat === 'undefined') {
-            throw new Error("Target data missing coordinates. Please wait for your new C2 Server deployment to finish on Render.");
+        // --- BULLETPROOF NaN FIX ---
+        // Force the data to be a number. If the API returns missing data or garbage,
+        // it falls back to a default location (Orlando) instead of crashing Leaflet.
+        nodeData.lat = parseFloat(nodeData.lat);
+        nodeData.lng = parseFloat(nodeData.lng);
+        
+        if (isNaN(nodeData.lat) || isNaN(nodeData.lng)) {
+            nodeData.lat = 28.5383; // Fallback to avoid (NaN, NaN) crash
+            nodeData.lng = -81.3792;
+            console.warn("Invalid coordinates from server, using fallback.");
         }
         
         activeNodeId = nodeData.id;
