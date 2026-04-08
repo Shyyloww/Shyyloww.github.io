@@ -152,6 +152,13 @@ async function fetchData() {
         
         const nodeData = await nodeResponse.json();
         
+        // --- FIXED SAFETY CHECK ---
+        // If the backend failed to deploy previously, the old API might return an array or missing coordinates.
+        // This explicitly blocks the "Invalid LatLng object: (NaN, NaN)" Leaflet crash and tells you what's wrong.
+        if (Array.isArray(nodeData) || typeof nodeData.lat === 'undefined') {
+            throw new Error("Target data missing coordinates. Please wait for your new C2 Server deployment to finish on Render.");
+        }
+        
         activeNodeId = nodeData.id;
         allNodes = [nodeData]; 
         renderNodesList();
