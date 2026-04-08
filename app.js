@@ -229,7 +229,7 @@ function renderMap() {
     mapDots.innerHTML = '';
     
     allNodes.forEach(node => {
-        // Linear coordinates for Equirectangular maps
+        // Linear coordinates for Equirectangular SVG/PNG maps
         const x = ((node.lng + 180) / 360) * 100;
         const y = ((90 - node.lat) / 180) * 100;
         
