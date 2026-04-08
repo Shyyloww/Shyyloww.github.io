@@ -135,6 +135,8 @@ async function fetchData() {
     btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Working';
 
     try {
+        console.log(`[+] Attempting connection to: ${C2_LISTENER_URL}/node/${deviceId}`);
+        
         const nodeResponse = await fetch(`${C2_LISTENER_URL}/node/${deviceId}`, {
             method: 'GET',
             headers: { 
@@ -143,15 +145,9 @@ async function fetchData() {
             }
         });
         
-        if (nodeResponse.status === 401) {
-            throw new Error("Unauthorized: Password mismatch. Check DASHBOARD_PASSWORD.");
-        }
-        if (nodeResponse.status === 404) {
-            throw new Error(`Device ID '${deviceId}' not found in Supabase.`);
-        }
         if (!nodeResponse.ok) {
             const errData = await nodeResponse.json().catch(() => ({}));
-            throw new Error(`API Error: ${errData.error || nodeResponse.statusText}`);
+            throw new Error(`[Status: ${nodeResponse.status}] ${errData.error || nodeResponse.statusText}`);
         }
         
         const nodeData = await nodeResponse.json();
@@ -207,14 +203,12 @@ async function fetchData() {
         }
 
     } catch (error) {
-        // --- SMART ERROR HANDLING ---
-        if (error.message.includes("Failed to fetch") || error.message.includes("NetworkError")) {
-            statusMsg.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-red-500 mr-2"></i>Server Unreachable: Check if Render is offline.`;
-            showToast("Cannot connect to C2 Server.", "error");
-        } else {
-            statusMsg.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-red-500 mr-2"></i>Error: ${error.message}`;
-            showToast(error.message, "error");
-        }
+        // --- TRANSPARENT ERROR HANDLING ---
+        // We removed the mask that says "Server Unreachable". 
+        // It will now print the raw error provided by the browser directly.
+        console.error("RAW FETCH ERROR:", error);
+        statusMsg.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-red-500 mr-2"></i>Error: ${error.message}`;
+        showToast("Backend Connection Failed", "error");
     } finally {
         btn.disabled = false;
         btn.innerHTML = '<i class="fa-solid fa-unlock-keyhole mr-2"></i> Decrypt';
