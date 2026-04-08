@@ -5,7 +5,6 @@
 const C2_LISTENER_URL = "https://uglyducky-c2.onrender.com"; 
 
 // --- NEW SECURITY MEASURE ---
-// This must exactly match the DASHBOARD_PASSWORD in c2_listener.py
 const DASHBOARD_PASSWORD = "ducky_admin_2024"; 
 // ==================================================================
 
@@ -13,6 +12,10 @@ const DASHBOARD_PASSWORD = "ducky_admin_2024";
 let activeNodeId = null; 
 let globalData = [];
 let allNodes = []; 
+
+// --- Interactive Map State ---
+let leafletMap = null;
+let leafletMarkers = [];
 
 // --- Live View State ---
 let streamInterval = null;
@@ -32,53 +35,69 @@ document.addEventListener("DOMContentLoaded", () => {
     switchTab('extraction'); 
     initDragAndDrop();
     initResizers();
-    initMapDrag(); // Initialize Map Panning
+    initMap(); // Initialize Leaflet Engine
     renderNodesList(); 
-    renderMap();
 });
 
 // ==========================================
-// MAP DRAG-TO-PAN LOGIC
+// LEAFLET MAP ENGINE
 // ==========================================
-function initMapDrag() {
+function initMap() {
     const mapContainer = document.getElementById('map-container');
-    if(!mapContainer) return;
+    if (!mapContainer) return;
 
-    let isDraggingMap = false;
-    let startX, startY, scrollLeft, scrollTop;
+    // Create the map engine, centered on the Atlantic
+    leafletMap = L.map('map-container', {
+        zoomControl: false, // Clean look
+        attributionControl: false, // Clean look
+        maxBoundsViscosity: 1.0
+    }).setView([20, 0], 2);
 
-    mapContainer.addEventListener('mousedown', (e) => {
-        isDraggingMap = true;
-        mapContainer.classList.add('cursor-grabbing');
-        mapContainer.classList.remove('cursor-grab');
-        startX = e.pageX - mapContainer.offsetLeft;
-        startY = e.pageY - mapContainer.offsetTop;
-        scrollLeft = mapContainer.scrollLeft;
-        scrollTop = mapContainer.scrollTop;
-    });
+    // Load CartoDB Dark Matter map (Borders, no labels, high quality)
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        subdomains: 'abcd',
+        maxZoom: 19,
+        minZoom: 1
+    }).addTo(leafletMap);
 
-    mapContainer.addEventListener('mouseleave', () => {
-        isDraggingMap = false;
-        mapContainer.classList.remove('cursor-grabbing');
-        mapContainer.classList.add('cursor-grab');
-    });
+    // Forces Leaflet to re-calculate its size if you resize the panel
+    new ResizeObserver(() => {
+        if (leafletMap) leafletMap.invalidateSize();
+    }).observe(mapContainer);
+}
 
-    mapContainer.addEventListener('mouseup', () => {
-        isDraggingMap = false;
-        mapContainer.classList.remove('cursor-grabbing');
-        mapContainer.classList.add('cursor-grab');
-    });
+function renderMap() {
+    if (!leafletMap) return;
 
-    mapContainer.addEventListener('mousemove', (e) => {
-        if (!isDraggingMap) return;
-        e.preventDefault();
-        const x = e.pageX - mapContainer.offsetLeft;
-        const y = e.pageY - mapContainer.offsetTop;
-        // The multiplier dictates drag speed
-        const walkX = (x - startX) * 1.5; 
-        const walkY = (y - startY) * 1.5;
-        mapContainer.scrollLeft = scrollLeft - walkX;
-        mapContainer.scrollTop = scrollTop - walkY;
+    // Clear old markers
+    leafletMarkers.forEach(m => leafletMap.removeLayer(m));
+    leafletMarkers = [];
+    
+    allNodes.forEach(node => {
+        let dotColor = node.status === 'green' ? 'text-green-500' : (node.status === 'red' ? 'text-red-500' : 'text-yellow-500');
+        
+        // Build the exact HTML layout we want for our custom dot
+        const customHtml = `
+            <div class="map-dot ${dotColor}">
+                <div class="map-tooltip text-[10px] text-left pointer-events-none">
+                    <div class="font-bold text-white border-b border-gray-700 pb-1 mb-1">${node.id}</div>
+                    <div class="text-gray-400">IP: <span class="text-cyberBlue">${node.ip}</span></div>
+                    <div class="text-gray-400">OS: <span class="text-white">${node.os}</span></div>
+                    <div class="text-gray-400">STAT: <span class="${dotColor}">${node.status.toUpperCase()}</span></div>
+                </div>
+            </div>`;
+
+        // Inject the HTML directly onto the Leaflet map engine
+        const customIcon = L.divIcon({
+            className: 'bg-transparent border-none', // Removes default leaflet white square
+            iconSize: [8, 8],
+            iconAnchor: [4, 4], // Centers the dot perfectly on the GPS coordinate
+            html: customHtml
+        });
+
+        // Add the marker natively using accurate GPS coordinates
+        const marker = L.marker([node.lat, node.lng], { icon: customIcon }).addTo(leafletMap);
+        leafletMarkers.push(marker);
     });
 }
 
@@ -137,6 +156,10 @@ async function fetchData() {
         allNodes = [nodeData]; 
         renderNodesList();
         renderMap();
+        
+        // Pan the camera gracefully to the infected node!
+        if (leafletMap) leafletMap.flyTo([nodeData.lat, nodeData.lng], 4, {duration: 1.5});
+
         selectNode(activeNodeId); 
 
         statusMsg.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin text-cyberBlue mr-2"></i>Node found. Decrypting vault logs...';
@@ -174,7 +197,7 @@ async function fetchData() {
 }
 
 // ==========================================
-// RENDER & SELECTION LOGIC (TARGETS & MAP)
+// RENDER & SELECTION LOGIC (TARGETS)
 // ==========================================
 function renderNodesList() {
     const container = document.getElementById('nodes-list');
@@ -206,7 +229,7 @@ function renderNodesList() {
         }
 
         container.innerHTML += `
-            <div class="p-3 ${activeBorder} rounded-lg relative overflow-hidden group transition-all">
+            <div class="p-3 ${activeBorder} rounded-lg relative overflow-hidden group transition-all cursor-pointer" onclick="leafletMap.flyTo([${node.lat}, ${node.lng}], 5)">
                 ${activeLine}
                 <div class="flex justify-between items-start mb-2 pl-2">
                     <div class="flex items-center gap-2">
@@ -219,29 +242,6 @@ function renderNodesList() {
                     <span class="w-2.5 h-2.5 rounded-full ${dotColor} ${pulse} shadow-[0_0_8px_currentColor]"></span>
                 </div>
                 <p class="text-[10px] text-gray-500 mt-1 pl-2 truncate" title="${node.os}">${node.os}</p>
-            </div>`;
-    });
-}
-
-function renderMap() {
-    const mapDots = document.getElementById('map-dots');
-    if(!mapDots) return;
-    mapDots.innerHTML = '';
-    
-    allNodes.forEach(node => {
-        // Linear coordinates for Equirectangular SVG/PNG maps
-        const x = ((node.lng + 180) / 360) * 100;
-        const y = ((90 - node.lat) / 180) * 100;
-        
-        let dotColor = node.status === 'green' ? 'text-green-500' : (node.status === 'red' ? 'text-red-500' : 'text-yellow-500');
-        mapDots.innerHTML += `
-            <div class="map-dot ${dotColor}" style="left: ${x}%; top: ${y}%;">
-                <div class="map-tooltip text-[10px] text-left pointer-events-none">
-                    <div class="font-bold text-white border-b border-gray-700 pb-1 mb-1">${node.id}</div>
-                    <div class="text-gray-400">IP: <span class="text-cyberBlue">${node.ip}</span></div>
-                    <div class="text-gray-400">OS: <span class="text-white">${node.os}</span></div>
-                    <div class="text-gray-400">STAT: <span class="${dotColor}">${node.status.toUpperCase()}</span></div>
-                </div>
             </div>`;
     });
 }

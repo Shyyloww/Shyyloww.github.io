@@ -24,7 +24,7 @@ body::before {
 ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
 ::-webkit-scrollbar-thumb:hover { background: #00d2d3; }
 
-/* Hide scrollbar for the map container but keep dragging functionality */
+/* Hide scrollbar for elements but keep functionality */
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
@@ -109,12 +109,14 @@ body::before {
 #fileExplorerModal.hidden { opacity: 0; pointer-events: none; backdrop-filter: blur(0px); }
 #fileExplorerModal.visible { opacity: 1; pointer-events: auto; backdrop-filter: blur(5px); }
 
-/* --- Map specific styles --- */
+/* --- Interactive Map Styles (Leaflet Overrides) --- */
+.leaflet-container { background: #0B0F19 !important; outline: none; }
+.leaflet-control-container { display: none; /* Hide default map controls */ }
+
 .map-dot {
-    position: absolute;
+    position: relative;
     width: 8px; height: 8px;
     border-radius: 50%;
-    transform: translate(-50%, -50%);
     cursor: pointer;
     box-shadow: 0 0 8px currentColor;
     z-index: 20;
@@ -132,7 +134,7 @@ body::before {
     position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%);
     background: rgba(15, 20, 35, 0.95); border: 1px solid rgba(0, 210, 211, 0.4);
     padding: 8px; border-radius: 4px; pointer-events: none; opacity: 0;
-    transition: opacity 0.2s; white-space: nowrap; z-index: 30;
+    transition: opacity 0.2s; white-space: nowrap; z-index: 9999;
     box-shadow: 0 4px 12px rgba(0,0,0,0.5); font-family: monospace;
 }
 .map-dot:hover .map-tooltip { opacity: 1; }
