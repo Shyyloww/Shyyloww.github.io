@@ -1661,4 +1661,3 @@ window.exportLogs = function() {
     
     showToast("Logs exported.");
 };
-</html>
