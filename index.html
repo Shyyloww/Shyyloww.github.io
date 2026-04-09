@@ -106,8 +106,9 @@
                             </div>
                             
                             <!-- INTERACTIVE LEAFLET MAP CONTAINER -->
-                            <div class="win-content rounded-b-[0.75rem] relative" style="overflow: hidden;">
-                                <div id="map-container" class="absolute inset-0 z-0 bg-[#0B0F19]"></div>
+                            <!-- FIX: Use standard flex layout for Leaflet -->
+                            <div class="win-content flex flex-col rounded-b-[0.75rem]" style="overflow: hidden;">
+                                <div id="map-container" class="w-full h-full flex-grow bg-[#0B0F19] z-0"></div>
                             </div>
                             
                         </div>
@@ -132,7 +133,10 @@
                                 <div class="flex-grow overflow-y-auto" id="terminal-output">
                                     <div class="text-cyberBlue">UglyDucky Shell v2.5.0</div>
                                     <div class="text-gray-500" id="terminal-connection-msg">Connecting...</div>
-                                    <div class="mt-2 text-green-400">C:\Users\System> <span class="cursor-blink"></span></div>
+                                    <!-- FIX: Added terminal-prompt class to the hardcoded baseline -->
+                                    <div class="mt-2 text-green-400 terminal-prompt flex flex-shrink-0">
+                                        <span class="mr-2">C:\Users\System></span> <span class="cursor-blink"></span>
+                                    </div>
                                 </div>
                                 <div class="pt-2 border-t border-gray-800 flex mt-2 flex-shrink-0">
                                     <span class="text-neon font-bold mr-2">></span>
@@ -246,6 +250,6 @@
         <span id="toastMsg" class="font-mono text-sm">Action successful!</span>
     </div>
 
-    <script src="app.js?version=1000"></script>
+    <script src="app.js?version=2000"></script>
 </body>
 </html>
