@@ -145,13 +145,14 @@ body::before {
     position: relative;
     overflow: hidden; 
     flex: 1 1 auto;
-    display: block;
+    display: flex;
+    flex-direction: column;
 }
 
 #map-container {
-    position: absolute !important;
-    top: 0; left: 0; right: 0; bottom: 0;
+    flex-grow: 1;
     width: 100% !important;
     height: 100% !important;
     z-index: 0;
+    background: #0B0F19 !important; /* Force render background to verify fill */
 }
