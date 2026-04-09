@@ -110,21 +110,21 @@ body::before {
 #fileExplorerModal.visible { opacity: 1; pointer-events: auto; backdrop-filter: blur(5px); }
 
 /* --- Interactive Map Styles (Leaflet Overrides) --- */
-.leaflet-container { background: #0B0F19 !important; outline: none; }
+.leaflet-container { background: transparent !important; outline: none; }
 .leaflet-control-container { display: none; /* Hide default map controls */ }
 
 .map-dot {
     position: relative;
-    width: 14px; height: 14px; /* Made bigger */
-    background-color: currentColor; /* Forces it to be a solid filled circle */
+    width: 14px; height: 14px; 
+    background-color: currentColor; 
     border-radius: 50%;
     cursor: pointer;
-    box-shadow: 0 0 12px currentColor, 0 0 24px currentColor; /* Stronger glow */
+    box-shadow: 0 0 12px currentColor, 0 0 24px currentColor; 
     z-index: 20;
 }
 .map-dot::before {
     content: ''; position: absolute; inset: -6px;
-    border-radius: 50%; border: 2px solid currentColor; /* Thicker ring */
+    border-radius: 50%; border: 2px solid currentColor; 
     animation: pulseMap 1.5s ease-out infinite; opacity: 0;
 }
 @keyframes pulseMap {
@@ -140,18 +140,18 @@ body::before {
 }
 .map-dot:hover .map-tooltip { opacity: 1; }
 
-/* --- LEAFLET MAP FIXES --- */
-#map-container {
-    height: 100% !important;
-    width: 100% !important;
-    min-height: 250px;
-    overflow: hidden !important; /* Prevents scrollbar conflicts with Leaflet */
+/* --- LEAFLET SIZING FIXES --- */
+#panel-map .win-content {
+    position: relative;
+    overflow: hidden; 
+    flex: 1 1 auto;
+    display: block;
 }
 
-/* Ensure the parent panel allows the map to stretch */
-#panel-map .win-content {
-    display: flex;
-    flex-direction: column;
-    flex: 1 1 auto;
-    height: 100%;
+#map-container {
+    position: absolute !important;
+    top: 0; left: 0; right: 0; bottom: 0;
+    width: 100% !important;
+    height: 100% !important;
+    z-index: 0;
 }
