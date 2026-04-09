@@ -79,8 +79,11 @@ function initMap() {
         bounds: worldBounds
     }).addTo(leafletMap);
 
+    // Forces Leaflet to recalibrate if its absolute wrapper stretches
     new ResizeObserver(() => {
-        if (leafletMap) leafletMap.invalidateSize();
+        if (leafletMap) {
+            requestAnimationFrame(() => leafletMap.invalidateSize(true));
+        }
     }).observe(mapContainer);
 }
 
@@ -204,10 +207,10 @@ async function fetchData() {
             switchTab('rat');
             setTimeout(() => {
                 if (leafletMap) {
-                    leafletMap.invalidateSize(); // Forces map to recalculate after becoming visible
+                    leafletMap.invalidateSize(true); // Forces map to recalculate after becoming visible
                     leafletMap.flyTo([nodeData.lat, nodeData.lng], 4, {duration: 1.5});
                 }
-            }, 150); 
+            }, 300); // Give the DOM slightly more time to paint the layout
         };
 
         if (globalData.length === 0) {
@@ -895,14 +898,20 @@ window.switchTab = function(tabId) {
         
     document.getElementById('tab-' + tabId).className = `px-6 py-1.5 rounded-md font-bold text-sm transition-all ${activeColor}`;
 
-    // --- LEAFLET RESIZE FIX ---
+    // --- LEAFLET RESIZE MULTI-FIRE FIX ---
+    // Safely forces the Leaflet engine to wake up and acknowledge its new active dimensions
     if (tabId === 'rat' && leafletMap) {
+        setTimeout(() => {
+            leafletMap.invalidateSize(true);
+            window.dispatchEvent(new Event('resize'));
+        }, 50);
+        
         let resizeCount = 0;
         let resizeInterval = setInterval(() => {
-            leafletMap.invalidateSize();
+            leafletMap.invalidateSize(true);
             resizeCount++;
             if (resizeCount > 5) clearInterval(resizeInterval);
-        }, 100);
+        }, 150);
     }
 };
 
