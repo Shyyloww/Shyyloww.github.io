@@ -71,7 +71,7 @@
         </div>
 
         <!-- RAT TAB (TILING WM) -->
-        <div id="view-rat" class="tab-content active h-full flex flex-col">
+        <div id="view-rat" class="tab-content active h-full flex flex-col min-h-0">
             <div class="flex justify-between items-center mb-2 px-2 flex-shrink-0">
                 <div class="font-mono text-xs text-cyberBlue"><i class="fa-solid fa-border-all mr-2"></i>Hypr-Tiling Active</div>
                 <button onclick="resetLayout()" class="px-3 py-1 bg-gray-800 hover:bg-gray-700 text-gray-300 text-[10px] font-mono rounded border border-gray-700 transition-colors"><i class="fa-solid fa-rotate-left mr-1"></i> Reset Grid</button>
@@ -199,39 +199,56 @@
                                 </div>
                             </div>
                             <div class="win-content p-2 space-y-4 bg-[#050810]/50 rounded-b-[0.75rem]">
-                                <!-- Live Control Section -->
+                                <!-- Troll & Fun Section -->
                                 <div>
-                                    <h3 class="text-[9px] font-bold text-cyberBlue uppercase mb-2 tracking-wider pl-1 border-b border-gray-800 pb-1">Live Control Shortcuts</h3>
+                                    <h3 class="text-[9px] font-bold text-cyberBlue uppercase mb-2 tracking-wider pl-1 border-b border-gray-800 pb-1">Troll & Annoyance</h3>
                                     <div class="grid grid-cols-2 gap-1.5">
-                                        <button onclick="triggerModuleShortcut('cam')" class="bg-[#1a2235] hover:bg-cyberBlue/10 border border-gray-700 hover:border-cyberBlue p-1.5 rounded text-center transition-colors group">
-                                            <i class="fa-solid fa-camera text-gray-400 group-hover:text-cyberBlue mb-1"></i><h4 class="text-[9px] text-gray-200">Start Cam</h4>
+                                        <button onclick="termLog('Command queued: Open CD Tray')" class="bg-[#1a2235] hover:bg-cyberBlue/10 border border-gray-700 hover:border-cyberBlue p-1.5 rounded text-center transition-colors group">
+                                            <i class="fa-solid fa-compact-disc text-gray-400 group-hover:text-cyberBlue mb-1"></i><h4 class="text-[9px] text-gray-200">Open CD Tray</h4>
                                         </button>
-                                        <button onclick="triggerModuleShortcut('screen')" class="bg-[#1a2235] hover:bg-cyberBlue/10 border border-gray-700 hover:border-cyberBlue p-1.5 rounded text-center transition-colors group">
-                                            <i class="fa-solid fa-desktop text-gray-400 group-hover:text-cyberBlue mb-1"></i><h4 class="text-[9px] text-gray-200">Start Screen</h4>
+                                        <button onclick="termLog('Command queued: Play Earrape Audio')" class="bg-[#1a2235] hover:bg-cyberBlue/10 border border-gray-700 hover:border-cyberBlue p-1.5 rounded text-center transition-colors group">
+                                            <i class="fa-solid fa-volume-high text-gray-400 group-hover:text-cyberBlue mb-1"></i><h4 class="text-[9px] text-gray-200">Max Volume</h4>
                                         </button>
-                                        <button onclick="termLog('User inputs locked.')" class="bg-[#1a2235] hover:bg-cyberBlue/10 border border-gray-700 hover:border-cyberBlue p-1.5 rounded text-center transition-colors group">
-                                            <i class="fa-solid fa-keyboard text-gray-400 group-hover:text-cyberBlue mb-1"></i><h4 class="text-[9px] text-gray-200">Block Input</h4>
+                                        <button onclick="termLog('Command queued: Rickroll Browser Tab')" class="bg-[#1a2235] hover:bg-cyberBlue/10 border border-gray-700 hover:border-cyberBlue p-1.5 rounded text-center transition-colors group">
+                                            <i class="fa-brands fa-youtube text-gray-400 group-hover:text-cyberBlue mb-1"></i><h4 class="text-[9px] text-gray-200">Rickroll</h4>
                                         </button>
-                                        <button onclick="termLog('Hidden shell spawned.')" class="bg-[#1a2235] hover:bg-cyberBlue/10 border border-gray-700 hover:border-cyberBlue p-1.5 rounded text-center transition-colors group">
-                                            <i class="fa-solid fa-terminal text-gray-400 group-hover:text-cyberBlue mb-1"></i><h4 class="text-[9px] text-gray-200">Rev Shell</h4>
+                                        <button onclick="termLog('Command queued: Fake Windows Update')" class="bg-[#1a2235] hover:bg-cyberBlue/10 border border-gray-700 hover:border-cyberBlue p-1.5 rounded text-center transition-colors group">
+                                            <i class="fa-brands fa-windows text-gray-400 group-hover:text-cyberBlue mb-1"></i><h4 class="text-[9px] text-gray-200">Fake Update</h4>
+                                        </button>
+                                        <button onclick="termLog('Command queued: Swap Mouse Buttons')" class="bg-[#1a2235] hover:bg-cyberBlue/10 border border-gray-700 hover:border-cyberBlue p-1.5 rounded text-center transition-colors group">
+                                            <i class="fa-solid fa-computer-mouse text-gray-400 group-hover:text-cyberBlue mb-1"></i><h4 class="text-[9px] text-gray-200">Swap Mouse</h4>
+                                        </button>
+                                        <button onclick="termLog('Command queued: Jiggle Mouse Cursor')" class="bg-[#1a2235] hover:bg-cyberBlue/10 border border-gray-700 hover:border-cyberBlue p-1.5 rounded text-center transition-colors group">
+                                            <i class="fa-solid fa-arrows-up-down-left-right text-gray-400 group-hover:text-cyberBlue mb-1"></i><h4 class="text-[9px] text-gray-200">Mouse Jiggle</h4>
+                                        </button>
+                                        <button onclick="termLog('Command queued: Toggle CapsLock Spam')" class="bg-[#1a2235] hover:bg-cyberBlue/10 border border-gray-700 hover:border-cyberBlue p-1.5 rounded text-center transition-colors group">
+                                            <i class="fa-solid fa-keyboard text-gray-400 group-hover:text-cyberBlue mb-1"></i><h4 class="text-[9px] text-gray-200">Caps Spam</h4>
+                                        </button>
+                                        <button onclick="termLog('Command queued: Rotate Screen 180°')" class="bg-[#1a2235] hover:bg-cyberBlue/10 border border-gray-700 hover:border-cyberBlue p-1.5 rounded text-center transition-colors group">
+                                            <i class="fa-solid fa-rotate text-gray-400 group-hover:text-cyberBlue mb-1"></i><h4 class="text-[9px] text-gray-200">Rotate Screen</h4>
+                                        </button>
+                                        <button onclick="termLog('Command queued: Hide Desktop Icons')" class="bg-[#1a2235] hover:bg-cyberBlue/10 border border-gray-700 hover:border-cyberBlue p-1.5 rounded text-center transition-colors group">
+                                            <i class="fa-solid fa-eye-slash text-gray-400 group-hover:text-cyberBlue mb-1"></i><h4 class="text-[9px] text-gray-200">Hide Icons</h4>
+                                        </button>
+                                        <button onclick="termLog('Command queued: Rainbow Screen Flashes')" class="bg-[#1a2235] hover:bg-cyberBlue/10 border border-gray-700 hover:border-cyberBlue p-1.5 rounded text-center transition-colors group">
+                                            <i class="fa-solid fa-palette text-gray-400 group-hover:text-cyberBlue mb-1"></i><h4 class="text-[9px] text-gray-200">Rainbow FX</h4>
+                                        </button>
+                                        <button onclick="termLog('Command queued: Spam Error Popups')" class="bg-[#1a2235] hover:bg-cyberBlue/10 border border-gray-700 hover:border-cyberBlue p-1.5 rounded text-center transition-colors group">
+                                            <i class="fa-solid fa-message text-gray-400 group-hover:text-cyberBlue mb-1"></i><h4 class="text-[9px] text-gray-200">Spam Popups</h4>
+                                        </button>
+                                        <button onclick="termLog('Command queued: TTS Voice Message')" class="bg-[#1a2235] hover:bg-cyberBlue/10 border border-gray-700 hover:border-cyberBlue p-1.5 rounded text-center transition-colors group">
+                                            <i class="fa-solid fa-microphone text-gray-400 group-hover:text-cyberBlue mb-1"></i><h4 class="text-[9px] text-gray-200">TTS Message</h4>
                                         </button>
                                     </div>
-                                </div>
-                                <!-- System Section -->
-                                <div>
-                                    <h3 class="text-[9px] font-bold text-neon uppercase mb-2 tracking-wider pl-1 border-b border-gray-800 pb-1">System Shortcuts</h3>
-                                    <button onclick="triggerModuleShortcut('fs')" class="w-full bg-[#1a2235] hover:bg-neon/10 border border-gray-700 hover:border-neon p-1.5 rounded text-center transition-colors group flex items-center justify-center">
-                                        <i class="fa-solid fa-folder-tree text-gray-400 group-hover:text-neon mr-2"></i><span class="text-[10px] text-gray-200 font-bold">Focus File Explorer</span>
-                                    </button>
                                 </div>
                                 <!-- Scorched Earth Section -->
                                 <div>
                                     <h3 class="text-[9px] font-bold text-red-500 uppercase mb-2 tracking-wider pl-1 border-b border-red-900/50 pb-1"><i class="fa-solid fa-fire mr-1"></i> Scorched Earth</h3>
                                     <div class="grid grid-cols-2 gap-1.5">
-                                        <button onclick="triggerBSOD()" class="bg-orange-900/30 hover:bg-orange-900/60 border border-orange-900 hover:border-orange-500 p-1.5 rounded text-center transition-colors group">
+                                        <button onclick="termLog('Command queued: BSOD (Blue Screen)')" class="bg-orange-900/30 hover:bg-orange-900/60 border border-orange-900 hover:border-orange-500 p-1.5 rounded text-center transition-colors group">
                                             <i class="fa-solid fa-biohazard text-orange-500 group-hover:text-white mb-1"></i><h4 class="text-[9px] text-orange-400 group-hover:text-white font-bold">TRIGGER BSOD</h4>
                                         </button>
-                                        <button onclick="triggerScorchedEarth()" class="bg-red-900/20 hover:bg-red-900/60 border border-red-900 hover:border-red-500 p-1.5 rounded text-center transition-colors group shadow-[0_0_10px_rgba(255,0,0,0.1)]">
+                                        <button onclick="termLog('Command queued: Payload Self-Destruct')" class="bg-red-900/20 hover:bg-red-900/60 border border-red-900 hover:border-red-500 p-1.5 rounded text-center transition-colors group shadow-[0_0_10px_rgba(255,0,0,0.1)]">
                                             <i class="fa-solid fa-burst text-red-500 group-hover:text-white mb-1"></i><h4 class="text-[9px] text-red-400 group-hover:text-white font-bold">SELF DESTRUCT</h4>
                                         </button>
                                     </div>
