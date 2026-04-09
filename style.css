@@ -52,7 +52,7 @@ body::before {
     display: flex;
     margin: -0.75rem; 
     width: calc(100% + 1.5rem);
-    height: 80vh; 
+    height: 100%; 
 }
 
 .tiling-col { display: flex; flex-direction: column; transition: flex-basis 0.2s ease; min-width: 200px; }
@@ -84,7 +84,7 @@ body::before {
 
 /* Minimize State */
 .drag-panel.collapsed { height: 48px !important; flex: 0 0 48px !important; border-bottom: 1px solid rgba(0, 210, 211, 0.3); }
-.drag-panel.collapsed .win-content { display: none; }
+.drag-panel.collapsed .win-content, .drag-panel.collapsed #monitorControls, .drag-panel.collapsed .p-1.border-b { display: none !important; }
 
 /* Maximize State */
 .drag-panel.maximized {
@@ -104,10 +104,6 @@ body::before {
 .resizer-h::after { content: ''; position: absolute; top: 50%; transform: translateY(-50%); left: 0; right: 0; height: 2px; background: transparent; transition: 0.2s; }
 .resizer-h:hover::after, .resizer-h.active::after { background: #00d2d3; box-shadow: 0 0 8px #00d2d3; }
 
-/* File Explorer Modal Styles */
-#fileExplorerModal { transition: opacity 0.3s, backdrop-filter 0.3s; }
-#fileExplorerModal.hidden { opacity: 0; pointer-events: none; backdrop-filter: blur(0px); }
-#fileExplorerModal.visible { opacity: 1; pointer-events: auto; backdrop-filter: blur(5px); }
 
 /* --- Interactive Map Styles (Leaflet Overrides) --- */
 .leaflet-container { background: transparent !important; outline: none; }
