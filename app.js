@@ -22,7 +22,7 @@ let activeQuality = 30; // Stream Slider Default Value
 const STREAM_POLL_RATE = 250; 
 
 // --- Terminal & Filesystem State ---
-let terminalPollInterval = null; // NEW: Real terminal polling
+let terminalPollInterval = null; 
 let fsPollInterval = null;
 let currentFsPath = null;
 const FS_POLL_RATE = 2000; 
@@ -47,7 +47,6 @@ document.addEventListener("DOMContentLoaded", () => {
     switchTab('extraction'); 
     initDragAndDrop();
     initResizers();
-    initMap(); 
     renderNodesList(); 
 });
 
@@ -56,7 +55,7 @@ document.addEventListener("DOMContentLoaded", () => {
 // ==========================================
 function initMap() {
     const mapContainer = document.getElementById('map-container');
-    if (!mapContainer) return;
+    if (!mapContainer || leafletMap) return;
 
     const worldBounds = [
         [-90, -180], 
@@ -79,12 +78,11 @@ function initMap() {
         bounds: worldBounds
     }).addTo(leafletMap);
 
-    // Forces Leaflet to recalibrate if its absolute wrapper stretches
-    new ResizeObserver(() => {
-        if (leafletMap) {
-            requestAnimationFrame(() => leafletMap.invalidateSize(true));
-        }
-    }).observe(mapContainer);
+    // Forces Leaflet to recalibrate after mounting
+    setTimeout(() => {
+        leafletMap.invalidateSize(true);
+        renderMap(); // Ensure dots populate once map boots
+    }, 100);
 }
 
 function renderMap() {
@@ -154,8 +152,6 @@ async function fetchData() {
     btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Working';
 
     try {
-        console.log(`[+] Attempting connection to: ${C2_LISTENER_URL}/node/${deviceId}`);
-        
         const nodeResponse = await fetch(`${C2_LISTENER_URL}/node/${deviceId}`, {
             method: 'GET',
             headers: { 
@@ -207,10 +203,10 @@ async function fetchData() {
             switchTab('rat');
             setTimeout(() => {
                 if (leafletMap) {
-                    leafletMap.invalidateSize(true); // Forces map to recalculate after becoming visible
+                    leafletMap.invalidateSize(true);
                     leafletMap.flyTo([nodeData.lat, nodeData.lng], 4, {duration: 1.5});
                 }
-            }, 300); // Give the DOM slightly more time to paint the layout
+            }, 300); 
         };
 
         if (globalData.length === 0) {
@@ -227,7 +223,6 @@ async function fetchData() {
         }
 
     } catch (error) {
-        console.error("RAW FETCH ERROR:", error);
         statusMsg.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-red-500 mr-2"></i>Error: ${error.message}`;
         showToast("Backend Connection Failed", "error");
     } finally {
@@ -366,7 +361,7 @@ window.executeTermCommand = function(inputEl) {
             const term = document.getElementById('terminal-output');
             term.innerHTML = `
                 <div class="text-cyberBlue">UglyDucky Shell v2.5.0</div>
-                <div class="mt-2 text-green-400 terminal-prompt flex">
+                <div class="mt-2 text-green-400 terminal-prompt flex flex-shrink-0">
                     <span class="mr-2">C:\\Users\\System></span> <span class="cursor-blink"></span>
                 </div>`;
             inputEl.value = ''; 
@@ -898,20 +893,14 @@ window.switchTab = function(tabId) {
         
     document.getElementById('tab-' + tabId).className = `px-6 py-1.5 rounded-md font-bold text-sm transition-all ${activeColor}`;
 
-    // --- LEAFLET RESIZE MULTI-FIRE FIX ---
-    // Safely forces the Leaflet engine to wake up and acknowledge its new active dimensions
-    if (tabId === 'rat' && leafletMap) {
-        setTimeout(() => {
-            leafletMap.invalidateSize(true);
-            window.dispatchEvent(new Event('resize'));
-        }, 50);
-        
-        let resizeCount = 0;
-        let resizeInterval = setInterval(() => {
-            leafletMap.invalidateSize(true);
-            resizeCount++;
-            if (resizeCount > 5) clearInterval(resizeInterval);
-        }, 150);
+    // --- LEAFLET LAZY INIT FIX ---
+    // Safely waits until the RAT view is rendered to give Leaflet a real DOM size.
+    if (tabId === 'rat') {
+        if (!leafletMap) {
+            initMap();
+        } else {
+            setTimeout(() => leafletMap.invalidateSize(true), 100);
+        }
     }
 };
 
