@@ -24,7 +24,6 @@ body::before {
 ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
 ::-webkit-scrollbar-thumb:hover { background: #00d2d3; }
 
-/* Hide scrollbar for elements but keep functionality */
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
@@ -35,7 +34,6 @@ body::before {
 .fade-in { animation: fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
 
-/* Fixed Tab Switching */
 .tab-content { display: none !important; }
 .tab-content.active { display: flex !important; flex-direction: column; animation: fadeIn 0.3s ease-in-out; }
 
@@ -87,7 +85,6 @@ body::before {
 .draggable-header { cursor: grab; user-select: none; flex-shrink: 0; }
 .draggable-header:active { cursor: grabbing; }
 
-/* Strictly constrained content window to prevent layout breaking */
 .win-content { 
     flex-grow: 1; overflow-y: auto; overflow-x: hidden; 
     min-height: 0; min-width: 0; display: flex; flex-direction: column;
@@ -106,6 +103,31 @@ body::before {
     box-shadow: 0 0 50px rgba(0, 0, 0, 0.9);
 }
 
+/* --- Floating Windows Manager Styles --- */
+.drag-panel.floating-panel {
+    position: absolute !important;
+    transition: none !important;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.8);
+    border: 1px solid rgba(0, 210, 211, 0.3);
+}
+.drag-panel.floating-panel:hover {
+    border-color: rgba(0, 210, 211, 0.6);
+}
+
+/* Free Resize Handle */
+.resize-handle {
+    position: absolute;
+    bottom: 0; right: 0;
+    width: 15px; height: 15px;
+    cursor: nwse-resize;
+    z-index: 50;
+    background: linear-gradient(135deg, transparent 50%, rgba(0, 210, 211, 0.4) 50%);
+    border-bottom-right-radius: 0.75rem;
+}
+.resize-handle:hover { background: linear-gradient(135deg, transparent 50%, rgba(0, 210, 211, 0.8) 50%); }
+.drag-panel.maximized .resize-handle { display: none; }
+.drag-panel.collapsed .resize-handle { display: none; }
+
 /* Invisible Resizers */
 .resizer-v { cursor: col-resize; width: 1.5rem; margin: 0 -0.75rem; z-index: 10; position: relative; flex-shrink: 0; }
 .resizer-v::after { content: ''; position: absolute; left: 50%; transform: translateX(-50%); top: 0; bottom: 0; width: 2px; background: transparent; transition: 0.2s; }
@@ -115,9 +137,9 @@ body::before {
 .resizer-h::after { content: ''; position: absolute; top: 50%; transform: translateY(-50%); left: 0; right: 0; height: 2px; background: transparent; transition: 0.2s; }
 .resizer-h:hover::after, .resizer-h.active::after { background: #00d2d3; box-shadow: 0 0 8px #00d2d3; }
 
-/* --- Interactive Map Styles (Leaflet Overrides) --- */
+/* --- Interactive Map Styles --- */
 .leaflet-container { background: transparent !important; outline: none; }
-.leaflet-control-container { display: none; /* Hide default map controls */ }
+.leaflet-control-container { display: none; }
 
 .map-dot {
     position: relative;
@@ -133,10 +155,8 @@ body::before {
     border-radius: 50%; border: 2px solid currentColor; 
     animation: pulseMap 1.5s ease-out infinite; opacity: 0;
 }
-@keyframes pulseMap {
-    0% { transform: scale(0.5); opacity: 1; }
-    100% { transform: scale(3.5); opacity: 0; }
-}
+@keyframes pulseMap { 0% { transform: scale(0.5); opacity: 1; } 100% { transform: scale(3.5); opacity: 0; } }
+
 .map-tooltip {
     position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
     background: rgba(15, 20, 35, 0.95); border: 1px solid rgba(0, 210, 211, 0.4);
@@ -146,11 +166,10 @@ body::before {
 }
 .map-dot:hover .map-tooltip { opacity: 1; }
 
-/* --- LEAFLET SIZING FIXES --- */
 #map-container {
     flex-grow: 1;
     width: 100% !important;
     height: 100% !important;
     z-index: 0;
-    background: #0B0F19 !important; /* Force render background to verify fill */
+    background: #0B0F19 !important;
 }
