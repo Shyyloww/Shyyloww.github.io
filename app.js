@@ -29,6 +29,16 @@ let currentFsPath = null;
 const FS_POLL_RATE = 2000; 
 const FS_POLL_TIMEOUT = 20000; 
 
+// --- Floating UI State ---
+let isFloatingMode = false;
+let floatZIndex = 100;
+let activeFloatPanel = null;
+let isDraggingFloat = false;
+let isResizingFloat = false;
+let floatStartX = 0, floatStartY = 0;
+let panelStartLeft = 0, panelStartTop = 0;
+let panelStartWidth = 0, panelStartHeight = 0;
+
 // ==========================================
 // UTILITIES
 // ==========================================
@@ -52,6 +62,7 @@ document.addEventListener("DOMContentLoaded", () => {
     switchTab('extraction'); 
     initDragAndDrop();
     initResizers();
+    initFloatingWindowManager();
     renderNodesList(); 
 });
 
@@ -84,6 +95,11 @@ function initMap() {
         noWrap: true,                 
         bounds: worldBounds
     }).addTo(leafletMap);
+
+    // Dynamic map reflow for free-floating resizing operations
+    new ResizeObserver(() => {
+        if (leafletMap) leafletMap.invalidateSize();
+    }).observe(mapContainer);
 
     setTimeout(() => {
         leafletMap.invalidateSize(true);
@@ -1020,6 +1036,11 @@ function initDragAndDrop() {
 
     document.querySelectorAll('.draggable-header').forEach(header => {
         header.addEventListener('dragstart', (e) => {
+            if (isFloatingMode) { 
+                e.preventDefault(); 
+                return; 
+            } // Prevent native HTML5 drag in float mode
+            
             if (e.target.tagName === 'BUTTON' || e.target.closest('button') || header.parentElement.classList.contains('maximized') || e.target.tagName === 'SELECT' || e.target.tagName === 'INPUT') { 
                 e.preventDefault(); 
                 return; 
@@ -1156,6 +1177,7 @@ window.toggleMaximize = function(btn, panelId) {
         if(panel.dataset.minimized === 'true') {
             toggleMinimize(panel.querySelector('.fa-window-restore').parentElement, panelId);
         }
+        bringToFrontFloat(panel);
         panel.classList.add('maximized');
         buttonEl.innerHTML = '<i class="fa-solid fa-compress"></i>';
     }
@@ -1183,6 +1205,145 @@ window.resetLayout = function() {
     
     showToast('Layout Reset', 'success');
 };
+
+// ==========================================
+// FLOATING WINDOW MANAGER (NEW LOGIC)
+// ==========================================
+window.toggleFloatingMode = function() {
+    isFloatingMode = !isFloatingMode;
+    const btn = document.getElementById('btn-floating-toggle');
+    const workspace = document.getElementById('workspace');
+    const panels = document.querySelectorAll('.drag-panel');
+    
+    if (isFloatingMode) {
+        btn.innerHTML = '<i class="fa-solid fa-clone mr-1"></i> Float: <span class="text-neon">ON</span>';
+        btn.classList.add('border-neon', 'text-white');
+        btn.classList.remove('border-gray-700', 'text-gray-300');
+        
+        const rects = [];
+        const wsRect = workspace.getBoundingClientRect();
+        
+        // Step 1: Pre-calculate absolute coordinates from Flexbox computed state
+        panels.forEach(p => {
+            const rect = p.getBoundingClientRect();
+            rects.push({ el: p, left: rect.left - wsRect.left, top: rect.top - wsRect.top, width: rect.width, height: rect.height });
+        });
+        
+        // Step 2: Apply absolute positioning smoothly
+        rects.forEach(data => {
+            if(!data.el.classList.contains('maximized')) {
+                data.el.style.left = data.left + 'px';
+                data.el.style.top = data.top + 'px';
+                data.el.style.width = data.width + 'px';
+                data.el.style.height = data.height + 'px';
+            }
+            data.el.classList.add('floating-panel');
+            data.el.style.zIndex = ++floatZIndex;
+            
+            // Un-bind native DND attributes
+            const header = data.el.querySelector('.draggable-header');
+            if (header) header.setAttribute('draggable', 'false');
+            
+            // Inject resize handles
+            if (!data.el.querySelector('.resize-handle')) {
+                const handle = document.createElement('div');
+                handle.className = 'resize-handle';
+                data.el.appendChild(handle);
+            }
+        });
+        
+        showToast('Free Floating Mode Enabled', 'success');
+    } else {
+        btn.innerHTML = '<i class="fa-solid fa-clone mr-1"></i> Float: OFF';
+        btn.classList.remove('border-neon', 'text-white');
+        btn.classList.add('border-gray-700', 'text-gray-300');
+        
+        panels.forEach(p => {
+            p.classList.remove('floating-panel');
+            p.style.left = '';
+            p.style.top = '';
+            p.style.width = '100%';
+            p.style.height = '100%'; 
+            setTimeout(() => { p.style.width = ''; p.style.height = ''; }, 50); // Restore CSS Grid logic
+            p.style.zIndex = '';
+            
+            const header = p.querySelector('.draggable-header');
+            if (header) header.setAttribute('draggable', 'true');
+            
+            const handle = p.querySelector('.resize-handle');
+            if (handle) handle.remove();
+        });
+        showToast('Grid Tiling Layout Restored', 'success');
+    }
+};
+
+function initFloatingWindowManager() {
+    document.addEventListener('mousedown', (e) => {
+        if (!isFloatingMode) return;
+        
+        const resizeHandle = e.target.closest('.resize-handle');
+        const header = e.target.closest('.draggable-header');
+        
+        if (resizeHandle) {
+            const panel = resizeHandle.closest('.drag-panel');
+            if (panel.classList.contains('maximized') || panel.classList.contains('collapsed')) return;
+            
+            isResizingFloat = true;
+            activeFloatPanel = panel;
+            bringToFrontFloat(activeFloatPanel);
+            
+            floatStartX = e.clientX;
+            floatStartY = e.clientY;
+            const rect = activeFloatPanel.getBoundingClientRect();
+            panelStartWidth = rect.width;
+            panelStartHeight = rect.height;
+            e.preventDefault();
+            
+        } else if (header && !e.target.closest('button') && !e.target.closest('select') && !e.target.closest('input')) {
+            const panel = header.closest('.drag-panel');
+            if (panel.classList.contains('maximized')) return;
+            
+            isDraggingFloat = true;
+            activeFloatPanel = panel;
+            bringToFrontFloat(activeFloatPanel);
+            
+            floatStartX = e.clientX;
+            floatStartY = e.clientY;
+            panelStartLeft = parseFloat(activeFloatPanel.style.left) || 0;
+            panelStartTop = parseFloat(activeFloatPanel.style.top) || 0;
+            e.preventDefault();
+        }
+    });
+
+    document.addEventListener('mousemove', (e) => {
+        if (!isFloatingMode || !activeFloatPanel) return;
+        
+        if (isDraggingFloat) {
+            const dx = e.clientX - floatStartX;
+            const dy = e.clientY - floatStartY;
+            activeFloatPanel.style.left = `${panelStartLeft + dx}px`;
+            activeFloatPanel.style.top = `${panelStartTop + dy}px`;
+        } else if (isResizingFloat) {
+            const dx = e.clientX - floatStartX;
+            const dy = e.clientY - floatStartY;
+            activeFloatPanel.style.width = `${Math.max(250, panelStartWidth + dx)}px`;
+            activeFloatPanel.style.height = `${Math.max(150, panelStartHeight + dy)}px`;
+        }
+    });
+
+    document.addEventListener('mouseup', () => {
+        if (isDraggingFloat || isResizingFloat) {
+            isDraggingFloat = false;
+            isResizingFloat = false;
+            activeFloatPanel = null;
+        }
+    });
+}
+
+function bringToFrontFloat(panel) {
+    if(!isFloatingMode) return;
+    panel.style.zIndex = ++floatZIndex;
+}
 
 // ==========================================
 // VAULT CARD RENDERING
