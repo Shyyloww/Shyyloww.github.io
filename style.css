@@ -37,7 +37,7 @@ body::before {
 
 /* Fixed Tab Switching */
 .tab-content { display: none !important; }
-.tab-content.active { display: flex !important; flex-direction: column; flex-grow: 1; animation: fadeIn 0.3s ease-in-out; }
+.tab-content.active { display: flex !important; flex-direction: column; animation: fadeIn 0.3s ease-in-out; }
 
 .blur-reveal { filter: blur(5px); transition: filter 0.3s; cursor: crosshair; }
 .blur-reveal:hover { filter: blur(0px); }
@@ -48,19 +48,20 @@ body::before {
 /* --- Tiling Window Manager Styles --- */
 #workspace {
     position: relative;
-    width: 100%;
-    display: flex;
-    margin: -0.75rem; 
     width: calc(100% + 1.5rem);
-    height: 100%; 
+    margin: -0.75rem; 
 }
 
-.tiling-col { display: flex; flex-direction: column; transition: flex-basis 0.2s ease; min-width: 200px; }
+.tiling-col { 
+    display: flex; flex-direction: column; transition: flex-basis 0.2s ease; 
+    min-width: 200px; height: 100%; min-height: 0;
+}
 
 .drag-slot {
-    position: relative; flex: 1 1 auto; display: flex; flex-direction: column; 
-    transition: flex-basis 0.2s ease; min-height: 48px;
+    position: relative; display: flex; flex-direction: column; 
+    transition: flex-basis 0.2s ease; 
     padding: 0.75rem; 
+    flex: 1 1 0%; min-height: 0; min-width: 0; /* strict bounding so table logic can't override flex-basis */
 }
 
 .drag-slot.drag-over::before {
@@ -74,17 +75,23 @@ body::before {
     background: rgba(15, 20, 35, 0.95); backdrop-filter: blur(12px); 
     border: 1px solid rgba(255, 255, 255, 0.05); 
     border-radius: 0.75rem; box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5); transition: opacity 0.2s ease;
+    min-height: 0; min-width: 0; overflow: hidden;
 }
 .drag-panel:hover { border-color: rgba(255, 255, 255, 0.1); }
 .drag-panel.dragging { opacity: 0.4; }
 
 .draggable-header { cursor: grab; user-select: none; flex-shrink: 0; }
 .draggable-header:active { cursor: grabbing; }
-.win-content { flex-grow: 1; overflow-y: auto; overflow-x: hidden; }
+
+/* Strictly constrained content window to prevent layout breaking */
+.win-content { 
+    flex-grow: 1; overflow-y: auto; overflow-x: hidden; 
+    min-height: 0; min-width: 0;
+}
 
 /* Minimize State */
-.drag-panel.collapsed { height: 48px !important; flex: 0 0 48px !important; border-bottom: 1px solid rgba(0, 210, 211, 0.3); }
-.drag-panel.collapsed .win-content, .drag-panel.collapsed #monitorControls, .drag-panel.collapsed .p-1.border-b { display: none !important; }
+.drag-panel.collapsed { flex: 0 0 auto !important; height: auto !important; border-bottom: 1px solid rgba(0, 210, 211, 0.3); }
+.drag-panel.collapsed .win-content, .drag-panel.collapsed #monitorControls, .drag-panel.collapsed .border-b { display: none !important; }
 
 /* Maximize State */
 .drag-panel.maximized {
@@ -103,7 +110,6 @@ body::before {
 .resizer-h { cursor: row-resize; height: 1.5rem; margin: -0.75rem 0; z-index: 10; position: relative; flex-shrink: 0; }
 .resizer-h::after { content: ''; position: absolute; top: 50%; transform: translateY(-50%); left: 0; right: 0; height: 2px; background: transparent; transition: 0.2s; }
 .resizer-h:hover::after, .resizer-h.active::after { background: #00d2d3; box-shadow: 0 0 8px #00d2d3; }
-
 
 /* --- Interactive Map Styles (Leaflet Overrides) --- */
 .leaflet-container { background: transparent !important; outline: none; }
@@ -137,14 +143,6 @@ body::before {
 .map-dot:hover .map-tooltip { opacity: 1; }
 
 /* --- LEAFLET SIZING FIXES --- */
-#panel-map .win-content {
-    position: relative;
-    overflow: hidden; 
-    flex: 1 1 auto;
-    display: flex;
-    flex-direction: column;
-}
-
 #map-container {
     flex-grow: 1;
     width: 100% !important;
