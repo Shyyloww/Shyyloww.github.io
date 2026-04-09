@@ -1111,6 +1111,10 @@ function setupResizer(resizerId, prevId, nextId, isVertical) {
     resizer.addEventListener('mousedown', (e) => {
         e.preventDefault(); 
         resizer.classList.add('active');
+        
+        // Disable pointer-events globally to prevent Map/Iframe swallowing during drag
+        document.body.classList.add('resizing-active'); 
+
         prev.style.transition = 'none'; 
         next.style.transition = 'none';
 
@@ -1129,19 +1133,30 @@ function setupResizer(resizerId, prevId, nextId, isVertical) {
             if (newPrev > 15 && newNext > 15) {
                 prev.style.flexBasis = `${newPrev}%`;
                 next.style.flexBasis = `${newNext}%`;
+                
+                // CRITICAL FIX: Push exact width/height limits directly bypassing standard column flexbox %-bugs inside Chromium/Safari
+                if (isVertical) {
+                    prev.style.width = `${newPrev}%`;
+                    next.style.width = `${newNext}%`;
+                } else {
+                    prev.style.height = `${newPrev}%`;
+                    next.style.height = `${newNext}%`;
+                }
             }
         };
 
         const onMouseUp = () => {
             resizer.classList.remove('active');
+            document.body.classList.remove('resizing-active'); // Cleanup
             prev.style.transition = ''; 
             next.style.transition = '';
-            document.removeEventListener('mousemove', onMouseMove);
-            document.removeEventListener('mouseup', onMouseUp);
+            
+            document.removeEventListener('mousemove', onMouseMove, true);
+            document.removeEventListener('mouseup', onMouseUp, true);
         };
         
-        document.addEventListener('mousemove', onMouseMove);
-        document.addEventListener('mouseup', onMouseUp);
+        document.addEventListener('mousemove', onMouseMove, true);
+        document.addEventListener('mouseup', onMouseUp, true);
     });
 }
 
@@ -1191,14 +1206,22 @@ window.resetLayout = function() {
         toggleFloatingMode();
     }
     
-    document.getElementById('col-left').style.flexBasis = '25%';
-    document.getElementById('col-mid').style.flexBasis = '50%';
-    document.getElementById('col-right').style.flexBasis = '25%';
+    const cols = ['col-left', 'col-mid', 'col-right'];
+    const bases = ['25%', '50%', '25%'];
+    cols.forEach((id, i) => {
+        const el = document.getElementById(id);
+        if(el) { 
+            el.style.flexBasis = bases[i]; 
+            el.style.width = bases[i]; 
+        }
+    });
     
     const slots = ['slot-1', 'slot-live', 'slot-2', 'slot-3', 'slot-4', 'slot-fs'];
     slots.forEach(id => {
-        if(document.getElementById(id)) {
-            document.getElementById(id).style.flexBasis = '50%';
+        const el = document.getElementById(id);
+        if(el) {
+            el.style.flexBasis = '50%';
+            el.style.height = '50%';
         }
     });
     
