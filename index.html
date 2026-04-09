@@ -106,8 +106,9 @@
                             </div>
                             
                             <!-- INTERACTIVE LEAFLET MAP CONTAINER -->
-                            <!-- Leaflet automatically handles the 100% width/height, zooming, and dragging! -->
-                            <div class="win-content rounded-b-[0.75rem] z-0" id="map-container"></div>
+                            <div class="win-content rounded-b-[0.75rem] relative" style="overflow: hidden;">
+                                <div id="map-container" class="absolute inset-0 z-0 bg-[#0B0F19]"></div>
+                            </div>
                             
                         </div>
                     </div>
@@ -245,6 +246,6 @@
         <span id="toastMsg" class="font-mono text-sm">Action successful!</span>
     </div>
 
-    <script src="app.js?version=999"></script>
+    <script src="app.js?version=1000"></script>
 </body>
 </html>
