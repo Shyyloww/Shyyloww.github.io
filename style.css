@@ -1,4 +1,3 @@
-
 body { 
     background-color: #050810; 
     color: #e2e8f0; 
@@ -20,12 +19,23 @@ body::before {
 }
 @keyframes gridMove { 0% { transform: translateY(0); } 100% { transform: translateY(30px); } }
 
+/* CRT Scanline Effect */
+.scanlines {
+    position: fixed;
+    top: 0; left: 0; width: 100vw; height: 100vh;
+    background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+    background-size: 100% 4px, 3px 100%;
+    pointer-events: none;
+    z-index: 9999;
+    display: none; /* toggled by JS via active class */
+}
+.scanlines.active { display: block; }
+
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: #050810; }
 ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
 ::-webkit-scrollbar-thumb:hover { background: #00d2d3; }
 
-/* Hide scrollbar for elements but keep functionality */
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
@@ -36,9 +46,14 @@ body::before {
 .fade-in { animation: fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
 
-/* Fixed Tab Switching */
-.tab-content { display: none !important; }
-.tab-content.active { display: flex !important; flex-direction: column; animation: fadeIn 0.3s ease-in-out; }
+/* Single Page App View Toggling */
+.view-section { display: none !important; width: 100%; height: 100%; }
+.view-section.active { display: flex !important; flex-direction: column; animation: fadeIn 0.3s ease-in-out; }
+
+/* Sidebar Navigation Buttons */
+.nav-btn { color: #94a3b8; }
+.nav-btn:hover { background: rgba(255, 255, 255, 0.05); color: #fff; }
+.nav-btn.active { background: rgba(0, 210, 211, 0.1); color: #00d2d3; border-left: 3px solid #00d2d3; }
 
 .blur-reveal { filter: blur(5px); transition: filter 0.3s; cursor: crosshair; }
 .blur-reveal:hover { filter: blur(0px); }
@@ -46,35 +61,92 @@ body::before {
 .cursor-blink::after { content: '█'; animation: blink 1s step-start infinite; color: #ff4757; margin-left: 4px; }
 @keyframes blink { 50% { opacity: 0; } }
 
-/* --- Tiling Window Manager Styles --- */
-#workspace {
-    position: relative;
-    width: calc(100% + 1.5rem);
-    margin: -0.75rem; 
-    display: flex;
-    flex-grow: 1;
-    align-items: stretch;
-    min-height: 0;
+/* ========================================= */
+/* THE ARMORY HARDWARE STYLES                */
+/* ========================================= */
+.cyber-grid {
+    background-image: 
+        linear-gradient(rgba(0, 210, 211, 0.1) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 210, 211, 0.1) 1px, transparent 1px);
+    background-size: 20px 20px; background-position: center center;
+}
+.image-container {
+    position: relative; width: 100%; aspect-ratio: 4/3; margin: 0 auto;
+    border: 1px solid rgba(0, 210, 211, 0.3); border-radius: 8px;
+    overflow: hidden; box-shadow: 0 0 30px rgba(0, 0, 0, 0.8); z-index: 20;
+}
+.img-base, .img-solo {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    object-fit: cover; filter: url(#smooth-edges) contrast(1.1) brightness(0.9);
+}
+.xray-container { cursor: crosshair; }
+.img-xray {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover;
+    filter: url(#smooth-edges) sepia(100%) hue-rotate(130deg) saturate(300%) brightness(0.8) contrast(1.2);
+    clip-path: circle(0px at center); 
+}
+.xray-ring {
+    position: absolute; width: 150px; height: 150px; border: 2px dashed #00d2d3; border-radius: 50%;
+    transform: translate(-50%, -50%); pointer-events: none;
+    box-shadow: 0 0 20px rgba(0, 210, 211, 0.5), inset 0 0 20px rgba(0, 210, 211, 0.3);
+    opacity: 0; transition: opacity 0.2s;
+}
+.xray-container:hover .xray-ring { opacity: 1; animation: spin 10s linear infinite; }
+@keyframes spin { 100% { transform: translate(-50%, -50%) rotate(360deg); } }
+
+.hotspot {
+    position: absolute; width: 14px; height: 14px; border-radius: 50%;
+    transform: translate(-50%, -50%); cursor: pointer; z-index: 10;
+    background: var(--dot-color, #ff4757); box-shadow: 0 0 10px var(--dot-color, #ff4757);
+}
+.hotspot::before {
+    content: ''; position: absolute; top: -6px; left: -6px; right: -6px; bottom: -6px;
+    border: 1px solid var(--dot-color, #ff4757); border-radius: 50%; animation: pulse 2s infinite;
+}
+@keyframes pulse { 0% { transform: scale(1); opacity: 1; } 100% { transform: scale(2.5); opacity: 0; } }
+.hotspot-info {
+    position: absolute; top: -40px; left: 20px; background: rgba(15, 20, 35, 0.95);
+    border: 1px solid var(--dot-color, #ff4757); padding: 8px 12px; border-radius: 4px;
+    font-family: 'JetBrains Mono', monospace; font-size: 10px; color: white;
+    white-space: nowrap; pointer-events: none; opacity: 0; transform: translateX(-10px); transition: all 0.2s;
+}
+.hotspot:hover .hotspot-info { opacity: 1; transform: translateX(0); }
+.hotspot-info span { color: var(--dot-color, #ff4757); }
+
+.tape-box {
+    background: #e2e2e2; color: #1a1a1a; position: relative;
+    box-shadow: 2px 4px 15px rgba(0,0,0,0.8); font-family: 'JetBrains Mono', monospace;
+}
+.tape-box::before {
+    content: ''; position: absolute; top: 0; bottom: 0; left: -5px; width: 10px; background: #e2e2e2;
+    clip-path: polygon(100% 0, 0 5%, 100% 10%, 0 15%, 100% 20%, 0 25%, 100% 30%, 0 35%, 100% 40%, 0 45%, 100% 50%, 0 55%, 100% 60%, 0 65%, 100% 70%, 0 75%, 100% 80%, 0 85%, 100% 90%, 0 95%, 100% 100%);
+}
+.tape-box::after {
+    content: ''; position: absolute; top: 0; bottom: 0; right: -5px; width: 10px; background: #e2e2e2;
+    clip-path: polygon(0 0, 100% 5%, 0 10%, 100% 15%, 0 20%, 100% 25%, 0 30%, 100% 35%, 0 40%, 100% 45%, 0 50%, 100% 55%, 0 60%, 100% 65%, 0 70%, 100% 75%, 0 80%, 100% 85%, 0 90%, 100% 95%, 0 100%);
 }
 
+/* ========================================= */
+/* TILING WINDOW MANAGER STYLES              */
+/* ========================================= */
+#workspace {
+    position: relative; width: calc(100% + 1.5rem); margin: -0.75rem; 
+    display: flex; flex-grow: 1; align-items: stretch; min-height: 0;
+}
 .tiling-col { 
     display: flex; flex-direction: column; transition: flex-basis 0.2s ease, width 0.2s ease; 
     min-width: 200px; height: 100%; flex-grow: 1; min-height: 0;
 }
-
 .drag-slot {
     position: relative; display: flex; flex-direction: column; 
     transition: flex-basis 0.2s ease, height 0.2s ease; 
-    padding: 0.75rem; 
-    flex-grow: 1; flex-basis: 0; min-height: 0; min-width: 0; 
+    padding: 0.75rem; flex-grow: 1; flex-basis: 0; min-height: 0; min-width: 0; 
 }
-
 .drag-slot.drag-over::before {
     content: ''; position: absolute; inset: 0.75rem; z-index: 50;
     background: rgba(0, 210, 211, 0.1); border: 2px dashed #00d2d3;
     border-radius: 0.75rem; pointer-events: none;
 }
-
 .drag-panel {
     width: 100%; display: flex; flex-direction: column;
     background: rgba(15, 20, 35, 0.95); backdrop-filter: blur(12px); 
@@ -84,78 +156,44 @@ body::before {
 }
 .drag-panel:hover { border-color: rgba(255, 255, 255, 0.1); }
 .drag-panel.dragging { opacity: 0.4; }
-
 .draggable-header { cursor: grab; user-select: none; flex-shrink: 0; }
 .draggable-header:active { cursor: grabbing; }
 
-/* Strictly constrained content window to prevent layout breaking */
 .win-content { 
     flex-grow: 1; overflow-y: auto; overflow-x: hidden; 
     min-height: 0; min-width: 0; display: flex; flex-direction: column;
 }
 
-/* Minimize State */
+/* Panel States */
 .drag-panel.collapsed { flex-grow: 0 !important; flex-basis: 40px !important; height: 40px !important; border-bottom: 1px solid rgba(0, 210, 211, 0.3); }
 .drag-panel.collapsed .win-content, .drag-panel.collapsed .p-1 { display: none !important; }
-
-/* Maximize State */
 .drag-panel.maximized {
     position: fixed !important; inset: 2rem !important;
     width: calc(100% - 4rem) !important; height: calc(100% - 4rem) !important;
     z-index: 9999 !important; border-radius: 10px;
-    border: 1px solid rgba(0, 210, 211, 0.4);
-    box-shadow: 0 0 50px rgba(0, 0, 0, 0.9);
+    border: 1px solid rgba(0, 210, 211, 0.4); box-shadow: 0 0 50px rgba(0, 0, 0, 0.9);
 }
 
-/* --- Floating Windows Manager Styles --- */
-
-/* CRITICAL: When floating is active, remove relative anchoring from columns/slots 
-   so the absolute positioning anchors to #workspace instead! */
-#workspace.floating-active .tiling-col,
-#workspace.floating-active .drag-slot {
-    position: static !important;
-}
-
-/* Hide grid resizers entirely while in floating mode */
-#workspace.floating-active .resizer-v,
-#workspace.floating-active .resizer-h {
-    display: none !important;
-    pointer-events: none !important;
-}
-
+/* Floating Window Mode */
+#workspace.floating-active .tiling-col, #workspace.floating-active .drag-slot { position: static !important; }
+#workspace.floating-active .resizer-v, #workspace.floating-active .resizer-h { display: none !important; pointer-events: none !important; }
 .drag-panel.floating-panel {
-    position: absolute !important;
-    transition: none !important; /* No transitions while dragging/resizing */
-    box-shadow: 0 10px 40px rgba(0,0,0,0.8);
-    border: 1px solid rgba(0, 210, 211, 0.4);
+    position: absolute !important; transition: none !important;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.8); border: 1px solid rgba(0, 210, 211, 0.4);
 }
+.drag-panel.floating-panel:hover { border-color: rgba(0, 210, 211, 0.8); }
+.drag-panel.gliding { transition: left 0.4s cubic-bezier(0.25, 1, 0.5, 1), top 0.4s cubic-bezier(0.25, 1, 0.5, 1), width 0.4s cubic-bezier(0.25, 1, 0.5, 1), height 0.4s cubic-bezier(0.25, 1, 0.5, 1) !important; }
 
-.drag-panel.floating-panel:hover {
-    border-color: rgba(0, 210, 211, 0.8);
-}
-
-/* Glide animation class applied dynamically during transitions */
-.drag-panel.gliding {
-    transition: left 0.4s cubic-bezier(0.25, 1, 0.5, 1), top 0.4s cubic-bezier(0.25, 1, 0.5, 1), width 0.4s cubic-bezier(0.25, 1, 0.5, 1), height 0.4s cubic-bezier(0.25, 1, 0.5, 1) !important;
-}
-
-/* Free Resize Handle */
 .resize-handle {
-    position: absolute;
-    bottom: 0; right: 0;
-    width: 16px; height: 16px;
-    cursor: nwse-resize;
-    z-index: 50;
+    position: absolute; bottom: 0; right: 0; width: 16px; height: 16px;
+    cursor: nwse-resize; z-index: 50;
     background: linear-gradient(135deg, transparent 50%, rgba(0, 210, 211, 0.5) 50%);
     border-bottom-right-radius: 0.75rem;
 }
-.resize-handle:hover { 
-    background: linear-gradient(135deg, transparent 50%, rgba(0, 210, 211, 1) 50%); 
-}
-.drag-panel.maximized .resize-handle { display: none; }
-.drag-panel.collapsed .resize-handle { display: none; }
+.resize-handle:hover { background: linear-gradient(135deg, transparent 50%, rgba(0, 210, 211, 1) 50%); }
+.drag-panel.maximized .resize-handle, .drag-panel.collapsed .resize-handle { display: none; }
 
-/* Invisible Resizers */
+/* Window Resizers */
 .resizer-v { cursor: col-resize; width: 1.5rem; margin: 0 -0.75rem; z-index: 10; position: relative; flex-shrink: 0; }
 .resizer-v::after { content: ''; position: absolute; left: 50%; transform: translateX(-50%); top: 0; bottom: 0; width: 2px; background: transparent; transition: 0.2s; }
 .resizer-v:hover::after, .resizer-v.active::after { background: #00d2d3; box-shadow: 0 0 8px #00d2d3; }
@@ -164,37 +202,21 @@ body::before {
 .resizer-h::after { content: ''; position: absolute; top: 50%; transform: translateY(-50%); left: 0; right: 0; height: 2px; background: transparent; transition: 0.2s; }
 .resizer-h:hover::after, .resizer-h.active::after { background: #00d2d3; box-shadow: 0 0 8px #00d2d3; }
 
-/* Dragging state fix to prevent maps/iframes from swallowing mouse events */
-body.resizing-active * {
-    user-select: none !important;
-}
-body.resizing-active iframe,
-body.resizing-active .leaflet-container {
-    pointer-events: none !important;
-}
+body.resizing-active * { user-select: none !important; }
+body.resizing-active iframe, body.resizing-active .leaflet-container { pointer-events: none !important; }
 
-/* --- Interactive Map Styles (Leaflet Overrides) --- */
+/* Leaflet Map Overrides */
 .leaflet-container { background: transparent !important; outline: none; }
-.leaflet-control-container { display: none; /* Hide default map controls */ }
-
+.leaflet-control-container { display: none; }
 .map-dot {
-    position: relative;
-    width: 14px; height: 14px; 
-    background-color: currentColor; 
-    border-radius: 50%;
-    cursor: pointer;
-    box-shadow: 0 0 12px currentColor, 0 0 24px currentColor; 
-    z-index: 20;
+    position: relative; width: 14px; height: 14px; background-color: currentColor; 
+    border-radius: 50%; cursor: pointer; box-shadow: 0 0 12px currentColor, 0 0 24px currentColor; z-index: 20;
 }
 .map-dot::before {
-    content: ''; position: absolute; inset: -6px;
-    border-radius: 50%; border: 2px solid currentColor; 
+    content: ''; position: absolute; inset: -6px; border-radius: 50%; border: 2px solid currentColor; 
     animation: pulseMap 1.5s ease-out infinite; opacity: 0;
 }
-@keyframes pulseMap {
-    0% { transform: scale(0.5); opacity: 1; }
-    100% { transform: scale(3.5); opacity: 0; }
-}
+@keyframes pulseMap { 0% { transform: scale(0.5); opacity: 1; } 100% { transform: scale(3.5); opacity: 0; } }
 .map-tooltip {
     position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
     background: rgba(15, 20, 35, 0.95); border: 1px solid rgba(0, 210, 211, 0.4);
@@ -203,12 +225,4 @@ body.resizing-active .leaflet-container {
     box-shadow: 0 4px 12px rgba(0,0,0,0.5); font-family: monospace;
 }
 .map-dot:hover .map-tooltip { opacity: 1; }
-
-/* --- LEAFLET SIZING FIXES --- */
-#map-container {
-    flex-grow: 1;
-    width: 100% !important;
-    height: 100% !important;
-    z-index: 0;
-    background: #0B0F19 !important; /* Force render background to verify fill */
-}
+#map-container { flex-grow: 1; width: 100% !important; height: 100% !important; z-index: 0; background: #0B0F19 !important; }
